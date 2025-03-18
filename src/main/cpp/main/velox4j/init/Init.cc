@@ -17,6 +17,9 @@
 
 #include "Init.h"
 #include <velox/common/memory/Memory.h>
+#include <velox/connectors/fuzzer/DiscardDataSink.cpp>
+#include <velox/connectors/fuzzer/FuzzerConnector.cpp>
+#include <velox/connectors/fuzzer/FuzzerConnectorSplit.h>
 #include <velox/connectors/hive/HiveConnector.h>
 #include <velox/connectors/hive/HiveConnectorSplit.h>
 #include <velox/connectors/hive/HiveDataSink.h>
@@ -28,6 +31,9 @@
 #include <velox/functions/sparksql/aggregates/Register.h>
 #include <velox/functions/sparksql/registration/Register.h>
 #include <velox/functions/sparksql/window/WindowFunctionsRegistration.h>
+#include <velox/vector/fuzzer/ConstrainedVectorGenerator.cpp>
+#include <velox/vector/fuzzer/Utils.cpp>
+#include <velox/vector/fuzzer/VectorFuzzer.cpp>
 #include "velox4j/config/Config.h"
 #include "velox4j/connector/ExternalStream.h"
 #include "velox4j/eval/Evaluation.h"
@@ -75,6 +81,9 @@ void initForSpark() {
   Query::registerSerDe();
   Type::registerSerDe();
   common::Filter::registerSerDe();
+  connector::fuzzer::DiscardDataTableHandle::registerSerDe();
+  connector::fuzzer::FuzzerTableHandle::registerSerDe();
+  connector::fuzzer::FuzzerConnectorSplit::registerSerDe();
   connector::hive::HiveTableHandle::registerSerDe();
   connector::hive::LocationHandle::registerSerDe();
   connector::hive::HiveColumnHandle::registerSerDe();
@@ -96,6 +105,11 @@ void initForSpark() {
       "connector-external-stream",
       std::make_shared<facebook::velox::config::ConfigBase>(
           std::unordered_map<std::string, std::string>())));
+  connector::registerConnector(std::make_shared<connector::fuzzer::FuzzerConnector>(
+      "connector-fuzzer",
+      std::make_shared<facebook::velox::config::ConfigBase>(
+          std::unordered_map<std::string, std::string>()),
+      nullptr));
   core::PlanNode::registerSerDe();
   core::ITypedExpr::registerSerDe();
   exec::registerPartitionFunctionSerDe();

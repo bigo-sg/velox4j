@@ -130,6 +130,9 @@ public final class ISerializableRegistry {
     NAME_REGISTRY.registerClass("HiveTableHandle", HiveTableHandle.class);
     NAME_REGISTRY.registerClass("ExternalStreamConnectorSplit", ExternalStreamConnectorSplit.class);
     NAME_REGISTRY.registerClass("ExternalStreamTableHandle", ExternalStreamTableHandle.class);
+    NAME_REGISTRY.registerClass("DiscardDataTableHandle", DiscardDataTableHandle.class);
+    NAME_REGISTRY.registerClass("FuzzerTableHandle", FuzzerTableHandle.class);
+    NAME_REGISTRY.registerClass("FuzzerConnectorSplit", FuzzerConnectorSplit.class);
     NAME_REGISTRY.registerClass("LocationHandle", LocationHandle.class);
     NAME_REGISTRY.registerClass("HiveSortingColumn", HiveSortingColumn.class);
     NAME_REGISTRY.registerClass("HiveBucketProperty", HiveBucketProperty.class);

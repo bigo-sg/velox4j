@@ -25,7 +25,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.github.zhztheplayer.velox4j.expression.TypedExpr;
 
 public class FilterNode extends PlanNode {
-  private final List<PlanNode> sources;
+  private List<PlanNode> sources;
   private final TypedExpr filter;
 
   @JsonCreator
@@ -46,5 +46,10 @@ public class FilterNode extends PlanNode {
   @JsonGetter("filter")
   public TypedExpr getFilter() {
     return filter;
+  }
+
+  @Override
+  public void setSources(List<PlanNode> sources) {
+    this.sources = sources;
   }
 }
