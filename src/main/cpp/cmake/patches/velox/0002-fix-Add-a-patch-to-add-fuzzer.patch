@@ -1,0 +1,214 @@
+diff --git a/velox/connectors/fuzzer/DiscardDataSink.cpp b/velox/connectors/fuzzer/DiscardDataSink.cpp
+new file mode 100644
+index 000000000..832a62d4c
+--- /dev/null
++++ b/velox/connectors/fuzzer/DiscardDataSink.cpp
+@@ -0,0 +1,59 @@
++/*
++ * Copyright (c) Facebook, Inc. and its affiliates.
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#include "velox/connectors/fuzzer/DiscardDataSink.h"
++
++#include <iostream>
++
++namespace facebook::velox::connector::fuzzer {
++namespace {
++
++long getCurrentTime() {
++  auto now = std::chrono::system_clock::now();
++  auto duration = now.time_since_epoch();
++  return std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
++}
++} // namespace
++
++void DiscardDataSink::appendData(RowVectorPtr input) {
++  if (lastTime == 0) {
++    lastTime = getCurrentTime();
++  }
++  rowNums += input->size();
++  if (rowNums % 100000 == 0) {
++    long now = getCurrentTime();
++    std::cout << "Discard  " << rowNums << " using " << (now - lastTime)  << std::endl;
++    lastTime = now;
++  }
++}
++
++folly::dynamic DiscardDataTableHandle::serialize() const {
++  folly::dynamic obj = folly::dynamic::object;
++  obj["name"] = "DiscardTableHandle";
++  return obj;
++}
++
++DiscardDataTableHandlePtr DiscardDataTableHandle::create(
++    const folly::dynamic& obj) {
++  return std::make_shared<DiscardDataTableHandle>();
++}
++
++void DiscardDataTableHandle::registerSerDe() {
++  auto& registry = DeserializationRegistryForSharedPtr();
++  registry.Register("DiscardDataTableHandle", DiscardDataTableHandle::create);
++}
++
++} // namespace facebook::velox::connector::fuzzer
+diff --git a/velox/connectors/fuzzer/DiscardDataSink.h b/velox/connectors/fuzzer/DiscardDataSink.h
+new file mode 100644
+index 000000000..d7a790f36
+--- /dev/null
++++ b/velox/connectors/fuzzer/DiscardDataSink.h
+@@ -0,0 +1,71 @@
++/*
++ * Copyright (c) Facebook, Inc. and its affiliates.
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++#pragma once
++
++#include "velox/connectors/Connector.h"
++
++namespace facebook::velox::connector::fuzzer {
++
++class DiscardDataTableHandle;
++using DiscardDataTableHandlePtr = std::shared_ptr<const DiscardDataTableHandle>;
++
++class DiscardDataTableHandle : public ConnectorInsertTableHandle {
++ public:
++  DiscardDataTableHandle() {}
++
++  virtual ~DiscardDataTableHandle() = default;
++
++  folly::dynamic serialize() const override;
++
++  static DiscardDataTableHandlePtr create(const folly::dynamic& obj);
++
++  static void registerSerDe();
++
++  std::string toString() const override {
++    return "";
++  }
++};
++
++class DiscardDataSink : public DataSink {
++ public:
++  DiscardDataSink() {}
++
++  void appendData(RowVectorPtr input) override;
++
++  bool finish() override {
++    return true;
++  }
++
++  Stats stats() const override {
++    Stats stats;
++    return stats;
++  }
++
++  std::vector<std::string> close() override {
++    std::vector<std::string> ignore;
++    return ignore;
++  }
++
++  void abort() override {}
++
++ private:
++  long lastTime = 0;
++  long rowNums = 0;
++
++};
++
++} // namespace facebook::velox::connector::fuzzer
++
+diff --git a/velox/connectors/fuzzer/FuzzerConnector.cpp b/velox/connectors/fuzzer/FuzzerConnector.cpp
+index 53f0c1843..d087c2409 100644
+--- a/velox/connectors/fuzzer/FuzzerConnector.cpp
++++ b/velox/connectors/fuzzer/FuzzerConnector.cpp
+@@ -19,6 +19,31 @@
+ 
+ namespace facebook::velox::connector::fuzzer {
+ 
++folly::dynamic FuzzerTableHandle::serialize() const {
++  folly::dynamic obj = ConnectorTableHandle::serializeBase("FuzzerTableHandle");
++  obj["fuzzerSeed"] = fuzzerSeed;
++
++  return obj;
++}
++
++ConnectorTableHandlePtr FuzzerTableHandle::create(
++    const folly::dynamic& obj,
++    void* context) {
++  auto connectorId = obj["connectorId"].asString();
++  auto fuzzerSeed = obj["fuzzerSeed"].asInt();
++
++  VectorFuzzer::Options options;
++  return std::make_shared<const FuzzerTableHandle>(
++      connectorId,
++      options,
++      (size_t) fuzzerSeed);
++}
++
++void FuzzerTableHandle::registerSerDe() {
++  auto& registry = DeserializationWithContextRegistryForSharedPtr();
++  registry.Register("FuzzerTableHandle", create);
++}
++
+ FuzzerDataSource::FuzzerDataSource(
+     const std::shared_ptr<const RowType>& outputType,
+     const std::shared_ptr<connector::ConnectorTableHandle>& tableHandle,
+diff --git a/velox/connectors/fuzzer/FuzzerConnector.h b/velox/connectors/fuzzer/FuzzerConnector.h
+index 64477b73e..9d754a591 100644
+--- a/velox/connectors/fuzzer/FuzzerConnector.h
++++ b/velox/connectors/fuzzer/FuzzerConnector.h
+@@ -17,6 +17,7 @@
+ 
+ #include "velox/common/config/Config.h"
+ #include "velox/connectors/Connector.h"
++#include "velox/connectors/fuzzer/DiscardDataSink.h"
+ #include "velox/connectors/fuzzer/FuzzerConnectorSplit.h"
+ #include "velox/vector/fuzzer/VectorFuzzer.h"
+ 
+@@ -48,6 +49,14 @@ class FuzzerTableHandle : public ConnectorTableHandle {
+     return "fuzzer-mock-table";
+   }
+ 
++  folly::dynamic serialize() const override;
++
++  static ConnectorTableHandlePtr create(
++      const folly::dynamic& obj,
++      void* context);
++
++  static void registerSerDe();
++
+   const VectorFuzzer::Options fuzzerOptions;
+   size_t fuzzerSeed;
+ };
+@@ -125,7 +134,7 @@ class FuzzerConnector final : public Connector {
+           ConnectorInsertTableHandle> /*connectorInsertTableHandle*/,
+       ConnectorQueryCtx* /*connectorQueryCtx*/,
+       CommitStrategy /*commitStrategy*/) override final {
+-    VELOX_NYI("FuzzerConnector does not support data sink.");
++    return std::make_unique<DiscardDataSink>();
+   }
+ };
+ 
