@@ -2,8 +2,11 @@ package io.github.zhztheplayer.velox4j.serializable;
 
 import io.github.zhztheplayer.velox4j.config.Config;
 import io.github.zhztheplayer.velox4j.config.ConnectorConfig;
+import io.github.zhztheplayer.velox4j.connector.DiscardDataTableHandle;
 import io.github.zhztheplayer.velox4j.connector.ExternalStreamConnectorSplit;
 import io.github.zhztheplayer.velox4j.connector.ExternalStreamTableHandle;
+import io.github.zhztheplayer.velox4j.connector.FuzzerConnectorSplit;
+import io.github.zhztheplayer.velox4j.connector.FuzzerTableHandle;
 import io.github.zhztheplayer.velox4j.connector.HiveBucketProperty;
 import io.github.zhztheplayer.velox4j.connector.HiveColumnHandle;
 import io.github.zhztheplayer.velox4j.connector.HiveConnectorSplit;
@@ -126,6 +129,9 @@ public final class ISerializableRegistry {
     NAME_REGISTRY.registerClass("HiveTableHandle", HiveTableHandle.class);
     NAME_REGISTRY.registerClass("ExternalStreamConnectorSplit", ExternalStreamConnectorSplit.class);
     NAME_REGISTRY.registerClass("ExternalStreamTableHandle", ExternalStreamTableHandle.class);
+    NAME_REGISTRY.registerClass("DiscardDataTableHandle", DiscardDataTableHandle.class);
+    NAME_REGISTRY.registerClass("FuzzerTableHandle", FuzzerTableHandle.class);
+    NAME_REGISTRY.registerClass("FuzzerConnectorSplit", FuzzerConnectorSplit.class);
     NAME_REGISTRY.registerClass("LocationHandle", LocationHandle.class);
     NAME_REGISTRY.registerClass("HiveSortingColumn", HiveSortingColumn.class);
     NAME_REGISTRY.registerClass("HiveBucketProperty", HiveBucketProperty.class);

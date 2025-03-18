@@ -21,4 +21,10 @@ public abstract class PlanNode extends ISerializable {
   @JsonGetter("sources")
   @JsonInclude(JsonInclude.Include.NON_EMPTY)
   protected abstract List<PlanNode> getSources();
+
+  public void setSources(List<PlanNode> sources) {
+    if (getSources() != null && !getSources().isEmpty()) {
+      getSources().forEach(planNode -> planNode.setSources(sources));
+    }
+  }
 }

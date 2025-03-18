@@ -18,7 +18,7 @@ public class TableWriteNode extends PlanNode {
   private final boolean hasPartitioningScheme;
   private final RowType outputType;
   private final CommitStrategy commitStrategy;
-  private final List<PlanNode> sources;
+  private List<PlanNode> sources;
 
   @JsonCreator
   public TableWriteNode(
@@ -87,5 +87,10 @@ public class TableWriteNode extends PlanNode {
   @Override
   protected List<PlanNode> getSources() {
     return sources;
+  }
+
+  @Override
+  public void setSources(List<PlanNode> sources) {
+    this.sources = sources;
   }
 }
