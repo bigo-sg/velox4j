@@ -22,6 +22,7 @@
 #include <velox/exec/Task.h>
 #include "velox4j/query/Query.h"
 
+#include <iostream>
 #include <utility>
 
 namespace velox4j {
