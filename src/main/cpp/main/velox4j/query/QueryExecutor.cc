@@ -19,6 +19,7 @@
 #include <velox/exec/Task.h>
 #include "velox4j/query/Query.h"
 
+#include <iostream>
 #include <utility>
 
 namespace velox4j {
@@ -34,6 +35,7 @@ class Out : public UpIterator {
     static std::atomic<uint32_t> executionId{
         0}; // Velox query ID, same with taskId.
     const uint32_t eid = executionId++;
+    std::cout << "Velox plan is " << query_->plan()->toString(true, true) << std::endl;
     core::PlanFragment planFragment{
         query_->plan(), core::ExecutionStrategy::kUngrouped, 1, {}};
     std::shared_ptr<core::QueryCtx> queryCtx = core::QueryCtx::create(

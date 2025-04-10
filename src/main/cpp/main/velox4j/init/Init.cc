@@ -117,6 +117,8 @@ void initForSpark() {
 
 void initialize(const std::shared_ptr<ConfigArray>& configArray) {
   init([&]() -> void {
+    FLAGS_logtostderr = true;
+    google::InitGoogleLogging("velox");
     auto vConfig = std::make_shared<facebook::velox::config::ConfigBase>(
         configArray->toMap());
     auto preset = vConfig->get(VELOX4J_INIT_PRESET);

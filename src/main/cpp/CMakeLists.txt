@@ -50,18 +50,23 @@ endif ()
 set(VELOX_PATCH_DIR ${CMAKE_CURRENT_LIST_DIR}/cmake/patches/velox)
 set(VELOX_REF_FILE ${CMAKE_CURRENT_LIST_DIR}/velox-ref.txt)
 set(VELOX_REF_HASH_FILE ${CMAKE_CURRENT_LIST_DIR}/velox-ref-hash.txt)
-set(VELOX_REPO facebookincubator/velox)
+set(VELOX_REPO bigo-sg/velox)
 file(STRINGS ${VELOX_REF_FILE} VELOX_REF)
 file(STRINGS ${VELOX_REF_HASH_FILE} VELOX_SOURCE_URL_MD5)
-set(VELOX_SOURCE_URL "https://github.com/${VELOX_REPO}/archive/${VELOX_REF}.zip")
+# set(VELOX_SOURCE_URL "https://github.com/${VELOX_REPO}/archive/${VELOX_REF}.zip")
+set(VELOX_SOURCE_URL "https://github.com/bigo-sg/velox.git")
+#set(VELOX_SOURCE_URL ${CMAKE_CURRENT_LIST_DIR}/build/_deps/velox-src)
 CPMAddPackage(
         NAME velox
-        URL ${VELOX_SOURCE_URL}
-        URL_HASH MD5=${VELOX_SOURCE_URL_MD5}
+        GIT_REPOSITORY ${VELOX_SOURCE_URL}
+        GIT_TAG gluten
         PATCHES
         "${VELOX_PATCH_DIR}/0001-fix-Add-a-patch-to-fix-folly-build-on-arm64-Linux.patch"
-        "${VELOX_PATCH_DIR}/0002-fix-Add-a-patch-to-add-fuzzer.patch"
 )
+#CPMAddPackage(
+#        NAME velox
+#        SOURCE_DIR  ${VELOX_SOURCE_URL}
+#)
 
 # Import JniHelpers.
 set(JNI_HELPERS_REPO zhztheplayer/JniHelpersCpp)
