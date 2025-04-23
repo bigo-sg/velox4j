@@ -23,6 +23,8 @@
 #include <velox/connectors/hive/HiveConnector.h>
 #include <velox/connectors/hive/HiveConnectorSplit.h>
 #include <velox/connectors/hive/HiveDataSink.h>
+#include <velox/connectors/nexmark/NexmarkConnector.h>
+#include <velox/connectors/nexmark/NexmarkConnectorSplit.h>
 #include <velox/dwio/parquet/RegisterParquetReader.h>
 #include <velox/dwio/parquet/RegisterParquetWriter.h>
 #include <velox/exec/PartitionFunction.h>
@@ -107,6 +109,13 @@ void initForSpark() {
           std::unordered_map<std::string, std::string>())));
   connector::registerConnector(std::make_shared<connector::fuzzer::FuzzerConnector>(
       "connector-fuzzer",
+      std::make_shared<facebook::velox::config::ConfigBase>(
+          std::unordered_map<std::string, std::string>()),
+      nullptr));
+  connector::nexmark::NexmarkTableHandle::registerSerDe();
+  connector::nexmark::NexmarkConnectorSplit::registerSerDe();
+  connector::registerConnector(std::make_shared<connector::nexmark::NexmarkConnector>(
+      "connector-nexmark",
       std::make_shared<facebook::velox::config::ConfigBase>(
           std::unordered_map<std::string, std::string>()),
       nullptr));
