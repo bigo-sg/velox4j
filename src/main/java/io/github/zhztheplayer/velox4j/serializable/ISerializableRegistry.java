@@ -126,6 +126,8 @@ public final class ISerializableRegistry {
     NAME_REGISTRY.registerClass("HiveBucketProperty", HiveBucketProperty.class);
     NAME_REGISTRY.registerClass("HiveInsertTableHandle", HiveInsertTableHandle.class);
     NAME_REGISTRY.registerClass("HiveInsertFileNameGenerator", HiveInsertFileNameGenerator.class);
+    NAME_REGISTRY.registerClass("NexmarkTableHandle", NexmarkTableHandle.class);
+    NAME_REGISTRY.registerClass("NexmarkConnectorSplit", NexmarkConnectorSplit.class);
   }
 
   private static void registerFilters() {
