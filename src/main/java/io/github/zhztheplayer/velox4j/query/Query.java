@@ -53,7 +53,7 @@ public class Query extends ISerializable {
   public List<BoundSplit> getSplits() {
     return boundSplits;
   }
-
+ 
   @JsonGetter("queryConfig")
   public Config getQueryConfig() {
     return queryConfig;
