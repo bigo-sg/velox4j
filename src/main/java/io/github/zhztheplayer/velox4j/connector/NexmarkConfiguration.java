@@ -113,10 +113,10 @@ public class NexmarkConfiguration implements Serializable {
     public NexmarkConfiguration(
             @JsonProperty("numEvents") long numEvents,
             @JsonProperty("numEventGenerators") int numEventGenerators,
-            @JsonProperty("rateShape") NexmarkUtils.RateShape rateShape,
+            @JsonProperty("rateShape") RateShape rateShape,
             @JsonProperty("firstEventRate") int firstEventRate,
             @JsonProperty("nextEventRate") int nextEventRate,
-            @JsonProperty("rateUnit") NexmarkUtils.RateUnit rateUnit,
+            @JsonProperty("rateUnit") RateUnit rateUnit,
             @JsonProperty("ratePeriodSec") int ratePeriodSec,
             @JsonProperty("preloadSeconds") int preloadSeconds,
             @JsonProperty("streamTimeout") int streamTimeout,
