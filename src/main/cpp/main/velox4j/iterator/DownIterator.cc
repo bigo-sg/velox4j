@@ -61,12 +61,8 @@ DownIterator::~DownIterator() {
 
 std::optional<RowVectorPtr> DownIterator::read(ContinueFuture& future) {
   VELOX_CHECK(!closed_);
-  {
-    std::lock_guard l(mutex_);
-    VELOX_CHECK(
-        promises_.empty(),
-        "DownIterator::read is called while the last read operation is awaiting. Aborting.");
-  }
+  // Stateful task will cal operators one by one, so need not to set the future.
+  // Only need to return data or null.
   const State state = advance();
   switch (state) {
     case State::AVAILABLE: {
@@ -75,39 +71,6 @@ std::optional<RowVectorPtr> DownIterator::read(ContinueFuture& future) {
       return vector;
     }
     case State::BLOCKED: {
-      auto [readPromise, readFuture] =
-          makeVeloxContinuePromiseContract(fmt::format("DownIterator::read"));
-      // Returns a future that is fulfilled immediately to signal Velox
-      // that this stream is still open and is currently waiting for input.
-      future = std::move(readFuture);
-      {
-        std::lock_guard l(mutex_);
-        VELOX_CHECK(promises_.empty());
-        promises_.emplace_back(std::move(readPromise));
-      }
-      waitExecutor_->add([this]() -> void {
-        try {
-          wait();
-        } catch (const std::exception& e) {
-          std::lock_guard l(mutex_);
-          // Velox should guarantee the continue future is only requested once
-          // while it's not fulfilled.
-          VELOX_CHECK(promises_.size() == 1);
-          for (auto& p : promises_) {
-            p.setException(e);
-          }
-          promises_.clear();
-          return;
-        }
-        {
-          std::lock_guard l(mutex_);
-          VELOX_CHECK(promises_.size() == 1);
-          for (auto& p : promises_) {
-            p.setValue();
-          }
-          promises_.clear();
-        }
-      });
       return std::nullopt;
     }
     case State::FINISHED: {

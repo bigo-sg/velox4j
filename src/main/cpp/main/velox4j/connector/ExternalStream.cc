@@ -124,23 +124,7 @@ std::optional<RowVectorPtr> ExternalStreamDataSource::next(
       continue;
     }
     {
-      // We are leaving Velox task execution and are entering external code.
-      // Suspend the current driver to make the current task open to spilling.
-      //
-      // When a task is getting spilled, it should have been suspended so has
-      // zero running threads, otherwise there's possibility that this spill
-      // call hangs. See
-      // https://github.com/apache/incubator-gluten/issues/7243. As of now,
-      // non-zero running threads usually happens when:
-      // 1. Task A spills task B;
-      // 2. Task A tries to grow buffers created by task B, during which spill
-      // is requested on task A again.
-      const exec::DriverThreadContext* driverThreadCtx =
-          exec::driverThreadContext();
-      VELOX_CHECK_NOT_NULL(
-          driverThreadCtx,
-          "ExternalStreamDataSource::next() is not called from a driver thread");
-      SuspendedSection ss(driverThreadCtx->driverCtx()->driver);
+      // Stateful doesn't need to check thread any more.
       const std::optional<RowVectorPtr> vector = current_->read(future);
       if (vector == nullptr) {
         // End of the current stream.
