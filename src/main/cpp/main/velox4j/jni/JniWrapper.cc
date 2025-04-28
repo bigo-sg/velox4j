@@ -31,6 +31,7 @@
 #include "velox4j/iterator/DownIterator.h"
 #include "velox4j/lifecycle/Session.h"
 #include "velox4j/query/QueryExecutor.h"
+#include "velox4j/query/StatefulQueryExecutor.h"
 
 namespace velox4j {
 using namespace facebook::velox;
@@ -82,7 +83,7 @@ jlong createQueryExecutor(JNIEnv* env, jobject javaThis, jstring queryJson) {
   // Keep the pool alive until the task is finished.
   auto queryDynamic = folly::parseJson(jQueryJson.get());
   auto query = ISerializable::deserialize<Query>(queryDynamic, querySerdePool);
-  auto exec = std::make_shared<QueryExecutor>(session->memoryManager(), query);
+  auto exec = std::make_shared<StatefulQueryExecutor>(session->memoryManager(), query);
   return sessionOf(env, javaThis)->objectStore()->save(exec);
   JNI_METHOD_END(-1L)
 }
