@@ -28,6 +28,7 @@
 #include <velox/dwio/parquet/RegisterParquetReader.h>
 #include <velox/dwio/parquet/RegisterParquetWriter.h>
 #include <velox/exec/PartitionFunction.h>
+#include <velox/experimental/stateful/StatefulPlanNode.h>
 #include <velox/functions/prestosql/aggregates/RegisterAggregateFunctions.h>
 #include <velox/functions/prestosql/registration/RegistrationFunctions.h>
 #include <velox/functions/prestosql/window/WindowFunctionsRegistration.h>
@@ -121,6 +122,7 @@ void initForSpark() {
           std::unordered_map<std::string, std::string>()),
       nullptr));
   core::PlanNode::registerSerDe();
+  stateful::WatermarkAssignerNode::registerSerDe();
   core::ITypedExpr::registerSerDe();
   exec::registerPartitionFunctionSerDe();
 }
