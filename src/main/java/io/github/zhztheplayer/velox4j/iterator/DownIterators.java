@@ -18,6 +18,11 @@ public final class DownIterators {
     return new FromBlockingQueue(queue);
   }
 
+  public static DownIterator fromBoundedBlockingQueue(Queue<RowVector> queue) {
+    Preconditions.checkArgument(queue instanceof BlockingQueue, "queue must be a BlockingQueue");
+    return new FromBoundedBlockingQueue((BlockingQueue<RowVector>) queue);
+  }
+
   private static class FromJavaIterator implements DownIterator {
     private final Iterator<RowVector> itr;
 
@@ -46,6 +51,11 @@ public final class DownIterators {
     @Override
     public void close() {
 
+    }
+
+    @Override
+    public void finish() {
+      // no-op
     }
   }
 
@@ -96,6 +106,81 @@ public final class DownIterators {
     @Override
     public void close() {
       closed.compareAndSet(false, true);
+    }
+
+    @Override
+    public void finish() {
+      // no-op
+    }
+  }
+  private static class FromBoundedBlockingQueue implements DownIterator {
+    private final BlockingQueue<RowVector> queue;
+    private RowVector pending = null;
+    private RowVector prevRowVector = null;
+    private AtomicBoolean closed = new AtomicBoolean(false);
+    private AtomicBoolean finished = new AtomicBoolean(false);
+
+    public FromBoundedBlockingQueue(BlockingQueue<RowVector> queue) {
+      this.queue = queue;
+    }
+
+    @Override
+    public State advance0() {
+      if (prevRowVector != null) {
+        prevRowVector.close();
+        prevRowVector = null;
+      }
+      if (pending != null) {
+        return State.AVAILABLE;
+      }
+      if (finished.get() && queue.isEmpty()) {
+        return State.FINISHED;
+      }
+      if (queue.isEmpty()) {
+        return State.BLOCKED;
+      }
+      return State.AVAILABLE;
+    }
+
+    @Override
+    public void waitFor() throws InterruptedException {
+      while (true) {
+        if (pending != null) {
+          return;
+        }
+        if (closed.get()) {
+          Thread.currentThread().interrupt();
+          throw new InterruptedException();
+        }
+        pending = queue.poll(100L, TimeUnit.MILLISECONDS);
+        if (pending == null && finished.get()) {
+          // If the queue is empty and finished, we should return
+          // to avoid blocking forever.
+          return;
+        }
+      }
+    }
+
+    @Override
+    public long get() {
+      if (pending != null) {
+        final RowVector out = pending;
+        prevRowVector = pending;
+        pending = null;
+        return out.id();
+      }
+      prevRowVector = queue.remove();
+      return prevRowVector.id();
+    }
+
+    @Override
+    public void close() {
+      closed.compareAndSet(false, true);
+    }
+
+    @Override
+    public void finish() {
+      finished.compareAndSet(false, true);
     }
   }
 }

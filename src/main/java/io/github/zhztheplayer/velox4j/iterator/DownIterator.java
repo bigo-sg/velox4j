@@ -30,5 +30,7 @@ public interface DownIterator {
   @CalledFromNative
   void close();
 
+  void finish();
+
   State advance0();
 }
