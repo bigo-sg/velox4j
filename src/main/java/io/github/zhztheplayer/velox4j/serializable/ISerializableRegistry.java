@@ -38,6 +38,7 @@ import io.github.zhztheplayer.velox4j.plan.ProjectNode;
 import io.github.zhztheplayer.velox4j.plan.TableScanNode;
 import io.github.zhztheplayer.velox4j.plan.TableWriteNode;
 import io.github.zhztheplayer.velox4j.plan.ValuesNode;
+import io.github.zhztheplayer.velox4j.plan.WatermarkAssignerNode;
 import io.github.zhztheplayer.velox4j.query.Query;
 import io.github.zhztheplayer.velox4j.serde.Serde;
 import io.github.zhztheplayer.velox4j.serde.SerdeRegistry;
@@ -156,6 +157,7 @@ public final class ISerializableRegistry {
     NAME_REGISTRY.registerClass("OrderByNode", OrderByNode.class);
     NAME_REGISTRY.registerClass("LimitNode", LimitNode.class);
     NAME_REGISTRY.registerClass("TableWriteNode", TableWriteNode.class);
+    NAME_REGISTRY.registerClass("WatermarkAssignerNode", WatermarkAssignerNode.class);
   }
 
   private static void retisterConfig() {
