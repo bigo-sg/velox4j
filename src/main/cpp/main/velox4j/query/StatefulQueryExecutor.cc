@@ -21,94 +21,97 @@
 
 #include <iostream>
 #include <utility>
-//#include <gperftools/heap-profiler.h>
 
 namespace velox4j {
 
 using namespace facebook::velox;
 
-namespace {
+StatefulSerialTask::StatefulSerialTask(
+    MemoryManager* memoryManager,
+    std::shared_ptr<const Query> query)
+    : memoryManager_(memoryManager), query_(std::move(query)) {
+  static std::atomic<uint32_t> executionId{
+      0}; // Velox query ID, same with taskId.
+  const uint32_t eid = executionId++;
+  core::PlanFragment planFragment{
+      query_->plan(), core::ExecutionStrategy::kUngrouped, 1, {}};
+  std::cout << "Stateful velox plan is " << query_->plan()->toString(true, true) << std::endl;
+  std::shared_ptr<core::QueryCtx> queryCtx = core::QueryCtx::create(
+      nullptr,
+      core::QueryConfig{query_->queryConfig()->toMap()},
+      query_->connectorConfig()->toMap(),
+      cache::AsyncDataCache::getInstance(),
+      memoryManager_
+          ->getVeloxPool(
+              fmt::format("Query Memory Pool - EID {}", std::to_string(eid)),
+              memory::MemoryPool::Kind::kAggregate)
+          ->shared_from_this(),
+      nullptr,
+      fmt::format("Query Context - EID {}", std::to_string(eid)));
 
-class Out : public UpIterator {
- public:
-  Out(MemoryManager* memoryManager, std::shared_ptr<const Query> query)
-      : memoryManager_(memoryManager), query_(std::move(query)) {
-    static std::atomic<uint32_t> executionId{
-        0}; // Velox query ID, same with taskId.
-    const uint32_t eid = executionId++;
-    std::cout << "Stateful velox plan is " << query_->plan()->toString(true, true) << std::endl;
-    VLOG(2)
-        << "Velox plan is " << query_->plan()->toString(true, true);
-    core::PlanFragment planFragment{
-        query_->plan(), core::ExecutionStrategy::kUngrouped, 1, {}};
-    std::shared_ptr<core::QueryCtx> queryCtx = core::QueryCtx::create(
-        nullptr,
-        core::QueryConfig{query_->queryConfig()->toMap()},
-        query_->connectorConfig()->toMap(),
-        cache::AsyncDataCache::getInstance(),
-        memoryManager_
-            ->getVeloxPool(
-                fmt::format("Query Memory Pool - EID {}", std::to_string(eid)),
-                memory::MemoryPool::Kind::kAggregate)
-            ->shared_from_this(),
-        nullptr,
-        fmt::format("Query Context - EID {}", std::to_string(eid)));
+  auto task = stateful::StatefulTask::create(
+      fmt::format("Task - EID {}", std::to_string(eid)),
+      std::move(planFragment),
+      std::move(queryCtx));
 
-    auto task = stateful::StatefulTask::create(
-        fmt::format("Task - EID {}", std::to_string(eid)),
-        std::move(planFragment),
-        std::move(queryCtx));
+  task_ = task;
 
-    std::cout << "Stateful query task created" << std::endl;
-    std::unordered_set<core::PlanNodeId> planNodesWithSplits{};
-    for (const auto& boundSplit : query_->boundSplits()) {
-      exec::Split split = *boundSplit->split();
-      planNodesWithSplits.emplace(boundSplit->planNodeId());
-      task->addSplit(boundSplit->planNodeId(), std::move(split));
-    }
-    for (const auto& nodeWithSplits : planNodesWithSplits) {
-      task->noMoreSplits(nodeWithSplits);
-    }
-
-    task_ = task;
+  if (!task_->supportSerialExecutionMode()) {
+    VELOX_FAIL(
+        "Task doesn't support single threaded execution: " + task->toString());
   }
+}
 
-  ~Out() override {
-    if (task_ != nullptr && task_->isRunning()) {
-      // TODO: add a method to finish the task and set state.
-      task_->finish();
-      // FIXME: Calling .wait() may take no effect in single thread execution
-      //  mode.
-      task_->requestCancel().wait();
-    }
-    task_.reset();
-    std::cout << "StatefulQueryExecutor dessc" << std::endl;
+StatefulSerialTask::~StatefulSerialTask() {
+  if (task_ != nullptr && task_->isRunning()) {
+    // TODO: add a method to finish the task and set state.
+    task_->finish();
+    // FIXME: Calling .wait() may take no effect in single thread execution
+    //  mode.
+    task_->requestCancel().wait();
   }
+  task_.reset();
+}
 
-  State advance() override {
-    VELOX_CHECK_NULL(pending_);
-    return advance0();
-  }
+UpIterator::State StatefulSerialTask::advance() {
+  VELOX_CHECK_NULL(pending_);
+  return advance0(false);
+}
 
-  void wait() override {
-  }
+void StatefulSerialTask::wait() {
+}
 
-  RowVectorPtr get() override {
-    VELOX_CHECK_NOT_NULL(
-        pending_,
-        "Out: No pending row vector to return.  No pending row vector to return. Make sure the iterator is available via member function advance() first");
-    const auto out = pending_;
-    pending_ = nullptr;
-    return out;
-  }
+RowVectorPtr StatefulSerialTask::get() {
+  VELOX_CHECK_NOT_NULL(
+      pending_,
+      "SerialTask: No pending row vector to return. Make sure the "
+      "iterator is available via member function advance() first");
+  const auto out = pending_;
+  pending_ = nullptr;
+  return out;
+}
 
- private:
+void StatefulSerialTask::addSplit(
+    const core::PlanNodeId& planNodeId,
+    int32_t groupId,
+    std::shared_ptr<connector::ConnectorSplit> connectorSplit) {
+  auto cs = connectorSplit;
+  task_->addSplit(planNodeId, exec::Split{std::move(cs), groupId});
+}
 
-  State advance0() {
-    //std::cout << "Advance enter " << wait << std::endl;
+void StatefulSerialTask::noMoreSplits(const core::PlanNodeId& planNodeId) {
+  task_->noMoreSplits(planNodeId);
+}
+
+std::unique_ptr<SerialTaskStats> StatefulSerialTask::collectStats() {
+  const auto stats = task_->taskStats();
+  return std::make_unique<SerialTaskStats>(stats);
+}
+
+UpIterator::State StatefulSerialTask::advance0(bool wait) {
+  while (true) {
     int32_t retCode = 0;
     auto out = task_->next(retCode);
-    //std::cout << "Advance next " << wait << std::endl;
     if (out != nullptr) {
       pending_ = std::move(out);
       return State::AVAILABLE;
@@ -118,21 +121,14 @@ class Out : public UpIterator {
     }
     return State::BLOCKED;
   }
+}
 
-  MemoryManager* const memoryManager_;
-  std::shared_ptr<const Query> query_;
-  std::shared_ptr<stateful::StatefulTask> task_;
-  bool hasPendingState_{false};
-  State pendingState_{State::BLOCKED};
-  RowVectorPtr pending_{nullptr};
-  int count = 0;
-};
-} // namespace
-
-StatefulQueryExecutor::StatefulQueryExecutor(MemoryManager* memoryManager, std::shared_ptr<const Query> query)
+StatefulQueryExecutor::StatefulQueryExecutor(
+    MemoryManager* memoryManager,
+    std::shared_ptr<const Query> query)
     : memoryManager_(memoryManager), query_(query) {}
 
-std::unique_ptr<UpIterator> StatefulQueryExecutor::execute() const {
-  return std::make_unique<Out>(memoryManager_, query_);
+std::unique_ptr<StatefulSerialTask> StatefulQueryExecutor::execute() const {
+  return std::make_unique<StatefulSerialTask>(memoryManager_, query_);
 }
 } // namespace velox4j
