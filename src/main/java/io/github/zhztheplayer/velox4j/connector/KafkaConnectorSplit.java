@@ -2,6 +2,9 @@ package io.github.zhztheplayer.velox4j.connector;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
+import io.github.zhztheplayer.velox4j.serializable.ISerializable;
+
 import java.util.List;
 import java.util.Map;
 
@@ -16,7 +19,7 @@ public class KafkaConnectorSplit extends ConnectorSplit {
   
   private String autoResetoffset;
   
-  private Map<String, List<Integer>> topicPartitions;
+  private List<TopicPartitionOffset> topicPartitions;
   
   public KafkaConnectorSplit(
     @JsonProperty("connectorId") String connectorId,
@@ -27,7 +30,7 @@ public class KafkaConnectorSplit extends ConnectorSplit {
     @JsonProperty("format") String format,
     @JsonProperty("enableAutoCommit") boolean enableAutoCommit,
     @JsonProperty("autoResetOffset") String autoResetOffset,
-    @JsonProperty("topicPartitions") Map<String, List<Integer>> topicPartitions) {
+    @JsonProperty("topicPartitions") List<TopicPartitionOffset> topicPartitions) {
     super(connectorId, splitWeight, cacheable);
     this.bootstrapServers = bootstrapServers;
     this.groupId = groupId;
@@ -63,7 +66,39 @@ public class KafkaConnectorSplit extends ConnectorSplit {
   }
   
   @JsonGetter("topicPartitions")
-  public Map<String, List<Integer>> getTopicPartitions() {
+  public List<TopicPartitionOffset> getTopicPartitions() {
     return this.topicPartitions;
+  }
+
+  public static class TopicPartitionOffset extends ISerializable {
+    private String topic;
+
+    private Integer partition;
+    
+    private Long offset;
+
+    public TopicPartitionOffset(
+      @JsonProperty("topic") String topic,
+      @JsonProperty("partition") Integer partition,
+      @JsonProperty("offset") Long offset) {
+      this.topic = topic;
+      this.partition = partition;
+      this.offset = offset;
+    }
+
+    @JsonGetter("topic")
+    public String getTopic() {
+      return this.topic;
+    }
+
+    @JsonGetter("partition")
+    public Integer getPartition() {
+      return this.partition;
+    }
+
+    @JsonGetter("offset")
+    public Long getOffset() {
+      return this.offset;
+    }
   }
 }
