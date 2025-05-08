@@ -76,7 +76,6 @@ CPMAddPackage(
         NAME velox
         GIT_REPOSITORY ${VELOX_SOURCE_URL}
         GIT_TAG gluten
-        PATCHES
 )
 #CPMAddPackage(
 #        NAME velox
