@@ -52,11 +52,6 @@ public final class DownIterators {
     public void close() {
 
     }
-
-    @Override
-    public void finish() {
-      // no-op
-    }
   }
 
   private static class FromBlockingQueue implements DownIterator {
@@ -107,12 +102,11 @@ public final class DownIterators {
     public void close() {
       closed.compareAndSet(false, true);
     }
-
-    @Override
-    public void finish() {
-      // no-op
-    }
   }
+
+  // This a new DownIterator that supports bounded input.
+  // As discussed in https://github.com/velox4j/velox4j/pull/168, this is may be removed in the
+  // future and use the new API instead.
   private static class FromBoundedBlockingQueue implements DownIterator {
     private final BlockingQueue<RowVector> queue;
     private RowVector pending = null;

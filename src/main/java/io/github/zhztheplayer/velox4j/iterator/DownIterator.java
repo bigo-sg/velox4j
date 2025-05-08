@@ -30,7 +30,9 @@ public interface DownIterator {
   @CalledFromNative
   void close();
 
-  void finish();
+  default void finish() {
+    throw new UnsupportedOperationException("finish() is not implemented");
+  }
 
   State advance0();
 }
