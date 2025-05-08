@@ -61,7 +61,8 @@ CPMAddPackage(
         GIT_REPOSITORY ${VELOX_SOURCE_URL}
         GIT_TAG gluten
         PATCHES
-        "${VELOX_PATCH_DIR}/0001-fix-Add-a-patch-to-fix-folly-build-on-arm64-Linux.patch"
+       "${VELOX_PATCH_DIR}/0001-fix-Add-a-patch-to-fix-folly-build-on-arm64-Linux.patch"
+       "${VELOX_PATCH_DIR}/0003-fix-Add-a-patch-to-fix-table-scan-return-emptyrow-kafka.patch"
 )
 #CPMAddPackage(
 #        NAME velox
