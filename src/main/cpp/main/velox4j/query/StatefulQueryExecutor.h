@@ -19,16 +19,51 @@
 
 #include <string>
 #include "Query.h"
+#include <velox/experimental/stateful/StatefulTask.h>
 #include "velox4j/iterator/UpIterator.h"
 #include "velox4j/memory/MemoryManager.h"
+#include "velox4j/query/QueryExecutor.h"
 
 namespace velox4j {
 
+class StatefulSerialTask : public UpIterator {
+ public:
+  StatefulSerialTask(MemoryManager* memoryManager, std::shared_ptr<const Query> query);
+
+  ~StatefulSerialTask() override;
+
+  State advance() override;
+
+  void wait() override;
+
+  facebook::velox::RowVectorPtr get() override;
+
+  void addSplit(
+      const facebook::velox::core::PlanNodeId& planNodeId,
+      int32_t groupId,
+      std::shared_ptr<facebook::velox::connector::ConnectorSplit>
+          connectorSplit);
+
+  void noMoreSplits(const facebook::velox::core::PlanNodeId& planNodeId);
+
+  std::unique_ptr<SerialTaskStats> collectStats();
+
+ private:
+  State advance0(bool wait);
+
+  MemoryManager* const memoryManager_;
+  std::shared_ptr<const Query> query_;
+  std::shared_ptr<facebook::velox::stateful::StatefulTask> task_;
+  facebook::velox::RowVectorPtr pending_{nullptr};
+};
+
 class StatefulQueryExecutor {
  public:
-  StatefulQueryExecutor(MemoryManager* memoryManager, std::shared_ptr<const Query> query);
+  StatefulQueryExecutor(
+      MemoryManager* memoryManager,
+      std::shared_ptr<const Query> query);
 
-  std::unique_ptr<UpIterator> execute() const;
+  std::unique_ptr<StatefulSerialTask> execute() const;
 
  private:
   MemoryManager* const memoryManager_;

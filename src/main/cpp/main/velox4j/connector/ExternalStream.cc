@@ -136,6 +136,7 @@ std::optional<RowVectorPtr> ExternalStreamDataSource::next(
       // 1. Task A spills task B;
       // 2. Task A tries to grow buffers created by task B, during which spill
       // is requested on task A again.
+      /**
       const exec::DriverThreadContext* driverThreadCtx =
           exec::driverThreadContext();
       VELOX_CHECK_NOT_NULL(
@@ -143,6 +144,7 @@ std::optional<RowVectorPtr> ExternalStreamDataSource::next(
           "ExternalStreamDataSource::next() is not called "
           "from a driver thread");
       SuspendedSection ss(driverThreadCtx->driverCtx()->driver);
+      */
       // Stateful doesn't need to check thread any more.
       const std::optional<RowVectorPtr> vector = current_->read(future);
       if (vector == nullptr) {

@@ -38,6 +38,7 @@ using namespace facebook::velox;
 
 namespace {
 const char* kClassName = "io/github/zhztheplayer/velox4j/jni/JniWrapper";
+const bool stateful = true;
 
 Session* sessionOf(JNIEnv* env, jobject javaThis) {
   static const auto* clazz = jniClassRegistry()->get(kClassName);
@@ -83,8 +84,14 @@ jlong createQueryExecutor(JNIEnv* env, jobject javaThis, jstring queryJson) {
   // Keep the pool alive until the task is finished.
   auto queryDynamic = folly::parseJson(jQueryJson.get());
   auto query = ISerializable::deserialize<Query>(queryDynamic, querySerdePool);
-  auto exec = std::make_shared<StatefulQueryExecutor>(session->memoryManager(), query);
-  return sessionOf(env, javaThis)->objectStore()->save(exec);
+  //auto exec = std::make_shared<QueryExecutor>(session->memoryManager(), query);
+  if (stateful) {
+    auto exec = std::make_shared<StatefulQueryExecutor>(session->memoryManager(), query);
+    return sessionOf(env, javaThis)->objectStore()->save(exec);
+  } else {
+    auto exec = std::make_shared<QueryExecutor>(session->memoryManager(), query);
+    return sessionOf(env, javaThis)->objectStore()->save(exec);
+  }
   JNI_METHOD_END(-1L)
 }
 
@@ -93,10 +100,17 @@ jlong queryExecutorExecute(
     jobject javaThis,
     jlong queryExecutorId) {
   JNI_METHOD_START
-  auto exec = ObjectStore::retrieve<QueryExecutor>(queryExecutorId);
-  return sessionOf(env, javaThis)
-      ->objectStore()
-      ->save<SerialTask>(exec->execute());
+  if (stateful) {
+    auto exec = ObjectStore::retrieve<StatefulQueryExecutor>(queryExecutorId);
+    return sessionOf(env, javaThis)
+        ->objectStore()
+        ->save<StatefulSerialTask>(exec->execute());
+  } else {
+    auto exec = ObjectStore::retrieve<QueryExecutor>(queryExecutorId);
+    return sessionOf(env, javaThis)
+        ->objectStore()
+        ->save<SerialTask>(exec->execute());
+  }
   JNI_METHOD_END(-1L)
 }
 

@@ -56,6 +56,7 @@ std::optional<RowVectorPtr> BlockingQueue::read(ContinueFuture& future) {
     }
   }
 
+  /**
   // Blocked. Async wait for a new element.
   auto [readPromise, readFuture] =
       makeVeloxContinuePromiseContract(fmt::format("BlockingQueue::read"));
@@ -102,7 +103,7 @@ std::optional<RowVectorPtr> BlockingQueue::read(ContinueFuture& future) {
       }
     }
   });
-
+  */
   return std::nullopt;
 }
 

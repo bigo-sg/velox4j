@@ -31,12 +31,14 @@
 #include "velox4j/lifecycle/Session.h"
 #include "velox4j/memory/JavaAllocationListener.h"
 #include "velox4j/query/QueryExecutor.h"
+#include "velox4j/query/StatefulQueryExecutor.h"
 
 namespace velox4j {
 using namespace facebook::velox;
 
 namespace {
 const char* kClassName = "io/github/zhztheplayer/velox4j/jni/StaticJniWrapper";
+const bool stateful = true;
 
 void initialize0(JNIEnv* env, jobject javaThis, jstring globalConfJson) {
   JNI_METHOD_START
@@ -110,14 +112,25 @@ void serialTaskAddSplit(
     jint groupId,
     jstring connectorSplitJson) {
   JNI_METHOD_START
-  auto serialTask = ObjectStore::retrieve<SerialTask>(stId);
-  spotify::jni::JavaString jPlanNodeId{env, planNodeId};
-  spotify::jni::JavaString jConnectorSplitJson{env, connectorSplitJson};
-  auto jConnectorSplitDynamic = folly::parseJson(jConnectorSplitJson.get());
-  auto connectorSplit = std::const_pointer_cast<connector::ConnectorSplit>(
-      ISerializable::deserialize<connector::ConnectorSplit>(
-          jConnectorSplitDynamic));
-  serialTask->addSplit(jPlanNodeId.get(), groupId, connectorSplit);
+  if (stateful) {
+    auto serialTask = ObjectStore::retrieve<StatefulSerialTask>(stId);
+    spotify::jni::JavaString jPlanNodeId{env, planNodeId};
+    spotify::jni::JavaString jConnectorSplitJson{env, connectorSplitJson};
+    auto jConnectorSplitDynamic = folly::parseJson(jConnectorSplitJson.get());
+    auto connectorSplit = std::const_pointer_cast<connector::ConnectorSplit>(
+        ISerializable::deserialize<connector::ConnectorSplit>(
+            jConnectorSplitDynamic));
+    serialTask->addSplit(jPlanNodeId.get(), groupId, connectorSplit);
+  } else {
+    auto serialTask = ObjectStore::retrieve<SerialTask>(stId);
+    spotify::jni::JavaString jPlanNodeId{env, planNodeId};
+    spotify::jni::JavaString jConnectorSplitJson{env, connectorSplitJson};
+    auto jConnectorSplitDynamic = folly::parseJson(jConnectorSplitJson.get());
+    auto connectorSplit = std::const_pointer_cast<connector::ConnectorSplit>(
+        ISerializable::deserialize<connector::ConnectorSplit>(
+            jConnectorSplitDynamic));
+    serialTask->addSplit(jPlanNodeId.get(), groupId, connectorSplit);
+  }
   JNI_METHOD_END()
 }
 
@@ -127,19 +140,33 @@ void serialTaskNoMoreSplits(
     jlong stId,
     jstring planNodeId) {
   JNI_METHOD_START
-  auto serialTask = ObjectStore::retrieve<SerialTask>(stId);
-  spotify::jni::JavaString jPlanNodeId{env, planNodeId};
-  serialTask->noMoreSplits(jPlanNodeId.get());
+  if (stateful) {
+    auto serialTask = ObjectStore::retrieve<StatefulSerialTask>(stId);
+    spotify::jni::JavaString jPlanNodeId{env, planNodeId};
+    serialTask->noMoreSplits(jPlanNodeId.get());
+  } else {
+    auto serialTask = ObjectStore::retrieve<SerialTask>(stId);
+    spotify::jni::JavaString jPlanNodeId{env, planNodeId};
+    serialTask->noMoreSplits(jPlanNodeId.get());
+  }
   JNI_METHOD_END()
 }
 
 jstring serialTaskCollectStats(JNIEnv* env, jobject javaThis, jlong stId) {
   JNI_METHOD_START
-  auto serialTask = ObjectStore::retrieve<SerialTask>(stId);
-  const auto stats = serialTask->collectStats();
-  const auto statsDynamic = stats->toJson();
-  const auto statsJson = folly::toPrettyJson(statsDynamic);
-  return env->NewStringUTF(statsJson.data());
+  if (stateful) {
+    auto serialTask = ObjectStore::retrieve<StatefulSerialTask>(stId);
+    const auto stats = serialTask->collectStats();
+    const auto statsDynamic = stats->toJson();
+    const auto statsJson = folly::toPrettyJson(statsDynamic);
+    return env->NewStringUTF(statsJson.data());
+  } else {
+    auto serialTask = ObjectStore::retrieve<SerialTask>(stId);
+    const auto stats = serialTask->collectStats();
+    const auto statsDynamic = stats->toJson();
+    const auto statsJson = folly::toPrettyJson(statsDynamic);
+    return env->NewStringUTF(statsJson.data());
+  }
   JNI_METHOD_END(nullptr)
 }
 
