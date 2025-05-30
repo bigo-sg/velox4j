@@ -104,6 +104,20 @@ void blockingQueueNoMoreInput(JNIEnv* env, jobject javaThis, jlong queueId) {
   JNI_METHOD_END()
 }
 
+void serialTaskStart(JNIEnv* env, jobject javaThis, jlong stId) {
+  JNI_METHOD_START
+  auto serialTask = ObjectStore::retrieve<StatefulSerialTask>(stId);
+  serialTask->start();
+  JNI_METHOD_END()
+}
+
+void serialTaskStop(JNIEnv * env, jobject javaThis, jlong stId) {
+  JNI_METHOD_START
+  auto serialTask = ObjectStore::retrieve<StatefulSerialTask>(stId);
+  serialTask->stop();
+  JNI_METHOD_END()
+}
+
 void serialTaskAddSplit(
     JNIEnv* env,
     jobject javaThis,
@@ -169,6 +183,17 @@ jstring serialTaskCollectStats(JNIEnv* env, jobject javaThis, jlong stId) {
   }
   JNI_METHOD_END(nullptr)
 }
+
+// jlong serialTaskSourceCompletedRows(JNIEnv* env, jobject javaThis, jlong stId) {
+//   JNI_METHOD_START
+//   if (stateful) {
+//     auto serialTask = ObjectStore::retrieve<StatefulSerialTask>(stId);
+
+//   } else {
+//     return 0;
+//   }
+//   JNI_METHOD_END(nullptr)
+// }
 
 jstring variantInferType(JNIEnv* env, jobject javaThis, jstring json) {
   JNI_METHOD_START
@@ -340,6 +365,18 @@ void StaticJniWrapper::initialize(JNIEnv* env) {
   addNativeMethod(
       "blockingQueueNoMoreInput",
       (void*)blockingQueueNoMoreInput,
+      kTypeVoid,
+      kTypeLong,
+      nullptr);
+  addNativeMethod(
+      "serialTaskStart",
+      (void*) serialTaskStart,
+      kTypeVoid,
+      kTypeLong,
+      nullptr);
+  addNativeMethod(
+      "serialTaskStop",
+      (void *) serialTaskStop,
       kTypeVoid,
       kTypeLong,
       nullptr);

@@ -18,6 +18,7 @@ package io.github.zhztheplayer.velox4j.connector;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -36,6 +37,7 @@ public class KafkaConnectorSplit extends ConnectorSplit {
 
   private List<TopicPartitionOffset> topicPartitions;
 
+  @JsonCreator
   public KafkaConnectorSplit(
       @JsonProperty("connectorId") String connectorId,
       @JsonProperty("splitWeight") long splitWeight,
@@ -92,6 +94,7 @@ public class KafkaConnectorSplit extends ConnectorSplit {
 
     private Long offset;
 
+    @JsonCreator
     public TopicPartitionOffset(
         @JsonProperty("topic") String topic,
         @JsonProperty("partition") Integer partition,
