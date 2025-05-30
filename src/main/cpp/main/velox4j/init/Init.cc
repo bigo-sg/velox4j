@@ -30,6 +30,7 @@
 #include <velox/exec/PartitionFunction.h>
 #include <velox/experimental/stateful/StatefulPlanNode.h>
 #include <velox/functions/prestosql/aggregates/RegisterAggregateFunctions.h>
+#include <velox/functions/prestosql/registration/RegistrationFunctions.h>
 #include <velox/functions/prestosql/window/WindowFunctionsRegistration.h>
 #include <velox/functions/sparksql/aggregates/Register.h>
 #include <velox/functions/sparksql/registration/Register.h>
@@ -68,6 +69,7 @@ void initForSpark() {
   parquet::registerParquetReaderFactory();
   parquet::registerParquetWriterFactory();
   functions::sparksql::registerFunctions();
+  functions::prestosql::registerAllScalarFunctions();
   aggregate::prestosql::registerAllAggregateFunctions(
       "",
       true /*registerCompanionFunctions*/,
