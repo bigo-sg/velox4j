@@ -1,0 +1,13 @@
+diff --git a/velox/exec/TableScan.cpp b/velox/exec/TableScan.cpp
+index 601dd4381..3e2ca979f 100644
+--- a/velox/exec/TableScan.cpp
++++ b/velox/exec/TableScan.cpp
+@@ -174,7 +174,7 @@ RowVectorPtr TableScan::getOutput() {
+       // at least read one batch from a split to trigger split fetch inside Meta
+       // internal data source connector.
+       if (data != nullptr && !shouldDropOutput()) {
+-        if (data->size() > 0) {
++        if (data->size() > 0 || (data->size() == 0 && connector_->connectorId() == "connector-kafka")) {
+           lockedStats->addInputVector(data->estimateFlatSize(), data->size());
+           constexpr int kMaxSelectiveBatchSizeMultiplier = 4;
+           maxFilteringRatio_ = std::max(

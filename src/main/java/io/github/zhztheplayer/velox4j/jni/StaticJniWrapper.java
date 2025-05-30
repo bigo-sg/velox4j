@@ -52,9 +52,18 @@ public class StaticJniWrapper {
   native void serialTaskAddSplit(
       long id, String planNodeId, int groupId, String connectorSplitJson);
 
+  native void serialTaskStart(long id);
+
+  native void serialTaskStop(long id);
+
   native void serialTaskNoMoreSplits(long id, String planNodeId);
 
   native String serialTaskCollectStats(long id);
+
+  // For SerialTask Metrics.
+  native long serialTaskSourceCompletedRows(long id);
+
+  // native long serialTaskSourceCompletedBytes(long id);
 
   // For Variant.
   native String variantInferType(String json);
