@@ -75,7 +75,7 @@ set(VELOX_SOURCE_URL "https://github.com/bigo-sg/velox.git")
 CPMAddPackage(
         NAME velox
         GIT_REPOSITORY ${VELOX_SOURCE_URL}
-        GIT_TAG gluten
+        GIT_TAG 73a1a34d51f3a6c4e05a11e1f4b626b7f0cfb188
 )
 #CPMAddPackage(
 #        NAME velox
