@@ -29,8 +29,7 @@ using namespace facebook::velox;
 StatefulSerialTask::StatefulSerialTask(
     MemoryManager* memoryManager,
     std::shared_ptr<const Query> query)
-    : memoryManager_(memoryManager),
-      query_(std::move(query)) {
+    : memoryManager_(memoryManager), query_(std::move(query)) {
   static std::atomic<uint32_t> executionId{
       0}; // Velox query ID, same with taskId.
   const uint32_t eid = executionId++;
@@ -105,7 +104,7 @@ void StatefulSerialTask::noMoreSplits(const core::PlanNodeId& planNodeId) {
 }
 
 std::unique_ptr<SerialTaskStats> StatefulSerialTask::collectStats() {
-  const auto stats = task_->statefulTaskStats();
+  const auto stats = task_->taskStats();
   return std::make_unique<SerialTaskStats>(stats);
 }
 
@@ -127,11 +126,9 @@ UpIterator::State StatefulSerialTask::advance0(bool wait) {
 StatefulQueryExecutor::StatefulQueryExecutor(
     MemoryManager* memoryManager,
     std::shared_ptr<const Query> query)
-    : memoryManager_(memoryManager),
-      query_(query) {}
+    : memoryManager_(memoryManager), query_(query) {}
 
 std::unique_ptr<StatefulSerialTask> StatefulQueryExecutor::execute() const {
   return std::make_unique<StatefulSerialTask>(memoryManager_, query_);
 }
-
 } // namespace velox4j

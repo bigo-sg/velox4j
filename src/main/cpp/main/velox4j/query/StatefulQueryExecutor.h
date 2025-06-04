@@ -50,6 +50,7 @@ class StatefulSerialTask : public UpIterator {
 
  private:
   State advance0(bool wait);
+
   MemoryManager* const memoryManager_;
   std::shared_ptr<const Query> query_;
   std::shared_ptr<facebook::velox::stateful::StatefulTask> task_;
