@@ -1,0 +1,91 @@
+/*
+* Licensed to the Apache Software Foundation (ASF) under one or more
+* contributor license agreements.  See the NOTICE file distributed with
+* this work for additional information regarding copyright ownership.
+* The ASF licenses this file to You under the Apache License, Version 2.0
+* (the "License"); you may not use this file except in compliance with
+* the License.  You may obtain a copy of the License at
+*
+*    http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
+package io.github.zhztheplayer.velox4j.connector;
+
+import java.util.List;
+import java.util.Map;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import io.github.zhztheplayer.velox4j.expression.TypedExpr;
+import io.github.zhztheplayer.velox4j.type.RowType;
+
+public class KafkaTableHandle extends ConnectorTableHandle {
+  private String tableName;
+  private final boolean filterPushdownEnabled;
+  private final List<SubfieldFilter> subfieldFilters;
+  private final TypedExpr remainingFilter;
+  private final RowType dataColumns;
+  private final RowType projectedDataColumns;
+  private final Map<String, String> tableParameters;
+
+  @JsonCreator
+  public KafkaTableHandle(
+      @JsonProperty("connectorId") String connectorId,
+      @JsonProperty("tableName") String tableName,
+      @JsonProperty("filterPushdownEnabled") boolean filterPushdownEnabled,
+      @JsonProperty("subfieldFilters") List<SubfieldFilter> subfieldFilters,
+      @JsonProperty("remainingFilter") TypedExpr remainingFilter,
+      @JsonProperty("dataColumns") RowType dataColumns,
+      @JsonProperty("projectedDataColumns") RowType projectedDataColumns,
+      @JsonProperty("tableParameters") Map<String, String> tableParameters) {
+    super(connectorId);
+    this.tableName = tableName;
+    this.filterPushdownEnabled = filterPushdownEnabled;
+    this.subfieldFilters = subfieldFilters;
+    this.remainingFilter = remainingFilter;
+    this.dataColumns = dataColumns;
+    this.projectedDataColumns = projectedDataColumns;
+    this.tableParameters = tableParameters;
+  }
+
+  @JsonProperty("tableName")
+  public String getTableName() {
+    return this.tableName;
+  }
+
+  @JsonProperty("filterPushdownEnabled")
+  public boolean getFilterPushdownEnabled() {
+    return this.filterPushdownEnabled;
+  }
+
+  @JsonProperty("subfieldFilters")
+  public List<SubfieldFilter> getSubfieldFilters() {
+    return this.subfieldFilters;
+  }
+
+  @JsonProperty("remainingFilter")
+  public TypedExpr getReaminingFilter() {
+    return this.remainingFilter;
+  }
+
+  @JsonProperty("dataColumns")
+  public RowType getDataColumns() {
+    return this.dataColumns;
+  }
+
+  @JsonProperty("projectedDataColumns")
+  public RowType getProjectedDataColumns() {
+    return this.projectedDataColumns;
+  }
+
+  @JsonProperty("tableParameters")
+  public Map<String, String> getTableParameters() {
+    return this.tableParameters;
+  }
+}
