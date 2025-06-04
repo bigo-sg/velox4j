@@ -23,6 +23,7 @@
 #include "velox4j/iterator/UpIterator.h"
 #include "velox4j/memory/MemoryManager.h"
 #include "velox4j/query/QueryExecutor.h"
+#include "folly/Executor.h"
 
 namespace velox4j {
 
@@ -47,8 +48,13 @@ class StatefulSerialTask : public UpIterator {
   void noMoreSplits(const facebook::velox::core::PlanNodeId& planNodeId);
 
   std::unique_ptr<SerialTaskStats> collectStats();
+  void start();
+  void stop();
 
  private:
+  bool running_ = false;
+  const std::shared_ptr<folly::Executor> executor_;
+  void run();
   State advance0(bool wait);
 
   MemoryManager* const memoryManager_;

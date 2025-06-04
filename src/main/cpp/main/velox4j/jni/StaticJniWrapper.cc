@@ -104,6 +104,20 @@ void blockingQueueNoMoreInput(JNIEnv* env, jobject javaThis, jlong queueId) {
   JNI_METHOD_END()
 }
 
+void serialTaskStart(JNIEnv* env, jobject javaThis, jlong stId) {
+  JNI_METHOD_START
+  auto serialTask = ObjectStore::retrieve<StatefulSerialTask>(stId);
+  serialTask->start();
+  JNI_METHOD_END()
+}
+
+void serialTaskStop(JNIEnv * env, jobject javaThis, jlong stId) {
+  JNI_METHOD_START
+  auto serialTask = ObjectStore::retrieve<StatefulSerialTask>(stId);
+  serialTask->stop();
+  JNI_METHOD_END()
+}
+
 void serialTaskAddSplit(
     JNIEnv* env,
     jobject javaThis,
@@ -358,6 +372,18 @@ void StaticJniWrapper::initialize(JNIEnv* env) {
       kTypeVoid,
       kTypeLong,
       kTypeString,
+      nullptr);
+  addNativeMethod(
+      "serialTaskStart",
+      (void*) serialTaskStart,
+      kTypeVoid,
+      kTypeLong,
+      nullptr);
+  addNativeMethod(
+      "serialTaskStop",
+      (void *) serialTaskStop,
+      kTypeVoid,
+      kTypeLong,
       nullptr);
   addNativeMethod(
       "serialTaskCollectStats",

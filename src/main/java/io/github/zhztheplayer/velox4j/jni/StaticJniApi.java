@@ -149,4 +149,12 @@ public class StaticJniApi {
     final String json = jni.variantAsJava(co.id());
     return Serde.fromJson(json, Variant.class);
   }
+
+  public void serialTaskStart(SerialTask serialTask) {
+    jni.serialTaskStart(serialTask.id());
+  }
+
+  public void serialTaskStop(SerialTask serialTask) {
+    jni.serialTaskStop(serialTask.id());
+  }
 }
