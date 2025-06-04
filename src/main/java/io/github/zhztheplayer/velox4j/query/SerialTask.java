@@ -62,4 +62,12 @@ public class SerialTask implements UpIterator {
   public SerialTaskStats collectStats() {
     return StaticJniApi.get().serialTaskCollectStats(this);
   }
+
+  public void start() {
+    StaticJniApi.get().serialTaskStart(this);
+  }
+
+  public void stop() {
+    StaticJniApi.get().serialTaskStop(this);
+  }
 }

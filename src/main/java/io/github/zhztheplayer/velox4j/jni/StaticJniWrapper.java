@@ -81,4 +81,8 @@ public class StaticJniWrapper {
   native String iSerializableAsJava(long id);
 
   native String variantAsJava(long id);
+
+  native void serialTaskStart(long id);
+  
+  native void serialTaskStop(long id);
 }

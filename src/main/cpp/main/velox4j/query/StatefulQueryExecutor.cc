@@ -18,6 +18,8 @@
 #include "StatefulQueryExecutor.h"
 #include <velox/experimental/stateful/StatefulTask.h>
 #include "velox4j/query/Query.h"
+#include "folly/Executor.h"
+#include "folly/executors/CPUThreadPoolExecutor.h"
 
 #include <iostream>
 #include <utility>
@@ -29,7 +31,9 @@ using namespace facebook::velox;
 StatefulSerialTask::StatefulSerialTask(
     MemoryManager* memoryManager,
     std::shared_ptr<const Query> query)
-    : memoryManager_(memoryManager), query_(std::move(query)) {
+    : memoryManager_(memoryManager),
+      query_(std::move(query)),
+      executor_(std::make_shared<folly::CPUThreadPoolExecutor>(1)) {
   static std::atomic<uint32_t> executionId{
       0}; // Velox query ID, same with taskId.
   const uint32_t eid = executionId++;
@@ -63,6 +67,9 @@ StatefulSerialTask::StatefulSerialTask(
 }
 
 StatefulSerialTask::~StatefulSerialTask() {
+  if (running_) {
+    stop();
+  }
   if (task_ != nullptr && task_->isRunning()) {
     // TODO: add a method to finish the task and set state.
     task_->finish();
@@ -120,6 +127,33 @@ UpIterator::State StatefulSerialTask::advance0(bool wait) {
       return State::FINISHED;
     }
     return State::BLOCKED;
+  }
+}
+
+void StatefulSerialTask::run() {
+  while (running_) {
+    int32_t retCode = 0;
+    auto out = task_->next(retCode);
+    if (out != nullptr) {
+      pending_ = std::move(out);
+    }
+  }
+}
+
+void StatefulSerialTask::start() {
+  running_ = true;
+  task_->initOperators();
+  executor_->add([&]() {
+    run();
+  });
+}
+
+void StatefulSerialTask::stop() {
+  running_ = false;
+  if (executor_) {
+    const std::shared_ptr<folly::CPUThreadPoolExecutor> cpuExecutor =
+        std::dynamic_pointer_cast<folly::CPUThreadPoolExecutor>(executor_);
+    cpuExecutor->stop();
   }
 }
 
