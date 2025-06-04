@@ -51,14 +51,6 @@ public class SerialTask implements UpIterator {
     return id;
   }
 
-  public void start() {
-    StaticJniApi.get().serialTaskStart(this);
-  }
-
-  public void stop() {
-    StaticJniApi.get().serialTaskStop(this);
-  }
-
   public void addSplit(String planNodeId, ConnectorSplit split) {
     StaticJniApi.get().serialTaskAddSplit(this, planNodeId, -1, split);
   }
