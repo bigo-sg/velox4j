@@ -21,45 +21,47 @@ import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Preconditions;
 
+import io.github.zhztheplayer.velox4j.expression.TypedExpr;
+import io.github.zhztheplayer.velox4j.join.JoinType;
 import io.github.zhztheplayer.velox4j.type.RowType;
 
 import java.util.List;
 
-public class StreamJoinNode extends PlanNode{
+public class NestedLoopJoinNode extends PlanNode {
   private final List<PlanNode> sources;
-  private final NestedLoopJoinNode build;
-  private final NestedLoopJoinNode probe;
+  private final JoinType joinType;
+  private final TypedExpr joinCondition;
   private final RowType outputType;
 
-  public StreamJoinNode(
+  public NestedLoopJoinNode(
       String id,
-      PlanNode leftInput,
-      PlanNode rightInput,
-      NestedLoopJoinNode build,
-      NestedLoopJoinNode probe,
+      JoinType joinType,
+      TypedExpr joinCondition,
+      PlanNode left,
+      PlanNode right,
       RowType outputType) {
     super(id);
-    this.sources = List.of(leftInput, rightInput);
-    this.build = build;
-    this.probe = probe;
+    this.sources = List.of(left, right);
+    this.joinType = joinType;
+    this.joinCondition = joinCondition;
     this.outputType = outputType;
   }
 
   @JsonCreator
-  private static StreamJoinNode create(
+  private static NestedLoopJoinNode create(
       @JsonProperty("id") String id,
+      @JsonProperty("joinType") JoinType joinType,
+      @JsonProperty("joinCondition") TypedExpr joinCondition,
       @JsonProperty("sources") List<PlanNode> sources,
-      @JsonProperty("build") NestedLoopJoinNode build,
-      @JsonProperty("probe") NestedLoopJoinNode probe,
       @JsonProperty("outputType") RowType outputType) {
     Preconditions.checkArgument(
         sources.size() == 2, "NestedLoopJoinNode should have 2 sources, but has %s", sources.size());
-    return new StreamJoinNode(
+    return new NestedLoopJoinNode(
         id,
+        joinType,
+        joinCondition,
         sources.get(0),
         sources.get(1),
-        build,
-        probe,
         outputType);
   }
 
@@ -68,14 +70,14 @@ public class StreamJoinNode extends PlanNode{
     return sources;
   }
 
-  @JsonGetter("build")
-  public NestedLoopJoinNode getBuild() {
-    return build;
+  @JsonGetter("joinType")
+  public JoinType getJoinType() {
+    return joinType;
   }
 
-  @JsonGetter("probe")
-  public NestedLoopJoinNode getProbe() {
-    return probe;
+  @JsonGetter("joinCondition")
+  public TypedExpr getJoinCondition() {
+    return joinCondition;
   }
 
   @JsonGetter("outputType")

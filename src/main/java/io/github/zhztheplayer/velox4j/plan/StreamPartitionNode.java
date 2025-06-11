@@ -19,24 +19,31 @@ package io.github.zhztheplayer.velox4j.plan;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.github.zhztheplayer.velox4j.type.Type;
 
 import java.util.List;
 
-public class StreamExchangeNode extends PlanNode {
-  private final Type outputType;
+public class StreamPartitionNode extends PlanNode {
+  private final PlanNode partition;
+  private final int numPartitions;
 
   @JsonCreator
-  public StreamExchangeNode(
+  public StreamPartitionNode(
           @JsonProperty("id") String id,
-          @JsonProperty("outputType") Type outputType) {
+          @JsonProperty("partition") PlanNode partition,
+          @JsonProperty("numPartitions") int numPartitions) {
     super(id);
-    this.outputType = outputType;
+    this.numPartitions = numPartitions;
+    this.partition = partition;
   }
 
-  @JsonGetter("outputType")
-  public Type getOutputType() {
-    return outputType;
+  @JsonGetter("numPartitions")
+  public int getNumPartitions() {
+    return numPartitions;
+  }
+
+  @JsonGetter("partition")
+  public PlanNode getPartition() {
+    return partition;
   }
 
   @Override

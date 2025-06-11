@@ -25,28 +25,17 @@ public class StatefulRecord extends StatefulElement {
   private RowVector rowVector;
   private final int key;
 
-  public StatefulRecord(String nodeId, long rowVectorId) {
-    super(nodeId);
-    this.rowVectorId = rowVectorId;
-    this.timestamp = -1;
-    this.hasTimestamp = false;
-    this.key = -1;
-  }
-
-  public StatefulRecord(String nodeId, long rowVectorId, long timestamp) {
+  public StatefulRecord(
+      String nodeId,
+      long rowVectorId,
+      long timestamp,
+      boolean hasTimestamp,
+      int key) {
     super(nodeId);
     this.rowVectorId = rowVectorId;
     this.timestamp = timestamp;
-    this.hasTimestamp = true;
-    this.key = -1;
-  }
-
-  public StatefulRecord(String nodeId, long rowVectorId, int key) {
-    super(nodeId);
-    this.rowVectorId = rowVectorId;
+    this.hasTimestamp = hasTimestamp;
     this.key = key;
-    this.timestamp = -1;
-    this.hasTimestamp = false;
   }
 
   public RowVector getRowVector() {
