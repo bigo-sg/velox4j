@@ -31,7 +31,10 @@ import io.github.zhztheplayer.velox4j.expression.LambdaTypedExpr;
 import io.github.zhztheplayer.velox4j.filter.AlwaysTrue;
 import io.github.zhztheplayer.velox4j.plan.AggregationNode;
 import io.github.zhztheplayer.velox4j.plan.EmptyNode;
-import io.github.zhztheplayer.velox4j.plan.StreamExchangeNode;
+import io.github.zhztheplayer.velox4j.plan.HashPartitionFunctionSpec;
+import io.github.zhztheplayer.velox4j.plan.LocalPartitionNode;
+import io.github.zhztheplayer.velox4j.plan.NestedLoopJoinNode;
+import io.github.zhztheplayer.velox4j.plan.StreamPartitionNode;
 import io.github.zhztheplayer.velox4j.plan.FilterNode;
 import io.github.zhztheplayer.velox4j.plan.HashJoinNode;
 import io.github.zhztheplayer.velox4j.plan.LimitNode;
@@ -165,7 +168,10 @@ public final class ISerializableRegistry {
     NAME_REGISTRY.registerClass("StatefulPlanNode", StatefulPlanNode.class);
     NAME_REGISTRY.registerClass("EmptyNode", EmptyNode.class);
     NAME_REGISTRY.registerClass("StreamJoinNode", StreamJoinNode.class);
-    NAME_REGISTRY.registerClass("StreamExchangeNode", StreamExchangeNode.class);
+    NAME_REGISTRY.registerClass("StreamPartitionNode", StreamPartitionNode.class);
+    NAME_REGISTRY.registerClass("LocalPartitionNode", LocalPartitionNode.class);
+    NAME_REGISTRY.registerClass("HashPartitionFunctionSpec", HashPartitionFunctionSpec.class);
+    NAME_REGISTRY.registerClass("NestedLoopJoinNode", NestedLoopJoinNode.class);
   }
 
   private static void retisterConfig() {

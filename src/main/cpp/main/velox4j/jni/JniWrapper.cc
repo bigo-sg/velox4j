@@ -145,10 +145,17 @@ jobject statefulTaskGet(JNIEnv* env, jobject javaThis, jlong itrId) {
     jlong rvId = sessionOf(env, javaThis)->objectStore()->save(record->record());
 
     jclass resultClass = env->FindClass("io/github/zhztheplayer/velox4j/stateful/StatefulRecord");
-    jmethodID constructor = env->GetMethodID(resultClass, "<init>", "(Ljava/lang/String;J)V");
+    jmethodID constructor = env->GetMethodID(resultClass, "<init>", "(Ljava/lang/String;JJZI)V");
 
     jstring id = env->NewStringUTF(record->nodeId().c_str());
-    jobject result = env->NewObject(resultClass, constructor, id, rvId);
+    jobject result = env->NewObject(
+        resultClass,
+        constructor,
+        id,
+        rvId,
+        record->timestamp(),
+        record->hasTimestamp(),
+        record->key());
 
     env->DeleteLocalRef(id);
     env->DeleteLocalRef(resultClass);
