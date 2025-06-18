@@ -24,10 +24,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import io.github.zhztheplayer.velox4j.expression.CallTypedExpr;
 import io.github.zhztheplayer.velox4j.expression.FieldAccessTypedExpr;
+import io.github.zhztheplayer.velox4j.serializable.ISerializable;
 import io.github.zhztheplayer.velox4j.sort.SortOrder;
 import io.github.zhztheplayer.velox4j.type.Type;
 
-public class Aggregate {
+public class Aggregate extends ISerializable {
   public final CallTypedExpr call;
   public final List<Type> rawInputTypes;
   public final FieldAccessTypedExpr mask;

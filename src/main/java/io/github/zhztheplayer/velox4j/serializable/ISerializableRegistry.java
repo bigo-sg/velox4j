@@ -16,6 +16,7 @@
 */
 package io.github.zhztheplayer.velox4j.serializable;
 
+import io.github.zhztheplayer.velox4j.aggregate.Aggregate;
 import io.github.zhztheplayer.velox4j.config.Config;
 import io.github.zhztheplayer.velox4j.config.ConnectorConfig;
 import io.github.zhztheplayer.velox4j.connector.*;
@@ -157,6 +158,7 @@ public final class ISerializableRegistry {
   private static void registerPlanNodes() {
     NAME_REGISTRY.registerClass("ValuesNode", ValuesNode.class);
     NAME_REGISTRY.registerClass("TableScanNode", TableScanNode.class);
+    NAME_REGISTRY.registerClass("Aggregate", Aggregate.class);
     NAME_REGISTRY.registerClass("AggregationNode", AggregationNode.class);
     NAME_REGISTRY.registerClass("ProjectNode", ProjectNode.class);
     NAME_REGISTRY.registerClass("FilterNode", FilterNode.class);
