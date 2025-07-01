@@ -21,38 +21,27 @@ import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import io.github.zhztheplayer.velox4j.expression.FieldAccessTypedExpr;
-import io.github.zhztheplayer.velox4j.sort.SortOrder;
-import io.github.zhztheplayer.velox4j.window.WindowFunction;
 
 import java.util.List;
 
-public class WindowNode extends PlanNode {
+public class RowNumberNode extends PlanNode {
   private final List<FieldAccessTypedExpr> partitionKeys;
-  private final List<FieldAccessTypedExpr> sortingKeys;
-  private final List<SortOrder> sortingOrders;
-  private final List<String> windowColumnNames;
-  private final List<WindowFunction> windowFunctions;
-  private final boolean inputsSorted;
+  private final List<String> rowNumberColumnName;
+  private final Integer limit;
 
   private final List<PlanNode> sources;
 
   @JsonCreator
-  public WindowNode(
+  public RowNumberNode(
       @JsonProperty("id") String id,
       @JsonProperty("partitionKeys") List<FieldAccessTypedExpr> partitionKeys,
-      @JsonProperty("sortingKeys") List<FieldAccessTypedExpr> sortingKeys,
-      @JsonProperty("sortingOrders") List<SortOrder> sortingOrders,
-      @JsonProperty("names") List<String> windowColumnNames,
-      @JsonProperty("functions") List<WindowFunction> windowFunctions,
-      @JsonProperty("inputsSorted") boolean inputsSorted,
+      @JsonProperty("rowNumberColumnName") List<String> rowNumberColumnName,
+      @JsonProperty("limit") Integer limit,
       @JsonProperty("sources") List<PlanNode> sources) {
     super(id);
     this.partitionKeys = partitionKeys;
-    this.sortingKeys = sortingKeys;
-    this.sortingOrders = sortingOrders;
-    this.windowColumnNames = windowColumnNames;
-    this.windowFunctions = windowFunctions;
-    this.inputsSorted = inputsSorted;
+    this.rowNumberColumnName = rowNumberColumnName;
+    this.limit = limit;
     this.sources = sources;
   }
 
@@ -66,28 +55,13 @@ public class WindowNode extends PlanNode {
     return partitionKeys;
   }
 
-  @JsonGetter("sortingKeys")
-  public List<FieldAccessTypedExpr> getSortingKeys() {
-    return sortingKeys;
+  @JsonGetter("rowNumberColumnName")
+  public List<String> getRowNumberColumnName() {
+    return rowNumberColumnName;
   }
 
-  @JsonGetter("names")
-  public List<String> getWindowColumnNames() {
-    return windowColumnNames;
-  }
-
-  @JsonGetter("sortingOrders")
-  public List<SortOrder> getSortingOrders() {
-    return sortingOrders;
-  }
-
-  @JsonGetter("inputsSorted")
-  public boolean isInputsSorted() {
-    return inputsSorted;
-  }
-
-  @JsonGetter("functions")
-  public List<WindowFunction> getWindowFunctions() {
-    return windowFunctions;
+  @JsonGetter("limit")
+  public Integer getLimit() {
+    return limit;
   }
 }

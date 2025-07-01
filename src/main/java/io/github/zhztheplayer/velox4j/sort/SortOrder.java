@@ -19,7 +19,9 @@ package io.github.zhztheplayer.velox4j.sort;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class SortOrder {
+import io.github.zhztheplayer.velox4j.serde.NativeBean;
+
+public class SortOrder implements NativeBean {
   private final boolean ascending;
   private final boolean nullsFirst;
 

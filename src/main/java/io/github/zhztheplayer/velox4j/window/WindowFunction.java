@@ -21,16 +21,17 @@ import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import io.github.zhztheplayer.velox4j.expression.CallTypedExpr;
+import io.github.zhztheplayer.velox4j.serializable.ISerializable;
 
-public class WindowFunction {
+public class WindowFunction extends ISerializable {
   private final CallTypedExpr functionCall;
-  private final WindowFrame frame;
+  private final Frame frame;
   private final boolean ignoreNulls;
 
   @JsonCreator
   public WindowFunction(
       @JsonProperty("functionCall") CallTypedExpr functionCall,
-      @JsonProperty("frame") WindowFrame frame,
+      @JsonProperty("frame") Frame frame,
       @JsonProperty("ignoreNulls") boolean ignoreNulls) {
     this.functionCall = functionCall;
     this.frame = frame;
@@ -43,7 +44,7 @@ public class WindowFunction {
   }
 
   @JsonGetter("frame")
-  public WindowFrame getFrame() {
+  public Frame GetFrame() {
     return frame;
   }
 
