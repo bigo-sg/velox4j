@@ -23,6 +23,7 @@
 #include <velox/connectors/hive/HiveConnector.h>
 #include <velox/connectors/hive/HiveConnectorSplit.h>
 #include <velox/connectors/hive/HiveDataSink.h>
+#include <velox/connectors/hive/storage_adapters/hdfs/RegisterHdfsFileSystem.h>
 #include <velox/connectors/nexmark/NexmarkConnector.h>
 #include <velox/connectors/nexmark/NexmarkConnectorSplit.h>
 #include <velox/connectors/kafka/KafkaConnector.h>
@@ -77,6 +78,7 @@ void initForSpark() {
   FLAGS_velox_exception_user_stacktrace_enabled = true;
   FLAGS_velox_exception_system_stacktrace_enabled = true;
   filesystems::registerLocalFileSystem();
+  filesystems::registerHdfsFileSystem();
   memory::MemoryManager::initialize({});
   dwio::common::registerFileSinks();
   parquet::registerParquetReaderFactory();
