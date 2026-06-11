@@ -1,0 +1,45 @@
+src/main/cpp/main/velox4j/query/StatefulQueryExecutor.cc
+  s_b62df494f5f54a::t_4d05cc2630aa60 105-107
+  s_6f52406df23c98::t_3e98d7c9ef839c 76-77
+src/main/cpp/main/velox4j/jni/JniWrapper.cc
+  s_b62df494f5f54a::t_4d05cc2630aa60 44-81,205-227,534-546
+src/main/java/io/github/zhztheplayer/velox4j/jni/JniApi.java
+  s_b62df494f5f54a::t_3826cd0ee17740 45,99-106
+src/main/cpp/CMakeLists.txt
+  s_6f52406df23c98::t_d8610e1ee390dc 77
+src/main/java/io/github/zhztheplayer/velox4j/stateful/NativeCallbackTarget.java
+  s_b62df494f5f54a::t_3826cd0ee17740 1-22
+src/main/java/io/github/zhztheplayer/velox4j/jni/JniWrapper.java
+  s_b62df494f5f54a::t_3826cd0ee17740 22,55-60
+src/main/java/io/github/zhztheplayer/velox4j/query/SerialTask.java
+  s_b62df494f5f54a::t_e3431cb8bf6254 116
+  s_b62df494f5f54a::t_3826cd0ee17740 26,59-65
+  s_b62df494f5f54a::t_4b4e5dd3a1740c 113-115
+src/main/cpp/main/velox4j/query/StatefulQueryExecutor.h
+  s_b62df494f5f54a::t_4d05cc2630aa60 44-47
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "c2c193ead7bf88f632838bca58921ef699c89c11",
+  "prompts": {},
+  "logical_commit_id": "c2c193ead7bf88f632838bca58921ef699c89c11",
+  "sessions": {
+    "s_6f52406df23c98": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_14bbe9fd2ffep4PIBxKdgtCdFE",
+        "model": "gpt-5.5"
+      },
+      "human_author": "lgbo-ustc <lgbo.ustc@gmail.com>"
+    },
+    "s_b62df494f5f54a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eb0e5-7363-7613-955d-4a287a8e300a",
+        "model": "gpt-5.5"
+      },
+      "human_author": "lgbo-ustc <lgbo.ustc@gmail.com>"
+    }
+  }
+}
