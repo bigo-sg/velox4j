@@ -88,6 +88,9 @@ StatefulSerialTask::~StatefulSerialTask() {
     //  mode.
     task_->requestCancel().wait();
   }
+  if (task_ != nullptr) {
+    task_->setNativeCallbackBridge(nullptr);
+  }
   task_.reset();
 }
 
@@ -127,6 +130,11 @@ stateful::StreamElementPtr StatefulSerialTask::statefulGet() {
   const auto out = std::move(pending_);
   pending_ = nullptr;
   return out;
+}
+
+void StatefulSerialTask::setNativeCallbackBridge(
+    std::shared_ptr<stateful::NativeCallbackBridge> callbackBridge) {
+  task_->setNativeCallbackBridge(std::move(callbackBridge));
 }
 
 void StatefulSerialTask::notifyWatermark(long watermark, int index) {

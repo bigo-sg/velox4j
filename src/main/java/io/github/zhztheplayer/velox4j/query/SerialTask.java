@@ -23,6 +23,7 @@ import io.github.zhztheplayer.velox4j.jni.JniApi;
 import io.github.zhztheplayer.velox4j.jni.StaticJniApi;
 import io.github.zhztheplayer.velox4j.serde.Serde;
 import io.github.zhztheplayer.velox4j.stateful.KeyedStateBackendParameters;
+import io.github.zhztheplayer.velox4j.stateful.NativeCallbackTarget;
 import io.github.zhztheplayer.velox4j.stateful.StatefulElement;
 
 public class SerialTask implements UpIterator {
@@ -52,6 +53,16 @@ public class SerialTask implements UpIterator {
   // This method is for Flink
   public StatefulElement statefulGet() {
     return jniApi.statefulTaskGet(this);
+  }
+
+  // This method is for Flink
+  public void bindNativeCallbackTarget(NativeCallbackTarget callbackTarget) {
+    jniApi.bindNativeCallbackTarget(this, callbackTarget);
+  }
+
+  // This method is for Flink
+  public void unbindNativeCallbackTarget() {
+    jniApi.unbindNativeCallbackTarget(this);
   }
 
   // This method is for Flink
@@ -102,5 +113,10 @@ public class SerialTask implements UpIterator {
 
   public void notifyCheckpointAborted(long checkpointId) {
     jniApi.notifyCheckpointAborted(this, checkpointId);
+  }
+
+  @Override
+  public void close() {
+    StaticJniApi.get().releaseCppObject(this);
   }
 }

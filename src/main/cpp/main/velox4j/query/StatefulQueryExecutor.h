@@ -43,6 +43,10 @@ class StatefulSerialTask : public UpIterator {
 
   facebook::velox::stateful::StreamElementPtr statefulGet();
 
+  void setNativeCallbackBridge(
+      std::shared_ptr<facebook::velox::stateful::NativeCallbackBridge>
+          callbackBridge);
+
   void notifyWatermark(long watermark, int index);
 
   void notifyWatermark(long watermark);

@@ -19,6 +19,7 @@ package io.github.zhztheplayer.velox4j.jni;
 import com.google.common.annotations.VisibleForTesting;
 
 import io.github.zhztheplayer.velox4j.iterator.DownIterator;
+import io.github.zhztheplayer.velox4j.stateful.NativeCallbackTarget;
 import io.github.zhztheplayer.velox4j.stateful.StatefulElement;
 
 final class JniWrapper {
@@ -51,6 +52,12 @@ final class JniWrapper {
 
   // For Flink.
   native StatefulElement statefulTaskGet(long id);
+
+  // For Flink.
+  native void bindNativeCallbackTarget(long id, NativeCallbackTarget callbackTarget);
+
+  // For Flink.
+  native void unbindNativeCallbackTarget(long id);
 
   // For Flink.
   native void notifyIndexedWatermark(long id, long watermark, int index);
