@@ -74,7 +74,7 @@ set(VELOX_SOURCE_URL "https://github.com/bigo-sg/velox.git")
 CPMAddPackage(
         NAME velox
         GIT_REPOSITORY ${VELOX_SOURCE_URL}
-        GIT_TAG c53b4cea4f5c0f2ff8f1609c948cea5a3862ca09
+        GIT_TAG be3e18f53a2cc655bb743c8bf2afb312dbd40ee4
 )
 #set(VELOX_SOURCE_URL ${CMAKE_CURRENT_LIST_DIR}/build/_deps/velox-src)
 #CPMAddPackage(
@@ -98,6 +98,15 @@ cpmaddpackage(
 target_link_libraries(
   JniHelpers
   PRIVATE JNI::JNI)
+
+# Add aarch64 assembly sources for folly
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64|ARM64")
+  file(GLOB FOLLY_AARCH64_ASM_SOURCES "${folly_SOURCE_DIR}/folly/external/aor/*.S")
+  if(FOLLY_AARCH64_ASM_SOURCES)
+    set_source_files_properties(${FOLLY_AARCH64_ASM_SOURCES} PROPERTIES LANGUAGE C)
+    target_sources(folly PRIVATE ${FOLLY_AARCH64_ASM_SOURCES})
+  endif()
+endif()
 
 # Directories of Velox4J.
 set(VELOX4J_SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/main)
