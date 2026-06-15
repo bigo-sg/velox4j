@@ -16,23 +16,34 @@
 */
 package io.github.zhztheplayer.velox4j.connector;
 
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 // TODO: Add a builder for this class.
-public class NexmarkConnectorSplit extends ConnectorSplit {
-  private final int numRows;
+public class NexmarkConnectorSplit extends ParallelSplit {
+  private final GeneratorConfig config;
+  private final List<NexmarkConnectorSplit> subtaskSplits;
 
   @JsonCreator
   public NexmarkConnectorSplit(
-      @JsonProperty("connectorId") String connectorId, @JsonProperty("numRows") int numRows) {
+      @JsonProperty("connectorId") String connectorId,
+      @JsonProperty("config") GeneratorConfig config,
+      @JsonProperty("subtaskSplits") List<NexmarkConnectorSplit> subtaskSplits) {
     super(connectorId, 0, true);
-    this.numRows = numRows;
+    this.config = config;
+    this.subtaskSplits = subtaskSplits;
   }
 
-  @JsonGetter("numRows")
-  public int getNumRows() {
-    return numRows;
+  @JsonGetter("config")
+  public GeneratorConfig getConfig() {
+    return config;
+  }
+
+  @Override
+  public ConnectorSplit getSubtaskSplit(int index, int parallelism) {
+    return subtaskSplits.get(index);
   }
 }
