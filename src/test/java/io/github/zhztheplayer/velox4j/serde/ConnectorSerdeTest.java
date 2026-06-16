@@ -16,6 +16,7 @@
 */
 package io.github.zhztheplayer.velox4j.serde;
 
+import java.util.Map;
 import java.util.OptionalLong;
 
 import org.junit.Assert;
@@ -92,6 +93,29 @@ public class ConnectorSerdeTest {
     final ConnectorTableHandle handle =
         SerdeTests.newSampleHiveTableHandle(SerdeTests.newSampleOutputType());
     SerdeTests.testISerializableRoundTrip(handle);
+  }
+
+  @Test
+  public void testPulsarTableHandle() {
+    final ConnectorTableHandle handle =
+        new PulsarTableHandle(
+            "connector-pulsar",
+            "persistent://public/default/orders",
+            SerdeTests.newSampleOutputType(),
+            Map.of("format", "json", "service.url", "pulsar://localhost:6650"));
+    SerdeTests.testISerializableRoundTrip(handle);
+  }
+
+  @Test
+  public void testPulsarConnectorSplit() {
+    final ConnectorSplit split =
+        new PulsarConnectorSplit(
+            "connector-pulsar",
+            "pulsar://localhost:6650",
+            "persistent://public/default/orders",
+            "velox4j-subscription",
+            "json");
+    SerdeTests.testISerializableRoundTrip(split);
   }
 
   @Test
