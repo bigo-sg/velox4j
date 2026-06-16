@@ -16,14 +16,14 @@
  */
 
 #include "StatefulQueryExecutor.h"
-#include <velox/experimental/stateful/state/StateBackend.h>
-#include <velox/experimental/stateful/state/RocksDBStateBackend.h>
-#include "velox4j/query/Query.h"
-#include <string>
-#include <utility>
 #include <folly/json.h>
 #include <folly/json/dynamic.h>
 #include <folly/json/json.h>
+#include <velox/experimental/stateful/state/RocksDBStateBackend.h>
+#include <velox/experimental/stateful/state/StateBackend.h>
+#include <string>
+#include <utility>
+#include "velox4j/query/Query.h"
 
 namespace velox4j {
 
@@ -37,7 +37,7 @@ StatefulSerialTask::StatefulSerialTask(
   const uint32_t eid = executionId++;
   auto connectorConfigs = query_->connectorConfig()->toMap();
   std::string taskIndex = std::to_string(eid);
-  for (const auto &[key, config] : connectorConfigs) {
+  for (const auto& [key, config] : connectorConfigs) {
     taskIndex = config->get<std::string>("task_index", taskIndex);
     break;
   }
@@ -81,8 +81,7 @@ UpIterator::State StatefulSerialTask::advance() {
   return advance0(false);
 }
 
-void StatefulSerialTask::wait() {
-}
+void StatefulSerialTask::wait() {}
 
 RowVectorPtr StatefulSerialTask::get() {
   VELOX_CHECK(false, "Should not call get for stateful task.");
@@ -107,11 +106,16 @@ void StatefulSerialTask::notifyWatermark(long watermark) {
   task_->notifyWatermark(watermark);
 }
 
-void StatefulSerialTask::initializeState(long checkpointId, std::string keyedStateBackendConfigString) {
+void StatefulSerialTask::initializeState(
+    long checkpointId,
+    std::string keyedStateBackendConfigString) {
   folly::dynamic obj = folly::parseJson(keyedStateBackendConfigString);
-  std::shared_ptr<const stateful::KeyedStateBackendParameters> params = stateful::KeyedStateBackendParameters::create(obj, nullptr);
-  if (params && params->getBackendType() == stateful::StateBackendType::ROCKSDB) {
-    auto rocksdbParams = stateful::RocksDBKeyedStateBackendParameters::create(obj, nullptr);
+  std::shared_ptr<const stateful::KeyedStateBackendParameters> params =
+      stateful::KeyedStateBackendParameters::create(obj, nullptr);
+  if (params &&
+      params->getBackendType() == stateful::StateBackendType::ROCKSDB) {
+    auto rocksdbParams =
+        stateful::RocksDBKeyedStateBackendParameters::create(obj, nullptr);
     task_->initializeState(rocksdbParams);
   } else {
     // params maybe null, then initialize by using default heap state backend.
@@ -123,7 +127,8 @@ void StatefulSerialTask::snapshotState(long checkpointId) {
   task_->snapshotState();
 }
 
-std::vector<std::string> StatefulSerialTask::notifyCheckpointComplete(long checkpointId) {
+std::vector<std::string> StatefulSerialTask::notifyCheckpointComplete(
+    long checkpointId) {
   return task_->notifyCheckpointComplete(checkpointId);
 }
 
