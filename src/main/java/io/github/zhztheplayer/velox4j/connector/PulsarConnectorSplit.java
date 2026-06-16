@@ -26,6 +26,9 @@ public class PulsarConnectorSplit extends ConnectorSplit {
   private final String topic;
   private final String subscriptionName;
   private final String format;
+  private final int partitionIndex;
+  private final String startMessageId;
+  private final String endMessageId;
 
   @JsonCreator
   public PulsarConnectorSplit(
@@ -33,12 +36,27 @@ public class PulsarConnectorSplit extends ConnectorSplit {
       @JsonProperty("serviceUrl") String serviceUrl,
       @JsonProperty("topic") String topic,
       @JsonProperty("subscriptionName") String subscriptionName,
-      @JsonProperty("format") String format) {
+      @JsonProperty("format") String format,
+      @JsonProperty("partitionIndex") Integer partitionIndex,
+      @JsonProperty("startMessageId") String startMessageId,
+      @JsonProperty("endMessageId") String endMessageId) {
     super(connectorId, 0, false);
     this.serviceUrl = serviceUrl;
     this.topic = topic;
     this.subscriptionName = subscriptionName;
     this.format = format;
+    this.partitionIndex = partitionIndex == null ? -1 : partitionIndex;
+    this.startMessageId = startMessageId == null ? "" : startMessageId;
+    this.endMessageId = endMessageId == null ? "" : endMessageId;
+  }
+
+  public PulsarConnectorSplit(
+      String connectorId,
+      String serviceUrl,
+      String topic,
+      String subscriptionName,
+      String format) {
+    this(connectorId, serviceUrl, topic, subscriptionName, format, -1, "", "");
   }
 
   @JsonGetter("serviceUrl")
@@ -59,6 +77,21 @@ public class PulsarConnectorSplit extends ConnectorSplit {
   @JsonGetter("format")
   public String getFormat() {
     return format;
+  }
+
+  @JsonGetter("partitionIndex")
+  public int getPartitionIndex() {
+    return partitionIndex;
+  }
+
+  @JsonGetter("startMessageId")
+  public String getStartMessageId() {
+    return startMessageId;
+  }
+
+  @JsonGetter("endMessageId")
+  public String getEndMessageId() {
+    return endMessageId;
   }
 
   @Override

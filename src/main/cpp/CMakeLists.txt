@@ -80,36 +80,8 @@ set(VELOX_SOURCE_URL "https://github.com/bigo-sg/velox.git")
 CPMAddPackage(
         NAME velox
         GIT_REPOSITORY ${VELOX_SOURCE_URL}
-        GIT_TAG aee30c0aa3cab655386f03c3c4ce3de9a1daaac8
+        GIT_TAG e7e24aaa9ae18a133db8681517da42f3dbbc8037
 )
-set(VELOX4J_VELOX_PATCHES
-    ${VELOX_PATCH_DIR}/pulsar-connector-split-serde-name.patch)
-foreach(VELOX4J_VELOX_PATCH ${VELOX4J_VELOX_PATCHES})
-  execute_process(
-    COMMAND git apply --check ${VELOX4J_VELOX_PATCH}
-    WORKING_DIRECTORY ${velox_SOURCE_DIR}
-    RESULT_VARIABLE VELOX4J_VELOX_PATCH_CHECK_RESULT
-    OUTPUT_QUIET
-    ERROR_QUIET)
-  if(VELOX4J_VELOX_PATCH_CHECK_RESULT EQUAL 0)
-    execute_process(
-      COMMAND git apply ${VELOX4J_VELOX_PATCH}
-      WORKING_DIRECTORY ${velox_SOURCE_DIR}
-      RESULT_VARIABLE VELOX4J_VELOX_PATCH_APPLY_RESULT)
-    if(NOT VELOX4J_VELOX_PATCH_APPLY_RESULT EQUAL 0)
-      message(FATAL_ERROR "Failed to apply Velox patch: ${VELOX4J_VELOX_PATCH}")
-    endif()
-  else()
-    execute_process(
-      COMMAND git apply --reverse --check ${VELOX4J_VELOX_PATCH}
-      WORKING_DIRECTORY ${velox_SOURCE_DIR}
-      RESULT_VARIABLE VELOX4J_VELOX_PATCH_REVERSE_CHECK_RESULT
-      ERROR_QUIET)
-    if(NOT VELOX4J_VELOX_PATCH_REVERSE_CHECK_RESULT EQUAL 0)
-      message(FATAL_ERROR "Velox patch is neither applicable nor applied: ${VELOX4J_VELOX_PATCH}")
-    endif()
-  endif()
-endforeach()
 #set(VELOX_SOURCE_URL ${CMAKE_CURRENT_LIST_DIR}/build/_deps/velox-src)
 #CPMAddPackage(
 #        NAME velox

@@ -114,7 +114,10 @@ public class ConnectorSerdeTest {
             "pulsar://localhost:6650",
             "persistent://public/default/orders",
             "velox4j-subscription",
-            "json");
+            "json",
+            3,
+            "1:2",
+            "3:4");
     SerdeTests.testISerializableRoundTrip(split);
   }
 
