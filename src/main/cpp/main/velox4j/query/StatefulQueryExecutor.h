@@ -70,6 +70,10 @@ class StatefulSerialTask : public UpIterator {
   std::shared_ptr<const Query> query_;
   std::shared_ptr<facebook::velox::stateful::StatefulTask> task_;
   facebook::velox::stateful::StreamElementPtr pending_{nullptr};
+  facebook::velox::ContinueFuture blockingFuture_{
+      facebook::velox::ContinueFuture::makeEmpty()};
+  State pendingState_{State::AVAILABLE};
+  bool hasPendingState_{false};
   std::string outNodeId_;
 };
 
