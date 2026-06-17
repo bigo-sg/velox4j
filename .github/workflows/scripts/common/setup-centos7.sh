@@ -18,12 +18,13 @@ sed -i \
 
 # Install essentials.
 yum -y install epel-release
-yum -y install wget curl tar zip unzip which patch sudo
+yum -y install wget curl tar zip unzip which patch sudo git
 yum -y install ninja-build perl-IPC-Cmd autoconf autoconf-archive automake libtool
 yum -y install devtoolset-11 python3 pip dnf
 yum -y install bison java-1.8.0-openjdk java-1.8.0-openjdk-devel
 yum -y install ccache patchelf
 yum -y install lz4-devel lzo-devel libzstd-devel snappy-devel double-conversion-devel
+yum -y install librdkafka-devel
 yum -y install libevent-devel
 
 # Link cc / c++ to the ones in devtoolset.
@@ -45,9 +46,13 @@ case "$(git --version)" in "git version 2."*)
   true
   ;;
   *)
-  [ -f /etc/yum.repos.d/ius.repo ] || yum -y install https://repo.ius.io/ius-release-el7.rpm
-  yum -y remove git
-  yum -y install git236
+  cd /tmp
+  yum -y install gettext-devel openssl-devel curl-devel expat-devel perl-devel perl-ExtUtils-MakeMaker
+  wget https://github.com/git/git/archive/refs/tags/v2.36.0.tar.gz
+  tar -xzf v2.36.0.tar.gz
+  cd git-2.36.0
+  make prefix=/usr/local NO_TCLTK=YesPlease all
+  make prefix=/usr/local install
   ;;
 esac
 
