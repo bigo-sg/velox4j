@@ -23,7 +23,26 @@ FetchContent_Declare(
   GIT_REPOSITORY https://github.com/apache/pulsar-client-cpp.git
   GIT_TAG v3.3.0)
 
-FetchContent_MakeAvailable(pulsarclient)
+FetchContent_GetProperties(pulsarclient)
+if(NOT pulsarclient_POPULATED)
+  FetchContent_Populate(pulsarclient)
+  file(READ "${pulsarclient_SOURCE_DIR}/CMakeLists.txt"
+       PULSAR_CLIENT_CMAKELISTS)
+  string(
+    REPLACE [=[set(COMMON_LIBS ${COMMON_LIBS} ${Protobuf_LIBRARIES})]=]
+            [=[if (Protobuf_LIBRARIES AND NOT Protobuf_LIBRARIES MATCHES "NOTFOUND")
+    set(COMMON_LIBS ${COMMON_LIBS} ${Protobuf_LIBRARIES})
+else ()
+    set(COMMON_LIBS ${COMMON_LIBS} protobuf::libprotobuf)
+endif ()]=]
+            PULSAR_CLIENT_CMAKELISTS "${PULSAR_CLIENT_CMAKELISTS}")
+  string(REPLACE "if (BUILD_DYNAMIC_LIB)\n    add_subdirectory(examples)\nendif()"
+                 "if (FALSE)\n    add_subdirectory(examples)\nendif()"
+                 PULSAR_CLIENT_CMAKELISTS "${PULSAR_CLIENT_CMAKELISTS}")
+  file(WRITE "${pulsarclient_SOURCE_DIR}/CMakeLists.txt"
+       "${PULSAR_CLIENT_CMAKELISTS}")
+  add_subdirectory("${pulsarclient_SOURCE_DIR}" "${pulsarclient_BINARY_DIR}")
+endif()
 
 if(TARGET PULSAR_OBJECT_LIB)
   target_compile_options(PULSAR_OBJECT_LIB PRIVATE -Wno-error)
