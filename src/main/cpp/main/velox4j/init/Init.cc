@@ -31,11 +31,11 @@
 #include <velox/connectors/kafka/KafkaTableHandle.h>
 #include <velox/connectors/nexmark/NexmarkConnector.h>
 #include <velox/connectors/nexmark/NexmarkConnectorSplit.h>
+#include <velox/connectors/print/PrintConnector.h>
+#include <velox/connectors/print/PrintTableHandle.h>
 #include <velox/connectors/pulsar/PulsarConnector.h>
 #include <velox/connectors/pulsar/PulsarConnectorSplit.h>
 #include <velox/connectors/pulsar/PulsarTableHandle.h>
-#include <velox/connectors/print/PrintConnector.h>
-#include <velox/connectors/print/PrintTableHandle.h>
 #include <velox/dwio/parquet/RegisterParquetReader.h>
 #include <velox/dwio/parquet/RegisterParquetWriter.h>
 #include <velox/dwio/text/RegisterTextWriter.h>
