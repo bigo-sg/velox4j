@@ -201,19 +201,43 @@ void initializeState(
     jobject javaThis,
     jlong itrId,
     jlong context,
-    jstring keyedStateBackendConfigString) {
+    jstring keyedStateBackendConfigString,
+    jobjectArray checkpointRecords) {
   JNI_METHOD_START
   auto itr = ObjectStore::retrieve<StatefulSerialTask>(itrId);
   spotify::jni::JavaString jTypeJson{env, keyedStateBackendConfigString};
-  itr->initializeState(context, jTypeJson.get());
+  std::vector<std::string> records;
+  if (checkpointRecords != nullptr) {
+    const auto numRecords = env->GetArrayLength(checkpointRecords);
+    records.reserve(numRecords);
+    for (jsize i = 0; i < numRecords; ++i) {
+      auto record = static_cast<jstring>(
+          env->GetObjectArrayElement(checkpointRecords, i));
+      spotify::jni::JavaString jRecord{env, record};
+      records.push_back(jRecord.get());
+      env->DeleteLocalRef(record);
+    }
+  }
+  itr->initializeState(context, jTypeJson.get(), std::move(records));
   JNI_METHOD_END()
 }
 
-void snapshotState(JNIEnv* env, jobject javaThis, jlong itrId, jlong context) {
+jobject
+snapshotState(JNIEnv* env, jobject javaThis, jlong itrId, jlong context) {
   JNI_METHOD_START
   auto itr = ObjectStore::retrieve<StatefulSerialTask>(itrId);
-  itr->snapshotState(context);
-  JNI_METHOD_END()
+  std::vector<std::string> snapshots = itr->snapshotState(context);
+  jclass stringClass = env->FindClass("java/lang/String");
+  jobjectArray result =
+      env->NewObjectArray(snapshots.size(), stringClass, nullptr);
+  for (size_t i = 0; i < snapshots.size(); ++i) {
+    jstring str = env->NewStringUTF(snapshots[i].c_str());
+    env->SetObjectArrayElement(result, i, str);
+    env->DeleteLocalRef(str);
+  }
+  env->DeleteLocalRef(stringClass);
+  return result;
+  JNI_METHOD_END(nullptr)
 }
 
 jobject notifyCheckpointComplete(
@@ -527,11 +551,12 @@ void JniWrapper::initialize(JNIEnv* env) {
       kTypeLong,
       kTypeLong,
       kTypeString,
+      "[Ljava/lang/String;",
       nullptr);
   addNativeMethod(
       "snapshotState",
       (void*)snapshotState,
-      kTypeVoid,
+      "[Ljava/lang/String;",
       kTypeLong,
       kTypeLong,
       nullptr);

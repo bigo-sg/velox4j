@@ -105,12 +105,16 @@ public final class JniApi {
     jni.notifyWatermark(itr.id(), watermark);
   }
 
-  public void initializeState(UpIterator itr, long context, String keyedStateBackendConfigString) {
-    jni.initializeState(itr.id(), context, keyedStateBackendConfigString);
+  public void initializeState(
+      UpIterator itr,
+      long context,
+      String keyedStateBackendConfigString,
+      String[] checkpointRecords) {
+    jni.initializeState(itr.id(), context, keyedStateBackendConfigString, checkpointRecords);
   }
 
-  public void snapshotState(UpIterator itr, long context) {
-    jni.snapshotState(itr.id(), context);
+  public String[] snapshotState(UpIterator itr, long context) {
+    return jni.snapshotState(itr.id(), context);
   }
 
   public String[] notifyCheckpointComplete(UpIterator itr, long checkpointId) {
