@@ -22,7 +22,7 @@ yum -y install wget curl tar zip unzip which patch sudo git
 yum -y install ninja-build perl-IPC-Cmd autoconf autoconf-archive automake libtool
 yum -y install devtoolset-11 python3 pip dnf
 yum -y install bison java-1.8.0-openjdk java-1.8.0-openjdk-devel
-yum -y install ccache patchelf
+yum -y install boost-devel ccache patchelf
 yum -y install lz4-devel lzo-devel libzstd-devel snappy-devel double-conversion-devel
 yum -y install librdkafka-devel
 yum -y install libevent-devel
