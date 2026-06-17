@@ -17,10 +17,10 @@
 
 #pragma once
 
-#include <string>
-#include "Query.h"
 #include <velox/experimental/stateful/StatefulTask.h>
 #include <velox/experimental/stateful/StreamElement.h>
+#include <string>
+#include "Query.h"
 #include "velox4j/iterator/UpIterator.h"
 #include "velox4j/memory/MemoryManager.h"
 #include "velox4j/query/QueryExecutor.h"
@@ -29,7 +29,9 @@ namespace velox4j {
 
 class StatefulSerialTask : public UpIterator {
  public:
-  StatefulSerialTask(MemoryManager* memoryManager, std::shared_ptr<const Query> query);
+  StatefulSerialTask(
+      MemoryManager* memoryManager,
+      std::shared_ptr<const Query> query);
 
   ~StatefulSerialTask() override;
 
@@ -45,7 +47,9 @@ class StatefulSerialTask : public UpIterator {
 
   void notifyWatermark(long watermark);
 
-  void initializeState(long checkpointId, std::string keyedStateBackendConfigString);
+  void initializeState(
+      long checkpointId,
+      std::string keyedStateBackendConfigString);
 
   void snapshotState(long checkpointId);
 

@@ -67,26 +67,14 @@ set(VELOX_REF_HASH_FILE ${CMAKE_CURRENT_LIST_DIR}/velox-ref-hash.txt)
 set(VELOX_REPO bigo-sg/velox)
 file(STRINGS ${VELOX_REF_FILE} VELOX_REF)
 file(STRINGS ${VELOX_REF_HASH_FILE} VELOX_SOURCE_URL_MD5)
-#set(VELOX_SOURCE_URL
-#    "https://github.com/${VELOX_REPO}/archive/${VELOX_REF}.zip")
-#cpmaddpackage(
-#  NAME
-#  velox
-#  URL
-#  ${VELOX_SOURCE_URL}
-#  URL_HASH
-#  MD5=${VELOX_SOURCE_URL_MD5})
 set(VELOX_SOURCE_URL "https://github.com/bigo-sg/velox.git")
-CPMAddPackage(
-        NAME velox
-        GIT_REPOSITORY ${VELOX_SOURCE_URL}
-        GIT_TAG cbb145ff75de14e27f874a941314ada912cce625
-)
-#set(VELOX_SOURCE_URL ${CMAKE_CURRENT_LIST_DIR}/build/_deps/velox-src)
-#CPMAddPackage(
-#        NAME velox
-#        SOURCE_DIR  ${VELOX_SOURCE_URL}
-#)
+cpmaddpackage(
+  NAME
+  velox
+  GIT_REPOSITORY
+  ${VELOX_SOURCE_URL}
+  GIT_TAG
+  cbb145ff75de14e27f874a941314ada912cce625)
 
 # Import JniHelpers.
 set(JNI_HELPERS_REPO zhztheplayer/JniHelpersCpp)
@@ -107,9 +95,11 @@ target_link_libraries(
 
 # Add aarch64 assembly sources for folly
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64|ARM64")
-  file(GLOB FOLLY_AARCH64_ASM_SOURCES "${folly_SOURCE_DIR}/folly/external/aor/*.S")
+  file(GLOB FOLLY_AARCH64_ASM_SOURCES
+       "${folly_SOURCE_DIR}/folly/external/aor/*.S")
   if(FOLLY_AARCH64_ASM_SOURCES)
-    set_source_files_properties(${FOLLY_AARCH64_ASM_SOURCES} PROPERTIES LANGUAGE C)
+    set_source_files_properties(${FOLLY_AARCH64_ASM_SOURCES} PROPERTIES LANGUAGE
+                                                                        C)
     target_sources(folly PRIVATE ${FOLLY_AARCH64_ASM_SOURCES})
   endif()
 endif()
