@@ -46,6 +46,7 @@ jobs:
     env:
       HOST_CCACHE_DIR: "${{ github.workspace }}/.ccache"
       CCACHE_MAXSIZE: 3000M
+      VELOX4J_BUILD_JOBS: 16
     steps:
       - uses: actions/checkout@v4
       - name: Restore Ccache
@@ -60,6 +61,7 @@ jobs:
           docker run -v ${{ github.workspace }}:/velox4j -w / ubuntu:24.04 bash -c "
             export CCACHE_DIR=/velox4j/.ccache
             export CCACHE_MAXSIZE=3000M
+            export VELOX4J_BUILD_JOBS=${{ env.VELOX4J_BUILD_JOBS }}
             cd /velox4j
             bash .github/workflows/scripts/ut-java/setup-ubuntu24.sh
             mvn clean test
@@ -74,6 +76,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       HOST_CCACHE_DIR: "${{ github.workspace }}/.ccache"
+      VELOX4J_BUILD_JOBS: 16
     steps:
       - uses: actions/checkout@v4
       - name: Restore Ccache
@@ -88,6 +91,7 @@ jobs:
           docker run -v ${{ github.workspace }}:/velox4j -w / centos:7 bash -c "
             export CCACHE_DIR=/velox4j/.ccache
             export CCACHE_MAXSIZE=3000M
+            export VELOX4J_BUILD_JOBS=${{ env.VELOX4J_BUILD_JOBS }}
             cd /velox4j
             bash .github/workflows/scripts/ut-java/setup-centos7.sh
             mvn clean test
