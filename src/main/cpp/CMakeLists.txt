@@ -64,17 +64,17 @@ list(PREPEND CMAKE_MODULE_PATH
      ${CMAKE_CURRENT_LIST_DIR}/cmake/resolve_dependency_modules)
 set(VELOX_REF_FILE ${CMAKE_CURRENT_LIST_DIR}/velox-ref.txt)
 set(VELOX_REF_HASH_FILE ${CMAKE_CURRENT_LIST_DIR}/velox-ref-hash.txt)
-set(VELOX_REPO bigo-sg/velox)
+set(VELOX_REPO ggjh-159/velox)
 file(STRINGS ${VELOX_REF_FILE} VELOX_REF)
 file(STRINGS ${VELOX_REF_HASH_FILE} VELOX_SOURCE_URL_MD5)
-set(VELOX_SOURCE_URL "https://github.com/bigo-sg/velox.git")
+set(VELOX_SOURCE_URL "https://github.com/ggjh-159/velox.git")
 cpmaddpackage(
   NAME
   velox
   GIT_REPOSITORY
   ${VELOX_SOURCE_URL}
   GIT_TAG
-  be3e18f53a2cc655bb743c8bf2afb312dbd40ee4)
+  fix/print-sink-multi-parallelism)
 
 # Import JniHelpers.
 set(JNI_HELPERS_REPO zhztheplayer/JniHelpersCpp)

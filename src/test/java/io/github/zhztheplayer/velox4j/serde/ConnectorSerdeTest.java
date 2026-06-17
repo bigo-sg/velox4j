@@ -107,6 +107,20 @@ public class ConnectorSerdeTest {
   }
 
   @Test
+  public void testPrintTableHandle() {
+    final PrintTableHandle handle =
+        new PrintTableHandle("print-table", SerdeTests.newSampleOutputType(), "foo", true);
+    SerdeTests.testISerializableRoundTrip(handle);
+  }
+
+  @Test
+  public void testPrintTableHandleEmptyIdentifier() {
+    final PrintTableHandle handle =
+        new PrintTableHandle("print-table", SerdeTests.newSampleOutputType(), null, false);
+    SerdeTests.testISerializableRoundTrip(handle);
+  }
+
+  @Test
   public void testLocationHandle() {
     final LocationHandle handle = SerdeTests.newSampleLocationHandle();
     SerdeTests.testISerializableRoundTrip(handle);
