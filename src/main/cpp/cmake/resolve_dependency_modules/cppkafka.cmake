@@ -27,7 +27,15 @@ FetchContent_Declare(
   URL ${VELOX_CPPKAFKA_SOURCE_URL}
   URL_HASH ${VELOX_CPPKAFKA_BUILD_SHA256_CHECKSUM})
 
-FetchContent_MakeAvailable(cppkafka)
+FetchContent_GetProperties(cppkafka)
+if(NOT cppkafka_POPULATED)
+  FetchContent_Populate(cppkafka)
+  file(READ "${cppkafka_SOURCE_DIR}/CMakeLists.txt" CPPKAFKA_CMAKELISTS)
+  string(REPLACE "if(NOT TARGET uninstall)" "if(FALSE)" CPPKAFKA_CMAKELISTS
+                 "${CPPKAFKA_CMAKELISTS}")
+  file(WRITE "${cppkafka_SOURCE_DIR}/CMakeLists.txt" "${CPPKAFKA_CMAKELISTS}")
+  add_subdirectory("${cppkafka_SOURCE_DIR}" "${cppkafka_BINARY_DIR}")
+endif()
 
 if(TARGET cppkafka)
   set_property(
