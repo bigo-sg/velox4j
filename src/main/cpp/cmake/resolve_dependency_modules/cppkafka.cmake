@@ -22,6 +22,12 @@ set(VELOX_CPPKAFKA_SOURCE_URL
 velox_resolve_dependency_url(CPPKAFKA)
 
 message(STATUS "Building CPPKAFKA from source")
+if(NOT TARGET Boost::boost AND TARGET Boost::headers)
+  add_library(Boost::boost INTERFACE IMPORTED)
+  set_target_properties(Boost::boost PROPERTIES INTERFACE_LINK_LIBRARIES
+                                                Boost::headers)
+endif()
+
 FetchContent_Declare(
   cppkafka
   URL ${VELOX_CPPKAFKA_SOURCE_URL}
