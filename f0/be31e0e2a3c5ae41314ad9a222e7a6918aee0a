@@ -1,0 +1,22 @@
+src/main/cpp/CMakeLists.txt
+  s_e1f35e69b6742d::t_46cbe571d2871a 78
+src/main/cpp/cmake/patches/velox/0003-make-task-destructor-virtual.patch
+  s_e1f35e69b6742d::t_46cbe571d2871a 1-13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "f0be31e0e2a3c5ae41314ad9a222e7a6918aee0a",
+  "prompts": {},
+  "logical_commit_id": "f0be31e0e2a3c5ae41314ad9a222e7a6918aee0a",
+  "sessions": {
+    "s_e1f35e69b6742d": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_14aa6f671ffePoWUDQKp2k7k57",
+        "model": "gpt-5.5"
+      },
+      "human_author": "lgbo-ustc <lgbo.ustc@gmail.com>"
+    }
+  }
+}
