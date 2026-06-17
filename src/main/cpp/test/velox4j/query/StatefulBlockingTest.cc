@@ -16,11 +16,11 @@
  */
 
 #include <gtest/gtest.h>
-#include <unordered_set>
 #include <velox/exec/tests/utils/PlanBuilder.h>
 #include <velox/experimental/stateful/StatefulOperator.h>
 #include <velox/experimental/stateful/StatefulTask.h>
 #include <velox/vector/tests/utils/VectorTestBase.h>
+#include <unordered_set>
 #include "velox4j/memory/AllocationListener.h"
 #include "velox4j/memory/MemoryManager.h"
 #include "velox4j/test/Init.h"
@@ -81,9 +81,8 @@ class BlockingSourceOperator : public SourceOperator {
   int getOutputCalls_{0};
 };
 
-class StatefulBlockingTest
-    : public testing::Test,
-      public facebook::velox::test::VectorTestBase {
+class StatefulBlockingTest : public testing::Test,
+                             public facebook::velox::test::VectorTestBase {
  protected:
   static void SetUpTestCase() {
     testingEnsureInitializedForSpark();
@@ -106,8 +105,7 @@ class StatefulBlockingTest
         cache::AsyncDataCache::getInstance(),
         memoryManager_
             ->getVeloxPool(
-                "StatefulBlockingTest",
-                memory::MemoryPool::Kind::kAggregate)
+                "StatefulBlockingTest", memory::MemoryPool::Kind::kAggregate)
             ->shared_from_this(),
         nullptr,
         "StatefulBlockingTest");
@@ -120,8 +118,8 @@ class StatefulBlockingTest
 
 TEST_F(StatefulBlockingTest, blockedSourceDoesNotCallGetOutput) {
   auto task = makeTask();
-  auto driverCtx = std::make_unique<DriverCtx>(
-      task, 0, 0, kUngroupedGroupId, 0);
+  auto driverCtx =
+      std::make_unique<DriverCtx>(task, 0, 0, kUngroupedGroupId, 0);
   auto driver = Driver::testingCreate(std::move(driverCtx));
   auto source = std::make_unique<BlockingSourceOperator>(
       driver->driverCtx(), ROW({"c0"}, {INTEGER()}));
