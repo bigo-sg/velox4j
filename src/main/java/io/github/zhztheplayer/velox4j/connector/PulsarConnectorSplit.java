@@ -51,11 +51,7 @@ public class PulsarConnectorSplit extends ConnectorSplit {
   }
 
   public PulsarConnectorSplit(
-      String connectorId,
-      String serviceUrl,
-      String topic,
-      String subscriptionName,
-      String format) {
+      String connectorId, String serviceUrl, String topic, String subscriptionName, String format) {
     this(connectorId, serviceUrl, topic, subscriptionName, format, -1, "", "");
   }
 
