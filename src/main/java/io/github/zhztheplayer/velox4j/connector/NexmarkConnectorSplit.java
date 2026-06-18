@@ -24,13 +24,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 // TODO: Add a builder for this class.
 public class NexmarkConnectorSplit extends ParallelSplit {
-  private final GeneratorConfig config;
+  private final NexmarkGeneratorConfig config;
   private final List<NexmarkConnectorSplit> subtaskSplits;
 
   @JsonCreator
   public NexmarkConnectorSplit(
       @JsonProperty("connectorId") String connectorId,
-      @JsonProperty("config") GeneratorConfig config,
+      @JsonProperty("config") NexmarkGeneratorConfig config,
       @JsonProperty("subtaskSplits") List<NexmarkConnectorSplit> subtaskSplits) {
     super(connectorId, 0, true);
     this.config = config;
@@ -38,7 +38,7 @@ public class NexmarkConnectorSplit extends ParallelSplit {
   }
 
   @JsonGetter("config")
-  public GeneratorConfig getConfig() {
+  public NexmarkGeneratorConfig getConfig() {
     return config;
   }
 

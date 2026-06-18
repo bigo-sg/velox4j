@@ -23,9 +23,9 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import io.github.zhztheplayer.velox4j.connector.ConnectorSplit;
-import io.github.zhztheplayer.velox4j.connector.GeneratorConfig;
 import io.github.zhztheplayer.velox4j.connector.NexmarkConfiguration;
 import io.github.zhztheplayer.velox4j.connector.NexmarkConnectorSplit;
+import io.github.zhztheplayer.velox4j.connector.NexmarkGeneratorConfig;
 import io.github.zhztheplayer.velox4j.test.Velox4jTests;
 
 public class NexmarkConnectorSplitSerdeTest {
@@ -41,14 +41,14 @@ public class NexmarkConnectorSplitSerdeTest {
   }
 
   @Test
-  public void testGeneratorConfig() {
-    final GeneratorConfig in = newSampleGeneratorConfig(1L, 5000L);
+  public void testNexmarkGeneratorConfig() {
+    final NexmarkGeneratorConfig in = newSampleNexmarkGeneratorConfig(1L, 5000L);
     SerdeTests.testJavaBeanRoundTrip(in);
   }
 
   @Test
-  public void testGeneratorConfigSerializesMaxEventsKey() {
-    final GeneratorConfig config = newSampleGeneratorConfig(1L, 5000L);
+  public void testNexmarkGeneratorConfigSerializesMaxEventsKey() {
+    final NexmarkGeneratorConfig config = newSampleNexmarkGeneratorConfig(1L, 5000L);
     final String json = SerdeTests.testJavaBeanRoundTrip(config).getJson();
     final com.fasterxml.jackson.databind.JsonNode tree = Serde.parseTree(json);
     Assert.assertTrue("expected maxEvents key in JSON", tree.has("maxEvents"));
@@ -56,8 +56,8 @@ public class NexmarkConnectorSplitSerdeTest {
   }
 
   @Test
-  public void testGeneratorConfigDoesNotLeakMaxEventsOrZero() {
-    final GeneratorConfig config = newSampleGeneratorConfig(1L, 5000L);
+  public void testNexmarkGeneratorConfigDoesNotLeakMaxEventsOrZero() {
+    final NexmarkGeneratorConfig config = newSampleNexmarkGeneratorConfig(1L, 5000L);
     final String json = SerdeTests.testJavaBeanRoundTrip(config).getJson();
     final com.fasterxml.jackson.databind.JsonNode tree = Serde.parseTree(json);
     Assert.assertFalse(
@@ -67,33 +67,40 @@ public class NexmarkConnectorSplitSerdeTest {
   @Test
   public void testNexmarkConnectorSplit() {
     final ConnectorSplit split =
-        new NexmarkConnectorSplit("connector-nexmark", newSampleGeneratorConfig(1L, 5000L), null);
+        new NexmarkConnectorSplit(
+            "connector-nexmark", newSampleNexmarkGeneratorConfig(1L, 5000L), null);
     SerdeTests.testISerializableRoundTrip(split);
   }
 
   @Test
   public void testNexmarkConnectorSplitWithSubtasks() {
     final NexmarkConnectorSplit subtask0 =
-        new NexmarkConnectorSplit("connector-nexmark", newSampleGeneratorConfig(1L, 5000L), null);
+        new NexmarkConnectorSplit(
+            "connector-nexmark", newSampleNexmarkGeneratorConfig(1L, 5000L), null);
     final NexmarkConnectorSplit subtask1 =
         new NexmarkConnectorSplit(
-            "connector-nexmark", newSampleGeneratorConfig(5001L, 5000L), null);
+            "connector-nexmark", newSampleNexmarkGeneratorConfig(5001L, 5000L), null);
     final ConnectorSplit parallel =
         new NexmarkConnectorSplit(
-            "connector-nexmark", newSampleGeneratorConfig(1L, 10000L), List.of(subtask0, subtask1));
+            "connector-nexmark",
+            newSampleNexmarkGeneratorConfig(1L, 10000L),
+            List.of(subtask0, subtask1));
     SerdeTests.testISerializableRoundTrip(parallel);
   }
 
   @Test
   public void testGetSubtaskSplitReturnsPerIndexSplit() {
     final NexmarkConnectorSplit subtask0 =
-        new NexmarkConnectorSplit("connector-nexmark", newSampleGeneratorConfig(1L, 5000L), null);
+        new NexmarkConnectorSplit(
+            "connector-nexmark", newSampleNexmarkGeneratorConfig(1L, 5000L), null);
     final NexmarkConnectorSplit subtask1 =
         new NexmarkConnectorSplit(
-            "connector-nexmark", newSampleGeneratorConfig(5001L, 5000L), null);
+            "connector-nexmark", newSampleNexmarkGeneratorConfig(5001L, 5000L), null);
     final NexmarkConnectorSplit parallel =
         new NexmarkConnectorSplit(
-            "connector-nexmark", newSampleGeneratorConfig(1L, 10000L), List.of(subtask0, subtask1));
+            "connector-nexmark",
+            newSampleNexmarkGeneratorConfig(1L, 10000L),
+            List.of(subtask0, subtask1));
 
     final ConnectorSplit s0 = parallel.getSubtaskSplit(0, 2);
     final ConnectorSplit s1 = parallel.getSubtaskSplit(1, 2);
@@ -136,8 +143,9 @@ public class NexmarkConnectorSplitSerdeTest {
         1L);
   }
 
-  private static GeneratorConfig newSampleGeneratorConfig(long firstEventId, long maxEvents) {
-    return new GeneratorConfig(
+  private static NexmarkGeneratorConfig newSampleNexmarkGeneratorConfig(
+      long firstEventId, long maxEvents) {
+    return new NexmarkGeneratorConfig(
         newSampleNexmarkConfiguration(), 1_700_000_000_000L, firstEventId, maxEvents, 1L);
   }
 }

@@ -22,7 +22,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class GeneratorConfig implements Serializable {
+public class NexmarkGeneratorConfig implements Serializable {
   private final NexmarkConfiguration configuration;
   private final long baseTime;
   private final long firstEventId;
@@ -30,7 +30,7 @@ public class GeneratorConfig implements Serializable {
   private final long firstEventNumber;
 
   @JsonCreator
-  public GeneratorConfig(
+  public NexmarkGeneratorConfig(
       @JsonProperty("configuration") NexmarkConfiguration configuration,
       @JsonProperty("baseTime") long baseTime,
       @JsonProperty("firstEventId") long firstEventId,
