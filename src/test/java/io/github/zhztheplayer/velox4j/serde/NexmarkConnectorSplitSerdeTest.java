@@ -26,6 +26,7 @@ import io.github.zhztheplayer.velox4j.connector.ConnectorSplit;
 import io.github.zhztheplayer.velox4j.connector.NexmarkConfiguration;
 import io.github.zhztheplayer.velox4j.connector.NexmarkConnectorSplit;
 import io.github.zhztheplayer.velox4j.connector.NexmarkGeneratorConfig;
+import io.github.zhztheplayer.velox4j.connector.NexmarkParallelSplit;
 import io.github.zhztheplayer.velox4j.test.Velox4jTests;
 
 public class NexmarkConnectorSplitSerdeTest {
@@ -67,48 +68,58 @@ public class NexmarkConnectorSplitSerdeTest {
   @Test
   public void testNexmarkConnectorSplit() {
     final ConnectorSplit split =
-        new NexmarkConnectorSplit(
-            "connector-nexmark", newSampleNexmarkGeneratorConfig(1L, 5000L), null);
+        new NexmarkConnectorSplit("connector-nexmark", newSampleNexmarkGeneratorConfig(1L, 5000L));
     SerdeTests.testISerializableRoundTrip(split);
-  }
-
-  @Test
-  public void testNexmarkConnectorSplitWithSubtasks() {
-    final NexmarkConnectorSplit subtask0 =
-        new NexmarkConnectorSplit(
-            "connector-nexmark", newSampleNexmarkGeneratorConfig(1L, 5000L), null);
-    final NexmarkConnectorSplit subtask1 =
-        new NexmarkConnectorSplit(
-            "connector-nexmark", newSampleNexmarkGeneratorConfig(5001L, 5000L), null);
-    final ConnectorSplit parallel =
-        new NexmarkConnectorSplit(
-            "connector-nexmark",
-            newSampleNexmarkGeneratorConfig(1L, 10000L),
-            List.of(subtask0, subtask1));
-    SerdeTests.testISerializableRoundTrip(parallel);
   }
 
   @Test
   public void testGetSubtaskSplitReturnsPerIndexSplit() {
     final NexmarkConnectorSplit subtask0 =
-        new NexmarkConnectorSplit(
-            "connector-nexmark", newSampleNexmarkGeneratorConfig(1L, 5000L), null);
+        new NexmarkConnectorSplit("connector-nexmark", newSampleNexmarkGeneratorConfig(1L, 5000L));
     final NexmarkConnectorSplit subtask1 =
         new NexmarkConnectorSplit(
-            "connector-nexmark", newSampleNexmarkGeneratorConfig(5001L, 5000L), null);
-    final NexmarkConnectorSplit parallel =
-        new NexmarkConnectorSplit(
-            "connector-nexmark",
-            newSampleNexmarkGeneratorConfig(1L, 10000L),
-            List.of(subtask0, subtask1));
+            "connector-nexmark", newSampleNexmarkGeneratorConfig(5001L, 5000L));
+    final NexmarkParallelSplit parallel =
+        new NexmarkParallelSplit("connector-nexmark", List.of(subtask0, subtask1));
 
     final ConnectorSplit s0 = parallel.getSubtaskSplit(0, 2);
     final ConnectorSplit s1 = parallel.getSubtaskSplit(1, 2);
 
-    Assert.assertTrue(s0 instanceof NexmarkConnectorSplit);
-    Assert.assertTrue(s1 instanceof NexmarkConnectorSplit);
-    Assert.assertEquals(1L, ((NexmarkConnectorSplit) s0).getConfig().getFirstEventId());
-    Assert.assertEquals(5001L, ((NexmarkConnectorSplit) s1).getConfig().getFirstEventId());
+    Assert.assertSame(subtask0, s0);
+    Assert.assertSame(subtask1, s1);
+  }
+
+  @Test(expected = IllegalStateException.class)
+  public void testGetSubtaskSplitFailsOnParallelismMismatch() {
+    final NexmarkConnectorSplit subtask0 =
+        new NexmarkConnectorSplit("connector-nexmark", newSampleNexmarkGeneratorConfig(1L, 5000L));
+    final NexmarkConnectorSplit subtask1 =
+        new NexmarkConnectorSplit(
+            "connector-nexmark", newSampleNexmarkGeneratorConfig(5001L, 5000L));
+    final NexmarkParallelSplit parallel =
+        new NexmarkParallelSplit("connector-nexmark", List.of(subtask0, subtask1));
+
+    parallel.getSubtaskSplit(0, 4);
+  }
+
+  @Test(expected = IndexOutOfBoundsException.class)
+  public void testGetSubtaskSplitFailsOnBadIndex() {
+    final NexmarkConnectorSplit subtask0 =
+        new NexmarkConnectorSplit("connector-nexmark", newSampleNexmarkGeneratorConfig(1L, 5000L));
+    final NexmarkConnectorSplit subtask1 =
+        new NexmarkConnectorSplit(
+            "connector-nexmark", newSampleNexmarkGeneratorConfig(5001L, 5000L));
+    final NexmarkParallelSplit parallel =
+        new NexmarkParallelSplit("connector-nexmark", List.of(subtask0, subtask1));
+
+    parallel.getSubtaskSplit(5, 2);
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void testGetSubtaskSplitFailsOnNullSubtasks() {
+    final NexmarkParallelSplit parallel = new NexmarkParallelSplit("connector-nexmark", null);
+
+    parallel.getSubtaskSplit(0, 1);
   }
 
   private static NexmarkConfiguration newSampleNexmarkConfiguration() {
