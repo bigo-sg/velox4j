@@ -25,6 +25,7 @@ import io.github.zhztheplayer.velox4j.aggregate.Aggregate;
 import io.github.zhztheplayer.velox4j.aggregate.AggregateStep;
 import io.github.zhztheplayer.velox4j.connector.CommitStrategy;
 import io.github.zhztheplayer.velox4j.data.BaseVectorTests;
+import io.github.zhztheplayer.velox4j.exception.VeloxException;
 import io.github.zhztheplayer.velox4j.expression.ConstantTypedExpr;
 import io.github.zhztheplayer.velox4j.expression.FieldAccessTypedExpr;
 import io.github.zhztheplayer.velox4j.join.JoinType;
@@ -37,8 +38,10 @@ import io.github.zhztheplayer.velox4j.plan.LimitNode;
 import io.github.zhztheplayer.velox4j.plan.OrderByNode;
 import io.github.zhztheplayer.velox4j.plan.PlanNode;
 import io.github.zhztheplayer.velox4j.plan.ProjectNode;
+import io.github.zhztheplayer.velox4j.plan.TableScanWithWatermarkNode;
 import io.github.zhztheplayer.velox4j.plan.TableWriteNode;
 import io.github.zhztheplayer.velox4j.plan.ValuesNode;
+import io.github.zhztheplayer.velox4j.plan.WatermarkPushDownSpec;
 import io.github.zhztheplayer.velox4j.session.Session;
 import io.github.zhztheplayer.velox4j.sort.SortOrder;
 import io.github.zhztheplayer.velox4j.test.Velox4jTests;
@@ -126,6 +129,39 @@ public class PlanNodeSerdeTest {
             List.of("foo"),
             List.of(FieldAccessTypedExpr.create(new IntegerType(), "foo")));
     SerdeTests.testISerializableRoundTrip(projectNode);
+  }
+
+  @Test
+  public void testWatermarkPushDownSpec() {
+    final WatermarkPushDownSpec spec = newSampleWatermarkPushDownSpec();
+    SerdeTests.testISerializableRoundTrip(spec);
+  }
+
+  @Test
+  public void testTableScanWithWatermarkNode() {
+    final RowType outputType = SerdeTests.newSampleOutputType();
+    final TableScanWithWatermarkNode scan =
+        new TableScanWithWatermarkNode(
+            "id-1",
+            outputType,
+            SerdeTests.newSampleHiveTableHandle(outputType),
+            List.of(),
+            newSampleWatermarkPushDownSpec());
+
+    SerdeTests.testISerializableRoundTrip(scan);
+    Assert.assertThrows(VeloxException.class, () -> scan.setSources(List.of()));
+  }
+
+  private static WatermarkPushDownSpec newSampleWatermarkPushDownSpec() {
+    final PlanNode source =
+        SerdeTests.newSampleTableScanNode("id-watermark-source", SerdeTests.newSampleOutputType());
+    final ProjectNode projectNode =
+        new ProjectNode(
+            "id-watermark-project",
+            List.of(source),
+            List.of("rowtime"),
+            List.of(FieldAccessTypedExpr.create(new IntegerType(), "foo")));
+    return new WatermarkPushDownSpec(projectNode, 1_000L, 200L, 0);
   }
 
   @Test
