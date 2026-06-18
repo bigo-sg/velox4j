@@ -47,7 +47,6 @@ set(VELOX_MONO_LIBRARY ON)
 set(VELOX_BUILD_SHARED ON)
 set(VELOX_BUILD_STATIC OFF)
 set(VELOX_ENABLE_ARROW ON)
-set(VELOX_ENABLE_HDFS ON)
 set(VELOX_ENABLE_KAFKA_CONNECTOR ON)
 set(CPPKAFKA_DISABLE_TESTS ON)
 set(CPPKAFKA_DISABLE_EXAMPLES ON)
@@ -68,26 +67,14 @@ set(VELOX_REF_HASH_FILE ${CMAKE_CURRENT_LIST_DIR}/velox-ref-hash.txt)
 set(VELOX_REPO bigo-sg/velox)
 file(STRINGS ${VELOX_REF_FILE} VELOX_REF)
 file(STRINGS ${VELOX_REF_HASH_FILE} VELOX_SOURCE_URL_MD5)
-#set(VELOX_SOURCE_URL
-#    "https://github.com/${VELOX_REPO}/archive/${VELOX_REF}.zip")
-#cpmaddpackage(
-#  NAME
-#  velox
-#  URL
-#  ${VELOX_SOURCE_URL}
-#  URL_HASH
-#  MD5=${VELOX_SOURCE_URL_MD5})
-# set(VELOX_SOURCE_URL "https://github.com/bigo-sg/velox.git")
-#CPMAddPackage(
-#       NAME velox
-#        GIT_REPOSITORY ${VELOX_SOURCE_URL}
-#        GIT_TAG be3e18f53a2cc655bb743c8bf2afb312dbd40ee4
-#)
-set(VELOX_SOURCE_URL ${CMAKE_CURRENT_LIST_DIR}/build/_deps/velox-src)
-CPMAddPackage(
-        NAME velox
-        SOURCE_DIR  ${VELOX_SOURCE_URL}
-)
+set(VELOX_SOURCE_URL "https://github.com/bigo-sg/velox.git")
+cpmaddpackage(
+  NAME
+  velox
+  GIT_REPOSITORY
+  ${VELOX_SOURCE_URL}
+  GIT_TAG
+  be3e18f53a2cc655bb743c8bf2afb312dbd40ee4)
 
 # Import JniHelpers.
 set(JNI_HELPERS_REPO zhztheplayer/JniHelpersCpp)
