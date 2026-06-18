@@ -29,7 +29,7 @@ class DownIteratorJniWrapper final : public spotify::jni::JavaClass {
     DownIteratorJniWrapper::initialize(env);
   }
 
-  DownIteratorJniWrapper() : JavaClass(){};
+  DownIteratorJniWrapper() : JavaClass() {}
 
   const char* getCanonicalName() const override;
 

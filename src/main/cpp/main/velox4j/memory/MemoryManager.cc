@@ -296,7 +296,7 @@ bool MemoryManager::tryDestruct() {
   // Velox memory manager considered safe to destruct when no alive pools.
   if (veloxMemoryManager_) {
     if (veloxMemoryManager_->numPools() > 3) {
-      LOG(ERROR) << "[Velox4J MemoryManager DTOR] " << "There are "
+      LOG(ERROR) << "[Velox4J MemoryManager DTOR] There are "
                  << veloxMemoryManager_->numPools()
                  << " outstanding Velox memory pools.";
       leakFound = true;

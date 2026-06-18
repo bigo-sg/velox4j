@@ -48,6 +48,10 @@ set(VELOX_BUILD_SHARED ON)
 set(VELOX_BUILD_STATIC OFF)
 set(VELOX_ENABLE_ARROW ON)
 set(VELOX_ENABLE_HDFS ON)
+set(VELOX_ENABLE_KAFKA_CONNECTOR ON)
+set(CPPKAFKA_DISABLE_TESTS ON)
+set(CPPKAFKA_DISABLE_EXAMPLES ON)
+include_directories("${CMAKE_CURRENT_BINARY_DIR}/_deps/rocksdb-src/include")
 if(NOT VELOX4J_BUILD_TESTING)
   set(VELOX_BUILD_TESTING OFF)
 endif()
@@ -57,6 +61,8 @@ endif()
 
 # Import Velox.
 set(VELOX_PATCH_DIR ${CMAKE_CURRENT_LIST_DIR}/cmake/patches/velox)
+list(PREPEND CMAKE_MODULE_PATH
+     ${CMAKE_CURRENT_LIST_DIR}/cmake/resolve_dependency_modules)
 set(VELOX_REF_FILE ${CMAKE_CURRENT_LIST_DIR}/velox-ref.txt)
 set(VELOX_REF_HASH_FILE ${CMAKE_CURRENT_LIST_DIR}/velox-ref-hash.txt)
 set(VELOX_REPO bigo-sg/velox)
@@ -102,9 +108,11 @@ target_link_libraries(
 
 # Add aarch64 assembly sources for folly
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64|ARM64")
-  file(GLOB FOLLY_AARCH64_ASM_SOURCES "${folly_SOURCE_DIR}/folly/external/aor/*.S")
+  file(GLOB FOLLY_AARCH64_ASM_SOURCES
+       "${folly_SOURCE_DIR}/folly/external/aor/*.S")
   if(FOLLY_AARCH64_ASM_SOURCES)
-    set_source_files_properties(${FOLLY_AARCH64_ASM_SOURCES} PROPERTIES LANGUAGE C)
+    set_source_files_properties(${FOLLY_AARCH64_ASM_SOURCES} PROPERTIES LANGUAGE
+                                                                        C)
     target_sources(folly PRIVATE ${FOLLY_AARCH64_ASM_SOURCES})
   endif()
 endif()

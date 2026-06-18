@@ -17,43 +17,43 @@
 
 #include "Init.h"
 #include <velox/common/memory/Memory.h>
-#include <velox/connectors/fuzzer/DiscardDataSink.cpp>
-#include <velox/connectors/fuzzer/FuzzerConnector.cpp>
+#include <velox/connectors/filesystem/FileSystemConnector.h>
+#include <velox/connectors/filesystem/FileSystemInsertTableHandle.h>
+#include <velox/connectors/from_elements/FromElementsConnector.h>
+#include <velox/connectors/from_elements/FromElementsConnectorSplit.h>
+#include <velox/connectors/from_elements/FromElementsTableHandle.h>
 #include <velox/connectors/fuzzer/FuzzerConnectorSplit.h>
 #include <velox/connectors/hive/HiveConnector.h>
 #include <velox/connectors/hive/HiveConnectorSplit.h>
 #include <velox/connectors/hive/HiveDataSink.h>
 #include <velox/connectors/hive/storage_adapters/hdfs/RegisterHdfsFileSystem.h>
-#include <velox/connectors/nexmark/NexmarkConnector.h>
-#include <velox/connectors/nexmark/NexmarkConnectorSplit.h>
 #include <velox/connectors/kafka/KafkaConnector.h>
 #include <velox/connectors/kafka/KafkaConnectorSplit.h>
 #include <velox/connectors/kafka/KafkaTableHandle.h>
+#include <velox/connectors/nexmark/NexmarkConnector.h>
+#include <velox/connectors/nexmark/NexmarkConnectorSplit.h>
 #include <velox/connectors/print/PrintConnector.h>
 #include <velox/connectors/print/PrintTableHandle.h>
-#include <velox/connectors/from_elements/FromElementsConnector.h>
-#include <velox/connectors/from_elements/FromElementsTableHandle.h>
-#include <velox/connectors/from_elements/FromElementsConnectorSplit.h>
-#include <velox/connectors/filesystem/FileSystemInsertTableHandle.h>
-#include <velox/connectors/filesystem/FileSystemConnector.h>
 #include <velox/dwio/parquet/RegisterParquetReader.h>
 #include <velox/dwio/parquet/RegisterParquetWriter.h>
 #include <velox/dwio/text/RegisterTextWriter.h>
 #include <velox/exec/PartitionFunction.h>
-#include <velox/experimental/stateful/StatefulPlanNode.h>
-#include <velox/experimental/stateful/state/StateBackend.h>
-#include <velox/experimental/stateful/state/RocksDBStateBackend.h>
 #include <velox/experimental/stateful/InternalTimerService.h>
 #include <velox/experimental/stateful/StatefulOperator.h>
+#include <velox/experimental/stateful/StatefulPlanNode.h>
+#include <velox/experimental/stateful/state/RocksDBStateBackend.h>
+#include <velox/experimental/stateful/state/StateBackend.h>
+#include <velox/experimental/stateful/udf/Register.h>
 #include <velox/functions/prestosql/aggregates/RegisterAggregateFunctions.h>
 #include <velox/functions/prestosql/window/WindowFunctionsRegistration.h>
 #include <velox/functions/sparksql/aggregates/Register.h>
 #include <velox/functions/sparksql/registration/Register.h>
 #include <velox/functions/sparksql/window/WindowFunctionsRegistration.h>
+#include <velox/connectors/fuzzer/DiscardDataSink.cpp>
+#include <velox/connectors/fuzzer/FuzzerConnector.cpp>
 #include <velox/vector/fuzzer/ConstrainedVectorGenerator.cpp>
 #include <velox/vector/fuzzer/Utils.cpp>
 #include <velox/vector/fuzzer/VectorFuzzer.cpp>
-#include <velox/experimental/stateful/udf/Register.h>
 #include "velox4j/config/Config.h"
 #include "velox4j/connector/ExternalStream.h"
 #include "velox4j/eval/Evaluation.h"
@@ -125,50 +125,54 @@ void initForSpark() {
       nullptr));
   connector::kafka::KafkaTableHandle::registerSerDe();
   connector::kafka::KafkaConnectorSplit::registerSerDe();
-  connector::registerConnector(std::make_shared<connector::kafka::KafkaConnector>(
-      "connector-kafka",
-      std::make_shared<facebook::velox::config::ConfigBase>(
-        std::unordered_map<std::string, std::string>()),
-      nullptr));
+  connector::registerConnector(
+      std::make_shared<connector::kafka::KafkaConnector>(
+          "connector-kafka",
+          std::make_shared<facebook::velox::config::ConfigBase>(
+              std::unordered_map<std::string, std::string>()),
+          nullptr));
   connector::filesystem::FileSystemInsertTableHandle::registerSerDe();
-  connector::registerConnector(std::make_shared<connector::filesystem::FileSystemConnector>(
-      "connector-filesystem",
-      std::make_shared<facebook::velox::config::ConfigBase>(
-        std::unordered_map<std::string, std::string>()),
-      nullptr));
+  connector::registerConnector(
+      std::make_shared<connector::filesystem::FileSystemConnector>(
+          "connector-filesystem",
+          std::make_shared<facebook::velox::config::ConfigBase>(
+              std::unordered_map<std::string, std::string>()),
+          nullptr));
   ExternalStreamConnectorSplit::registerSerDe();
   ExternalStreamTableHandle::registerSerDe();
   connector::registerConnector(std::make_shared<ExternalStreamConnector>(
       "connector-external-stream",
       std::make_shared<facebook::velox::config::ConfigBase>(
           std::unordered_map<std::string, std::string>())));
-  connector::registerConnector(std::make_shared<connector::fuzzer::FuzzerConnector>(
-      "connector-fuzzer",
-      std::make_shared<facebook::velox::config::ConfigBase>(
-          std::unordered_map<std::string, std::string>()),
-      nullptr));
+  connector::registerConnector(
+      std::make_shared<connector::fuzzer::FuzzerConnector>(
+          "connector-fuzzer",
+          std::make_shared<facebook::velox::config::ConfigBase>(
+              std::unordered_map<std::string, std::string>()),
+          nullptr));
   connector::nexmark::NexmarkTableHandle::registerSerDe();
   connector::nexmark::NexmarkConnectorSplit::registerSerDe();
-  connector::registerConnector(std::make_shared<connector::nexmark::NexmarkConnector>(
-      "connector-nexmark",
-      std::make_shared<facebook::velox::config::ConfigBase>(
-          std::unordered_map<std::string, std::string>()),
-      nullptr));
+  connector::registerConnector(
+      std::make_shared<connector::nexmark::NexmarkConnector>(
+          "connector-nexmark",
+          std::make_shared<facebook::velox::config::ConfigBase>(
+              std::unordered_map<std::string, std::string>()),
+          nullptr));
   connector::print::PrintTableHandle::registerSerDe();
-  connector::registerConnector(std::make_shared<connector::print::PrintConnector>(
-      "connector-print",
-      std::make_shared<facebook::velox::config::ConfigBase>(
-          std::unordered_map<std::string, std::string>()),
-        nullptr
-      ));
+  connector::registerConnector(
+      std::make_shared<connector::print::PrintConnector>(
+          "connector-print",
+          std::make_shared<facebook::velox::config::ConfigBase>(
+              std::unordered_map<std::string, std::string>()),
+          nullptr));
   connector::from_elements::FromElementsTableHandle::registerSerDe();
   connector::from_elements::FromElementsConnectorSplit::registerSerDe();
-  connector::registerConnector(std::make_shared<connector::from_elements::FromElementsConnector>(
-      "connector-from-elements",
-      std::make_shared<facebook::velox::config::ConfigBase>(
-          std::unordered_map<std::string, std::string>()),
-        nullptr
-      ));
+  connector::registerConnector(
+      std::make_shared<connector::from_elements::FromElementsConnector>(
+          "connector-from-elements",
+          std::make_shared<facebook::velox::config::ConfigBase>(
+              std::unordered_map<std::string, std::string>()),
+          nullptr));
   core::PlanNode::registerSerDe();
   stateful::StatefulPlanNode::registerSerDe();
   stateful::KeyedStateBackendParameters::registerSerDe();
