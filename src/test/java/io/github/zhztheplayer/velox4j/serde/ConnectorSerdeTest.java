@@ -117,7 +117,8 @@ public class ConnectorSerdeTest {
             "json",
             3,
             "1:2",
-            "3:4");
+            "3:4",
+            false);
     SerdeTests.testISerializableRoundTrip(split);
   }
 
