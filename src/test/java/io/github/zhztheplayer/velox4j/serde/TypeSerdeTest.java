@@ -106,6 +106,10 @@ public class TypeSerdeTest {
   @Test
   public void testTimestampType() {
     SerdeTests.testISerializableRoundTrip(new TimestampType());
+    final TimestampType timestampType =
+        Serde.fromJson(Serde.toPrettyJson(new TimestampType(6, true)), TimestampType.class);
+    Assert.assertEquals(6, timestampType.getPrecision());
+    Assert.assertTrue(timestampType.isLocalZoned());
   }
 
   @Test
