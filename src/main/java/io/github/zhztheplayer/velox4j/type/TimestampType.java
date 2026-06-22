@@ -16,6 +16,32 @@
 */
 package io.github.zhztheplayer.velox4j.type;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class TimestampType extends Type {
-  public TimestampType() {}
+  private final int precision;
+  private final boolean localZoned;
+
+  public TimestampType() {
+    this(6, false);
+  }
+
+  @JsonCreator
+  public TimestampType(
+      @JsonProperty("precision") int precision, @JsonProperty("localZoned") boolean localZoned) {
+    this.precision = precision;
+    this.localZoned = localZoned;
+  }
+
+  @JsonGetter("precision")
+  public int getPrecision() {
+    return precision;
+  }
+
+  @JsonGetter("localZoned")
+  public boolean isLocalZoned() {
+    return localZoned;
+  }
 }

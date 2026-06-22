@@ -62,6 +62,8 @@ final class JniWrapper {
 
   native void snapshotState(long id, long context);
 
+  native String[] snapshotSourceState(long id);
+
   native String[] notifyCheckpointComplete(long id, long checkpointId);
 
   native void notifyCheckpointAborted(long id, long checkpointId);

@@ -22,6 +22,9 @@ option(VELOX4J_ENABLE_CCACHE "Use ccache if installed." ON)
 option(VELOX4J_BUILD_TESTING "Build Velox4J tests." ON)
 
 # Velox4J non-bool option definitions.
+set(VELOX4J_VELOX_SOURCE_DIR
+    ""
+    CACHE STRING "Optional local Velox source directory used instead of fetching Velox.")
 set(VELOX4J_INSTALL_DESTINATION
     "lib"
     CACHE
@@ -67,14 +70,22 @@ set(VELOX_REF_HASH_FILE ${CMAKE_CURRENT_LIST_DIR}/velox-ref-hash.txt)
 set(VELOX_REPO bigo-sg/velox)
 file(STRINGS ${VELOX_REF_FILE} VELOX_REF)
 file(STRINGS ${VELOX_REF_HASH_FILE} VELOX_SOURCE_URL_MD5)
-set(VELOX_SOURCE_URL "https://github.com/bigo-sg/velox.git")
-cpmaddpackage(
-  NAME
-  velox
-  GIT_REPOSITORY
-  ${VELOX_SOURCE_URL}
-  GIT_TAG
-  1100a17658f4179d4cfe1e6fd83df95fd562d357)
+if(VELOX4J_VELOX_SOURCE_DIR)
+  cpmaddpackage(
+    NAME
+    velox
+    SOURCE_DIR
+    ${VELOX4J_VELOX_SOURCE_DIR})
+else()
+  set(VELOX_SOURCE_URL "https://github.com/bigo-sg/velox.git")
+  cpmaddpackage(
+    NAME
+    velox
+    GIT_REPOSITORY
+    ${VELOX_SOURCE_URL}
+    GIT_TAG
+    1e281344b1a07c4e226068a4e01184dadbd35231)
+endif()
 if(TARGET gflags::gflags_shared)
   get_target_property(GFLAGS_SHARED_LIBRARY gflags::gflags_shared IMPORTED_LOCATION_RELEASE)
 endif()

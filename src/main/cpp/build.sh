@@ -12,7 +12,19 @@ INSTALL_DESTINATION=$BUILD_DIR/dist/lib
 VELOX4J_LIB_NAME=libvelox4j.so
 
 # Build C++ so libraries.
-cmake -DCMAKE_BUILD_TYPE=Release -DVELOX4J_ENABLE_CCACHE=ON -DVELOX4J_BUILD_TESTING=OFF -DVELOX4J_INSTALL_DESTINATION="$INSTALL_DESTINATION" -S "$SOURCE_DIR" -B "$BUILD_DIR"
+CMAKE_ARGS=(
+  -DCMAKE_BUILD_TYPE=Release
+  -DCMAKE_PREFIX_PATH=/usr/local
+  -DBoost_DIR=/usr/local/lib/cmake/Boost-1.84.0
+  -DVELOX4J_ENABLE_CCACHE=ON
+  -DVELOX4J_BUILD_TESTING=OFF
+  -DVELOX4J_INSTALL_DESTINATION="$INSTALL_DESTINATION"
+)
+if [[ -n "${VELOX4J_VELOX_SOURCE_DIR:-}" ]]
+then
+  CMAKE_ARGS+=("-DVELOX4J_VELOX_SOURCE_DIR=$VELOX4J_VELOX_SOURCE_DIR")
+fi
+cmake "${CMAKE_ARGS[@]}" -S "$SOURCE_DIR" -B "$BUILD_DIR"
 cmake --build "$BUILD_DIR" --target velox4j_shared -j "$NUM_THREADS"
 cmake --install "$BUILD_DIR" --component velox4j
 
@@ -55,7 +67,7 @@ ldd "$INSTALL_DESTINATION/$VELOX4J_LIB_NAME"
 
 # 2. Check ld result.
 echo "Checking ld result of libvelox4j.so: "
-ld "$INSTALL_DESTINATION/$VELOX4J_LIB_NAME"
+ld "$INSTALL_DESTINATION/$VELOX4J_LIB_NAME" -o "$BUILD_DIR/ld-check.out"
 
 # Finished.
 echo "Successfully built velox4j-cpp."
