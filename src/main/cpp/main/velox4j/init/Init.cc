@@ -34,6 +34,9 @@
 #include <velox/connectors/nexmark/NexmarkConnectorSplit.h>
 #include <velox/connectors/print/PrintConnector.h>
 #include <velox/connectors/print/PrintTableHandle.h>
+#include <velox/connectors/pulsar/PulsarConnector.h>
+#include <velox/connectors/pulsar/PulsarConnectorSplit.h>
+#include <velox/connectors/pulsar/PulsarTableHandle.h>
 #include <velox/dwio/parquet/RegisterParquetReader.h>
 #include <velox/dwio/parquet/RegisterParquetWriter.h>
 #include <velox/dwio/text/RegisterTextWriter.h>
@@ -128,6 +131,14 @@ void initForSpark() {
   connector::registerConnector(
       std::make_shared<connector::kafka::KafkaConnector>(
           "connector-kafka",
+          std::make_shared<facebook::velox::config::ConfigBase>(
+              std::unordered_map<std::string, std::string>()),
+          nullptr));
+  connector::pulsar::PulsarTableHandle::registerSerDe();
+  connector::pulsar::PulsarConnectorSplit::registerSerDe();
+  connector::registerConnector(
+      std::make_shared<connector::pulsar::PulsarConnector>(
+          "connector-pulsar",
           std::make_shared<facebook::velox::config::ConfigBase>(
               std::unordered_map<std::string, std::string>()),
           nullptr));

@@ -74,7 +74,7 @@ cpmaddpackage(
   GIT_REPOSITORY
   ${VELOX_SOURCE_URL}
   GIT_TAG
-  be3e18f53a2cc655bb743c8bf2afb312dbd40ee4)
+  cc9469989a099e39f9a90967f15044455dddd5e2)
 
 # Import JniHelpers.
 set(JNI_HELPERS_REPO zhztheplayer/JniHelpersCpp)

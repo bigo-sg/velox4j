@@ -77,11 +77,27 @@ StatefulSerialTask::~StatefulSerialTask() {
 }
 
 UpIterator::State StatefulSerialTask::advance() {
+  if (hasPendingState_) {
+    hasPendingState_ = false;
+    return pendingState_;
+  }
+  if (blockingFuture_.valid()) {
+    return State::BLOCKED;
+  }
   VELOX_CHECK_NULL(pending_);
   return advance0(false);
 }
 
-void StatefulSerialTask::wait() {}
+void StatefulSerialTask::wait() {
+  VELOX_CHECK(!hasPendingState_);
+  VELOX_CHECK_NULL(pending_);
+  if (blockingFuture_.valid()) {
+    std::move(blockingFuture_).wait(std::chrono::seconds(1));
+    blockingFuture_ = ContinueFuture::makeEmpty();
+  }
+  pendingState_ = advance0(true);
+  hasPendingState_ = true;
+}
 
 RowVectorPtr StatefulSerialTask::get() {
   VELOX_CHECK(false, "Should not call get for stateful task.");
@@ -156,7 +172,18 @@ std::unique_ptr<SerialTaskStats> StatefulSerialTask::collectStats() {
 UpIterator::State StatefulSerialTask::advance0(bool wait) {
   while (true) {
     int32_t retCode = 0;
-    auto out = task_->next(retCode);
+    auto future = ContinueFuture::makeEmpty();
+    auto out = task_->next(&future, retCode);
+    if (future.valid()) {
+      VELOX_CHECK_NULL(
+          out, "Expected blocked state but got non-null stateful output");
+      if (!wait) {
+        blockingFuture_ = std::move(future);
+        return State::BLOCKED;
+      }
+      std::move(future).wait(std::chrono::seconds(1));
+      continue;
+    }
     if (out != nullptr) {
       pending_ = std::move(out);
       return State::AVAILABLE;
