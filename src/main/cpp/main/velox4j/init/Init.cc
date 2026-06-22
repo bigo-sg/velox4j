@@ -35,6 +35,8 @@
 #include <velox/connectors/from_elements/FromElementsConnectorSplit.h>
 #include <velox/connectors/filesystem/FileSystemInsertTableHandle.h>
 #include <velox/connectors/filesystem/FileSystemConnector.h>
+#include <velox/dwio/dwrf/RegisterDwrfReader.h>
+#include <velox/dwio/dwrf/RegisterDwrfWriter.h>
 #include <velox/dwio/parquet/RegisterParquetReader.h>
 #include <velox/dwio/parquet/RegisterParquetWriter.h>
 #include <velox/dwio/text/RegisterTextWriter.h>
@@ -79,6 +81,8 @@ void initForSpark() {
   filesystems::registerLocalFileSystem();
   memory::MemoryManager::initialize({});
   dwio::common::registerFileSinks();
+  dwrf::registerDwrfReaderFactory();
+  dwrf::registerDwrfWriterFactory();
   parquet::registerParquetReaderFactory();
   parquet::registerParquetWriterFactory();
   text::registerTextWriterFactory();
