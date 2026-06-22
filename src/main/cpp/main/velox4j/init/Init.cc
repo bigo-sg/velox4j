@@ -96,6 +96,7 @@ void initForSpark() {
   dwio::common::registerFileSinks();
   dwrf::registerDwrfReaderFactory();
   dwrf::registerDwrfWriterFactory();
+  dwrf::registerOrcWriterFactory();
   parquet::registerParquetReaderFactory();
   parquet::registerParquetWriterFactory();
   text::registerTextWriterFactory();
