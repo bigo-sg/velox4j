@@ -74,7 +74,7 @@ cpmaddpackage(
   GIT_REPOSITORY
   ${VELOX_SOURCE_URL}
   GIT_TAG
-  be28583dae07aa0c4b50e727339f4d149ffbcc86)
+  5045c4e8ff8b4d04c7e86b0a38568b962fe348a9)
 if(TARGET gflags::gflags_shared)
   get_target_property(GFLAGS_SHARED_LIBRARY gflags::gflags_shared IMPORTED_LOCATION_RELEASE)
 endif()
