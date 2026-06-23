@@ -34,9 +34,16 @@
 #include <velox/connectors/nexmark/NexmarkConnectorSplit.h>
 #include <velox/connectors/print/PrintConnector.h>
 #include <velox/connectors/print/PrintTableHandle.h>
+#include <velox/connectors/from_elements/FromElementsConnector.h>
+#include <velox/connectors/from_elements/FromElementsConnectorSplit.h>
+#include <velox/connectors/from_elements/FromElementsTableHandle.h>
+#include <velox/connectors/filesystem/FileSystemConnector.h>
+#include <velox/connectors/filesystem/FileSystemInsertTableHandle.h>
 #include <velox/connectors/pulsar/PulsarConnector.h>
 #include <velox/connectors/pulsar/PulsarConnectorSplit.h>
 #include <velox/connectors/pulsar/PulsarTableHandle.h>
+#include <velox/dwio/dwrf/RegisterDwrfReader.h>
+#include <velox/dwio/dwrf/RegisterDwrfWriter.h>
 #include <velox/dwio/parquet/RegisterParquetReader.h>
 #include <velox/dwio/parquet/RegisterParquetWriter.h>
 #include <velox/dwio/text/RegisterTextWriter.h>
@@ -87,6 +94,9 @@ void initForSpark() {
   filesystems::registerHdfsFileSystem();
   memory::MemoryManager::initialize({});
   dwio::common::registerFileSinks();
+  dwrf::registerDwrfReaderFactory();
+  dwrf::registerDwrfWriterFactory();
+  dwrf::registerOrcWriterFactory();
   parquet::registerParquetReaderFactory();
   parquet::registerParquetWriterFactory();
   text::registerTextWriterFactory();
