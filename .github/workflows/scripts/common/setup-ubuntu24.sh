@@ -14,7 +14,7 @@ apt-get install -y liblzo2-dev libzstd-dev libsnappy-dev libdouble-conversion-de
 apt-get install -y libboost-all-dev libcurl4-openssl-dev curl zip unzip tar pkg-config
 apt-get install -y autoconf-archive bison flex libfl-dev libc-ares-dev libicu-dev
 apt-get install -y libgoogle-glog-dev libbz2-dev libgflags-dev libgmock-dev libevent-dev
-apt-get install -y liblz4-dev libsodium-dev libelf-dev
+apt-get install -y liblz4-dev librdkafka-dev libsodium-dev libelf-dev
 apt-get install -y autoconf automake g++ libnuma-dev libtool numactl unzip libdaxctl-dev
 apt-get install -y openjdk-11-jdk
 apt-get install -y maven cmake

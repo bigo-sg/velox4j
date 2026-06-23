@@ -20,8 +20,8 @@
 #include <velox/common/memory/Memory.h>
 #include <velox/core/PlanNode.h>
 #include <velox/exec/TableWriter.h>
-#include <velox/vector/VectorSaver.h>
 #include <velox/experimental/stateful/StreamElement.h>
+#include <velox/vector/VectorSaver.h>
 
 #include "JniCommon.h"
 #include "JniError.h"
@@ -85,12 +85,15 @@ jlong createQueryExecutor(JNIEnv* env, jobject javaThis, jstring queryJson) {
   // Keep the pool alive until the task is finished.
   auto queryDynamic = folly::parseJson(jQueryJson.get());
   auto query = ISerializable::deserialize<Query>(queryDynamic, querySerdePool);
-  //auto exec = std::make_shared<QueryExecutor>(session->memoryManager(), query);
+  // auto exec = std::make_shared<QueryExecutor>(session->memoryManager(),
+  // query);
   if (stateful) {
-    auto exec = std::make_shared<StatefulQueryExecutor>(session->memoryManager(), query);
+    auto exec = std::make_shared<StatefulQueryExecutor>(
+        session->memoryManager(), query);
     return sessionOf(env, javaThis)->objectStore()->save(exec);
   } else {
-    auto exec = std::make_shared<QueryExecutor>(session->memoryManager(), query);
+    auto exec =
+        std::make_shared<QueryExecutor>(session->memoryManager(), query);
     return sessionOf(env, javaThis)->objectStore()->save(exec);
   }
   JNI_METHOD_END(-1L)
@@ -130,11 +133,14 @@ jobject statefulTaskGet(JNIEnv* env, jobject javaThis, jlong itrId) {
   if (element->isWatermark()) {
     auto watermark = std::static_pointer_cast<stateful::Watermark>(element);
 
-    jclass resultClass = env->FindClass("io/github/zhztheplayer/velox4j/stateful/StatefulWatermark");
-    jmethodID constructor = env->GetMethodID(resultClass, "<init>", "(Ljava/lang/String;J)V");
+    jclass resultClass = env->FindClass(
+        "io/github/zhztheplayer/velox4j/stateful/StatefulWatermark");
+    jmethodID constructor =
+        env->GetMethodID(resultClass, "<init>", "(Ljava/lang/String;J)V");
 
     jstring id = env->NewStringUTF(watermark->nodeId().c_str());
-    jobject result = env->NewObject(resultClass, constructor, id, watermark->timestamp());
+    jobject result =
+        env->NewObject(resultClass, constructor, id, watermark->timestamp());
 
     env->DeleteLocalRef(id);
     env->DeleteLocalRef(resultClass);
@@ -142,10 +148,13 @@ jobject statefulTaskGet(JNIEnv* env, jobject javaThis, jlong itrId) {
   } else {
     VELOX_CHECK(element->isRecord());
     auto record = std::static_pointer_cast<stateful::StreamRecord>(element);
-    jlong rvId = sessionOf(env, javaThis)->objectStore()->save(record->record());
+    jlong rvId =
+        sessionOf(env, javaThis)->objectStore()->save(record->record());
 
-    jclass resultClass = env->FindClass("io/github/zhztheplayer/velox4j/stateful/StatefulRecord");
-    jmethodID constructor = env->GetMethodID(resultClass, "<init>", "(Ljava/lang/String;JJZI)V");
+    jclass resultClass = env->FindClass(
+        "io/github/zhztheplayer/velox4j/stateful/StatefulRecord");
+    jmethodID constructor =
+        env->GetMethodID(resultClass, "<init>", "(Ljava/lang/String;JJZI)V");
 
     jstring id = env->NewStringUTF(record->nodeId().c_str());
     jobject result = env->NewObject(
@@ -164,21 +173,35 @@ jobject statefulTaskGet(JNIEnv* env, jobject javaThis, jlong itrId) {
   JNI_METHOD_END(nullptr)
 }
 
-void notifyIndexedWatermark(JNIEnv* env, jobject javaThis, jlong itrId, jlong watermark, jint index) {
+void notifyIndexedWatermark(
+    JNIEnv* env,
+    jobject javaThis,
+    jlong itrId,
+    jlong watermark,
+    jint index) {
   JNI_METHOD_START
   auto itr = ObjectStore::retrieve<StatefulSerialTask>(itrId);
   itr->notifyWatermark(watermark, index);
   JNI_METHOD_END()
 }
 
-void notifyWatermark(JNIEnv* env, jobject javaThis, jlong itrId, jlong watermark) {
+void notifyWatermark(
+    JNIEnv* env,
+    jobject javaThis,
+    jlong itrId,
+    jlong watermark) {
   JNI_METHOD_START
   auto itr = ObjectStore::retrieve<StatefulSerialTask>(itrId);
   itr->notifyWatermark(watermark);
   JNI_METHOD_END()
 }
 
-void initializeState(JNIEnv* env, jobject javaThis, jlong itrId, jlong context, jstring keyedStateBackendConfigString) {
+void initializeState(
+    JNIEnv* env,
+    jobject javaThis,
+    jlong itrId,
+    jlong context,
+    jstring keyedStateBackendConfigString) {
   JNI_METHOD_START
   auto itr = ObjectStore::retrieve<StatefulSerialTask>(itrId);
   spotify::jni::JavaString jTypeJson{env, keyedStateBackendConfigString};
@@ -193,12 +216,18 @@ void snapshotState(JNIEnv* env, jobject javaThis, jlong itrId, jlong context) {
   JNI_METHOD_END()
 }
 
-jobject notifyCheckpointComplete(JNIEnv* env, jobject javaThis, jlong itrId, jlong checkpointId) {
+jobject notifyCheckpointComplete(
+    JNIEnv* env,
+    jobject javaThis,
+    jlong itrId,
+    jlong checkpointId) {
   JNI_METHOD_START
   auto itr = ObjectStore::retrieve<StatefulSerialTask>(itrId);
-  std::vector<std::string> committed = itr->notifyCheckpointComplete(checkpointId);
+  std::vector<std::string> committed =
+      itr->notifyCheckpointComplete(checkpointId);
   jclass stringClass = env->FindClass("java/lang/String");
-  jobjectArray result = env->NewObjectArray(committed.size(), stringClass, nullptr);
+  jobjectArray result =
+      env->NewObjectArray(committed.size(), stringClass, nullptr);
   for (size_t i = 0; i < committed.size(); ++i) {
     jstring str = env->NewStringUTF(committed[i].c_str());
     env->SetObjectArrayElement(result, i, str);
@@ -209,7 +238,11 @@ jobject notifyCheckpointComplete(JNIEnv* env, jobject javaThis, jlong itrId, jlo
   JNI_METHOD_END(nullptr)
 }
 
-void notifyCheckpointAborted(JNIEnv* env, jobject javaThis, jlong itrId, jlong checkpointId) {
+void notifyCheckpointAborted(
+    JNIEnv* env,
+    jobject javaThis,
+    jlong itrId,
+    jlong checkpointId) {
   JNI_METHOD_START
   auto itr = ObjectStore::retrieve<StatefulSerialTask>(itrId);
   itr->notifyCheckpointAborted(checkpointId);
@@ -468,54 +501,54 @@ void JniWrapper::initialize(JNIEnv* env) {
       "upIteratorGet", (void*)upIteratorGet, kTypeLong, kTypeLong, nullptr);
   addNativeMethod(
       "statefulTaskGet",
-       (void*)statefulTaskGet,
-       "io/github/zhztheplayer/velox4j/stateful/StatefulElement",
-       kTypeLong,
-       nullptr);
+      (void*)statefulTaskGet,
+      "io/github/zhztheplayer/velox4j/stateful/StatefulElement",
+      kTypeLong,
+      nullptr);
   addNativeMethod(
       "notifyIndexedWatermark",
-       (void*)notifyIndexedWatermark,
-       kTypeVoid,
-       kTypeLong,
-       kTypeLong,
-       kTypeInt,
-       nullptr);
+      (void*)notifyIndexedWatermark,
+      kTypeVoid,
+      kTypeLong,
+      kTypeLong,
+      kTypeInt,
+      nullptr);
   addNativeMethod(
       "notifyWatermark",
-       (void*)notifyWatermark,
-       kTypeVoid,
-       kTypeLong,
-       kTypeLong,
-       nullptr);
+      (void*)notifyWatermark,
+      kTypeVoid,
+      kTypeLong,
+      kTypeLong,
+      nullptr);
   addNativeMethod(
       "initializeState",
-       (void*)initializeState,
-       kTypeVoid,
-       kTypeLong,
-       kTypeLong,
-       kTypeString,
-       nullptr);
+      (void*)initializeState,
+      kTypeVoid,
+      kTypeLong,
+      kTypeLong,
+      kTypeString,
+      nullptr);
   addNativeMethod(
       "snapshotState",
-       (void*)snapshotState,
-       kTypeVoid,
-       kTypeLong,
-       kTypeLong,
-       nullptr);
+      (void*)snapshotState,
+      kTypeVoid,
+      kTypeLong,
+      kTypeLong,
+      nullptr);
   addNativeMethod(
       "notifyCheckpointComplete",
-       (void*)notifyCheckpointComplete,
-       "[Ljava/lang/String;",
-       kTypeLong,
-       kTypeLong,
-       nullptr);
+      (void*)notifyCheckpointComplete,
+      "[Ljava/lang/String;",
+      kTypeLong,
+      kTypeLong,
+      nullptr);
   addNativeMethod(
       "notifyCheckpointAborted",
-       (void*)notifyCheckpointAborted,
-       kTypeVoid,
-       kTypeLong,
-       kTypeLong,
-       nullptr);
+      (void*)notifyCheckpointAborted,
+      kTypeVoid,
+      kTypeLong,
+      kTypeLong,
+      nullptr);
   addNativeMethod(
       "createExternalStreamFromDownIterator",
       (void*)createExternalStreamFromDownIterator,

@@ -47,6 +47,10 @@ set(VELOX_MONO_LIBRARY ON)
 set(VELOX_BUILD_SHARED ON)
 set(VELOX_BUILD_STATIC OFF)
 set(VELOX_ENABLE_ARROW ON)
+set(VELOX_ENABLE_KAFKA_CONNECTOR ON)
+set(CPPKAFKA_DISABLE_TESTS ON)
+set(CPPKAFKA_DISABLE_EXAMPLES ON)
+include_directories("${CMAKE_CURRENT_BINARY_DIR}/_deps/rocksdb-src/include")
 if(NOT VELOX4J_BUILD_TESTING)
   set(VELOX_BUILD_TESTING OFF)
 endif()
@@ -56,31 +60,45 @@ endif()
 
 # Import Velox.
 set(VELOX_PATCH_DIR ${CMAKE_CURRENT_LIST_DIR}/cmake/patches/velox)
+list(PREPEND CMAKE_MODULE_PATH
+     ${CMAKE_CURRENT_LIST_DIR}/cmake/resolve_dependency_modules)
 set(VELOX_REF_FILE ${CMAKE_CURRENT_LIST_DIR}/velox-ref.txt)
 set(VELOX_REF_HASH_FILE ${CMAKE_CURRENT_LIST_DIR}/velox-ref-hash.txt)
 set(VELOX_REPO bigo-sg/velox)
 file(STRINGS ${VELOX_REF_FILE} VELOX_REF)
 file(STRINGS ${VELOX_REF_HASH_FILE} VELOX_SOURCE_URL_MD5)
-#set(VELOX_SOURCE_URL
-#    "https://github.com/${VELOX_REPO}/archive/${VELOX_REF}.zip")
-#cpmaddpackage(
-#  NAME
-#  velox
-#  URL
-#  ${VELOX_SOURCE_URL}
-#  URL_HASH
-#  MD5=${VELOX_SOURCE_URL_MD5})
 set(VELOX_SOURCE_URL "https://github.com/bigo-sg/velox.git")
-CPMAddPackage(
-        NAME velox
-        GIT_REPOSITORY ${VELOX_SOURCE_URL}
-        GIT_TAG c53b4cea4f5c0f2ff8f1609c948cea5a3862ca09
-)
-#set(VELOX_SOURCE_URL ${CMAKE_CURRENT_LIST_DIR}/build/_deps/velox-src)
-#CPMAddPackage(
-#        NAME velox
-#        SOURCE_DIR  ${VELOX_SOURCE_URL}
-#)
+cpmaddpackage(
+  NAME
+  velox
+  GIT_REPOSITORY
+  ${VELOX_SOURCE_URL}
+  GIT_TAG
+  5045c4e8ff8b4d04c7e86b0a38568b962fe348a9)
+if(TARGET gflags::gflags_shared)
+  get_target_property(GFLAGS_SHARED_LIBRARY gflags::gflags_shared IMPORTED_LOCATION_RELEASE)
+endif()
+if(NOT GFLAGS_SHARED_LIBRARY)
+  find_library(GFLAGS_SHARED_LIBRARY gflags REQUIRED)
+endif()
+set(GFLAGS_LINK_COMPAT_DIR ${CMAKE_CURRENT_BINARY_DIR}/gflags-link-compat)
+file(MAKE_DIRECTORY ${GFLAGS_LINK_COMPAT_DIR})
+file(CREATE_LINK
+     ${GFLAGS_SHARED_LIBRARY}
+     ${GFLAGS_LINK_COMPAT_DIR}/libgflags_shared.so
+     SYMBOLIC)
+link_directories(${GFLAGS_LINK_COMPAT_DIR})
+foreach(ROCKSDB_TARGET rocksdb rocksdb-shared RocksDB::rocksdb RocksDB::rocksdb-shared)
+  if(TARGET ${ROCKSDB_TARGET})
+    foreach(ROCKSDB_LINK_PROPERTY INTERFACE_LINK_LIBRARIES IMPORTED_LINK_DEPENDENT_LIBRARIES_RELEASE)
+      get_target_property(ROCKSDB_LINK_LIBRARIES ${ROCKSDB_TARGET} ${ROCKSDB_LINK_PROPERTY})
+      if(ROCKSDB_LINK_LIBRARIES)
+        string(REPLACE "gflags_shared" "${GFLAGS_SHARED_LIBRARY}" ROCKSDB_LINK_LIBRARIES "${ROCKSDB_LINK_LIBRARIES}")
+        set_target_properties(${ROCKSDB_TARGET} PROPERTIES ${ROCKSDB_LINK_PROPERTY} "${ROCKSDB_LINK_LIBRARIES}")
+      endif()
+    endforeach()
+  endif()
+endforeach()
 
 # Import JniHelpers.
 set(JNI_HELPERS_REPO zhztheplayer/JniHelpersCpp)
@@ -98,6 +116,17 @@ cpmaddpackage(
 target_link_libraries(
   JniHelpers
   PRIVATE JNI::JNI)
+
+# Add aarch64 assembly sources for folly
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64|ARM64")
+  file(GLOB FOLLY_AARCH64_ASM_SOURCES
+       "${folly_SOURCE_DIR}/folly/external/aor/*.S")
+  if(FOLLY_AARCH64_ASM_SOURCES)
+    set_source_files_properties(${FOLLY_AARCH64_ASM_SOURCES} PROPERTIES LANGUAGE
+                                                                        C)
+    target_sources(folly PRIVATE ${FOLLY_AARCH64_ASM_SOURCES})
+  endif()
+endif()
 
 # Directories of Velox4J.
 set(VELOX4J_SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/main)

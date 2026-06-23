@@ -169,12 +169,10 @@ public class Resources {
             Preconditions.checkNotNull(
                 classloader.getResourceAsStream(fromPath), "Resource %s not found", fromPath))) {
       final BufferedOutputStream o = new BufferedOutputStream(new FileOutputStream(toFile));
-      while (true) {
-        int b = is.read();
-        if (b == -1) {
-          break;
-        }
-        o.write(b);
+      byte[] buf = new byte[8192];
+      int n;
+      while ((n = is.read(buf)) != -1) {
+        o.write(buf, 0, n);
       }
       o.flush();
       o.close();

@@ -16,14 +16,15 @@
  */
 
 #include "StatefulQueryExecutor.h"
-#include <velox/experimental/stateful/state/StateBackend.h>
-#include <velox/experimental/stateful/state/RocksDBStateBackend.h>
-#include "velox4j/query/Query.h"
-#include <string>
-#include <utility>
+#include <exception>
 #include <folly/json.h>
 #include <folly/json/dynamic.h>
 #include <folly/json/json.h>
+#include <velox/experimental/stateful/state/RocksDBStateBackend.h>
+#include <velox/experimental/stateful/state/StateBackend.h>
+#include <string>
+#include <utility>
+#include "velox4j/query/Query.h"
 
 namespace velox4j {
 
@@ -37,7 +38,7 @@ StatefulSerialTask::StatefulSerialTask(
   const uint32_t eid = executionId++;
   auto connectorConfigs = query_->connectorConfig()->toMap();
   std::string taskIndex = std::to_string(eid);
-  for (const auto &[key, config] : connectorConfigs) {
+  for (const auto& [key, config] : connectorConfigs) {
     taskIndex = config->get<std::string>("task_index", taskIndex);
     break;
   }
@@ -62,7 +63,21 @@ StatefulSerialTask::StatefulSerialTask(
       std::move(queryCtx));
 
   task_ = task;
-  task_->init();
+  try {
+    task_->init();
+  } catch (...) {
+    const auto exception = std::current_exception();
+    try {
+      task_->finish();
+    } catch (...) {
+      try {
+        task_->requestCancel().wait();
+      } catch (...) {
+      }
+    }
+    task_.reset();
+    std::rethrow_exception(exception);
+  }
 }
 
 StatefulSerialTask::~StatefulSerialTask() {
@@ -77,11 +92,26 @@ StatefulSerialTask::~StatefulSerialTask() {
 }
 
 UpIterator::State StatefulSerialTask::advance() {
+  if (hasPendingState_) {
+    hasPendingState_ = false;
+    return pendingState_;
+  }
+  if (blockingFuture_.valid()) {
+    return State::BLOCKED;
+  }
   VELOX_CHECK_NULL(pending_);
   return advance0(false);
 }
 
 void StatefulSerialTask::wait() {
+  VELOX_CHECK(!hasPendingState_);
+  VELOX_CHECK_NULL(pending_);
+  if (blockingFuture_.valid()) {
+    std::move(blockingFuture_).wait(std::chrono::seconds(1));
+    blockingFuture_ = ContinueFuture::makeEmpty();
+  }
+  pendingState_ = advance0(true);
+  hasPendingState_ = true;
 }
 
 RowVectorPtr StatefulSerialTask::get() {
@@ -107,11 +137,16 @@ void StatefulSerialTask::notifyWatermark(long watermark) {
   task_->notifyWatermark(watermark);
 }
 
-void StatefulSerialTask::initializeState(long checkpointId, std::string keyedStateBackendConfigString) {
+void StatefulSerialTask::initializeState(
+    long checkpointId,
+    std::string keyedStateBackendConfigString) {
   folly::dynamic obj = folly::parseJson(keyedStateBackendConfigString);
-  std::shared_ptr<const stateful::KeyedStateBackendParameters> params = stateful::KeyedStateBackendParameters::create(obj, nullptr);
-  if (params && params->getBackendType() == stateful::StateBackendType::ROCKSDB) {
-    auto rocksdbParams = stateful::RocksDBKeyedStateBackendParameters::create(obj, nullptr);
+  std::shared_ptr<const stateful::KeyedStateBackendParameters> params =
+      stateful::KeyedStateBackendParameters::create(obj, nullptr);
+  if (params &&
+      params->getBackendType() == stateful::StateBackendType::ROCKSDB) {
+    auto rocksdbParams =
+        stateful::RocksDBKeyedStateBackendParameters::create(obj, nullptr);
     task_->initializeState(rocksdbParams);
   } else {
     // params maybe null, then initialize by using default heap state backend.
@@ -123,7 +158,8 @@ void StatefulSerialTask::snapshotState(long checkpointId) {
   task_->snapshotState();
 }
 
-std::vector<std::string> StatefulSerialTask::notifyCheckpointComplete(long checkpointId) {
+std::vector<std::string> StatefulSerialTask::notifyCheckpointComplete(
+    long checkpointId) {
   return task_->notifyCheckpointComplete(checkpointId);
 }
 
@@ -151,7 +187,18 @@ std::unique_ptr<SerialTaskStats> StatefulSerialTask::collectStats() {
 UpIterator::State StatefulSerialTask::advance0(bool wait) {
   while (true) {
     int32_t retCode = 0;
-    auto out = task_->next(retCode);
+    auto future = ContinueFuture::makeEmpty();
+    auto out = task_->next(&future, retCode);
+    if (future.valid()) {
+      VELOX_CHECK_NULL(
+          out, "Expected blocked state but got non-null stateful output");
+      if (!wait) {
+        blockingFuture_ = std::move(future);
+        return State::BLOCKED;
+      }
+      std::move(future).wait(std::chrono::seconds(1));
+      continue;
+    }
     if (out != nullptr) {
       pending_ = std::move(out);
       return State::AVAILABLE;
@@ -171,4 +218,5 @@ StatefulQueryExecutor::StatefulQueryExecutor(
 std::unique_ptr<StatefulSerialTask> StatefulQueryExecutor::execute() const {
   return std::make_unique<StatefulSerialTask>(memoryManager_, query_);
 }
+
 } // namespace velox4j
