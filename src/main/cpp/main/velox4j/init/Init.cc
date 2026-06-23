@@ -26,6 +26,7 @@
 #include <velox/connectors/hive/HiveConnector.h>
 #include <velox/connectors/hive/HiveConnectorSplit.h>
 #include <velox/connectors/hive/HiveDataSink.h>
+#include <velox/connectors/hive/storage_adapters/hdfs/RegisterHdfsFileSystem.h>
 #include <velox/connectors/kafka/KafkaConnector.h>
 #include <velox/connectors/kafka/KafkaConnectorSplit.h>
 #include <velox/connectors/kafka/KafkaTableHandle.h>
@@ -33,6 +34,9 @@
 #include <velox/connectors/nexmark/NexmarkConnectorSplit.h>
 #include <velox/connectors/print/PrintConnector.h>
 #include <velox/connectors/print/PrintTableHandle.h>
+#include <velox/connectors/pulsar/PulsarConnector.h>
+#include <velox/connectors/pulsar/PulsarConnectorSplit.h>
+#include <velox/connectors/pulsar/PulsarTableHandle.h>
 #include <velox/dwio/parquet/RegisterParquetReader.h>
 #include <velox/dwio/parquet/RegisterParquetWriter.h>
 #include <velox/dwio/text/RegisterTextWriter.h>
@@ -80,6 +84,7 @@ void initForSpark() {
   FLAGS_velox_exception_user_stacktrace_enabled = true;
   FLAGS_velox_exception_system_stacktrace_enabled = true;
   filesystems::registerLocalFileSystem();
+  filesystems::registerHdfsFileSystem();
   memory::MemoryManager::initialize({});
   dwio::common::registerFileSinks();
   parquet::registerParquetReaderFactory();
@@ -126,6 +131,14 @@ void initForSpark() {
   connector::registerConnector(
       std::make_shared<connector::kafka::KafkaConnector>(
           "connector-kafka",
+          std::make_shared<facebook::velox::config::ConfigBase>(
+              std::unordered_map<std::string, std::string>()),
+          nullptr));
+  connector::pulsar::PulsarTableHandle::registerSerDe();
+  connector::pulsar::PulsarConnectorSplit::registerSerDe();
+  connector::registerConnector(
+      std::make_shared<connector::pulsar::PulsarConnector>(
+          "connector-pulsar",
           std::make_shared<facebook::velox::config::ConfigBase>(
               std::unordered_map<std::string, std::string>()),
           nullptr));
