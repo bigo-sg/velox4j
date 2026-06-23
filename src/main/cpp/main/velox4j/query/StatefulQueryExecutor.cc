@@ -16,6 +16,7 @@
  */
 
 #include "StatefulQueryExecutor.h"
+#include <exception>
 #include <folly/json.h>
 #include <folly/json/dynamic.h>
 #include <folly/json/json.h>
@@ -62,7 +63,21 @@ StatefulSerialTask::StatefulSerialTask(
       std::move(queryCtx));
 
   task_ = task;
-  task_->init();
+  try {
+    task_->init();
+  } catch (...) {
+    const auto exception = std::current_exception();
+    try {
+      task_->finish();
+    } catch (...) {
+      try {
+        task_->requestCancel().wait();
+      } catch (...) {
+      }
+    }
+    task_.reset();
+    std::rethrow_exception(exception);
+  }
 }
 
 StatefulSerialTask::~StatefulSerialTask() {
