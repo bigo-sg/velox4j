@@ -74,7 +74,31 @@ cpmaddpackage(
   GIT_REPOSITORY
   ${VELOX_SOURCE_URL}
   GIT_TAG
-  11b74d7be8f1fa1ed593929b35fbf77dd5af9595)
+  e8727fa636f2693a53244237bd3f78fa42bedf4b)
+if(TARGET gflags::gflags_shared)
+  get_target_property(GFLAGS_SHARED_LIBRARY gflags::gflags_shared IMPORTED_LOCATION_RELEASE)
+endif()
+if(NOT GFLAGS_SHARED_LIBRARY)
+  find_library(GFLAGS_SHARED_LIBRARY gflags REQUIRED)
+endif()
+set(GFLAGS_LINK_COMPAT_DIR ${CMAKE_CURRENT_BINARY_DIR}/gflags-link-compat)
+file(MAKE_DIRECTORY ${GFLAGS_LINK_COMPAT_DIR})
+file(CREATE_LINK
+     ${GFLAGS_SHARED_LIBRARY}
+     ${GFLAGS_LINK_COMPAT_DIR}/libgflags_shared.so
+     SYMBOLIC)
+link_directories(${GFLAGS_LINK_COMPAT_DIR})
+foreach(ROCKSDB_TARGET rocksdb rocksdb-shared RocksDB::rocksdb RocksDB::rocksdb-shared)
+  if(TARGET ${ROCKSDB_TARGET})
+    foreach(ROCKSDB_LINK_PROPERTY INTERFACE_LINK_LIBRARIES IMPORTED_LINK_DEPENDENT_LIBRARIES_RELEASE)
+      get_target_property(ROCKSDB_LINK_LIBRARIES ${ROCKSDB_TARGET} ${ROCKSDB_LINK_PROPERTY})
+      if(ROCKSDB_LINK_LIBRARIES)
+        string(REPLACE "gflags_shared" "${GFLAGS_SHARED_LIBRARY}" ROCKSDB_LINK_LIBRARIES "${ROCKSDB_LINK_LIBRARIES}")
+        set_target_properties(${ROCKSDB_TARGET} PROPERTIES ${ROCKSDB_LINK_PROPERTY} "${ROCKSDB_LINK_LIBRARIES}")
+      endif()
+    endforeach()
+  endif()
+endforeach()
 
 # Import JniHelpers.
 set(JNI_HELPERS_REPO zhztheplayer/JniHelpersCpp)
