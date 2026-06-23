@@ -66,14 +66,14 @@ set(VELOX_REF_FILE ${CMAKE_CURRENT_LIST_DIR}/velox-ref.txt)
 set(VELOX_REF_HASH_FILE ${CMAKE_CURRENT_LIST_DIR}/velox-ref-hash.txt)
 file(STRINGS ${VELOX_REF_FILE} VELOX_REF)
 file(STRINGS ${VELOX_REF_HASH_FILE} VELOX_SOURCE_URL_MD5)
-set(VELOX_SOURCE_URL "https://github.com/ggjh-159/velox.git")
+set(VELOX_SOURCE_URL "https://github.com/bigo-sg/velox.git")
 cpmaddpackage(
   NAME
   velox
   GIT_REPOSITORY
   ${VELOX_SOURCE_URL}
   GIT_TAG
-  fix/nexmark-source-multi-parallelism)
+  11b74d7be8f1fa1ed593929b35fbf77dd5af9595)
 
 # Import JniHelpers.
 set(JNI_HELPERS_REPO zhztheplayer/JniHelpersCpp)
