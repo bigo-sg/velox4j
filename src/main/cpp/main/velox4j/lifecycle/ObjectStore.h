@@ -18,6 +18,7 @@
 #pragma once
 
 #include <map>
+#include <string_view>
 #include "ResourceMap.h"
 
 namespace velox4j {
@@ -76,6 +77,23 @@ class ObjectStore {
     return store->retrieveInternal<T>(resourceId);
   }
 
+  static std::string_view storedTypeName(ObjectHandle handle) {
+    ResourceHandle storeId =
+        safeCast<ResourceHandle>(handle >> (sizeof(ResourceHandle) * 8));
+    ResourceHandle resourceId = safeCast<ResourceHandle>(
+        handle & std::numeric_limits<ResourceHandle>::max());
+    auto store = stores().lookup(storeId);
+    return store->storedTypeNameInternal(resourceId);
+  }
+
+  template <typename T>
+  static std::shared_ptr<T> dynamicRetrieve(ObjectHandle handle) {
+    if (storedTypeName(handle) != typeid(T).name()) {
+      return nullptr;
+    }
+    return retrieve<T>(handle);
+  }
+
   virtual ~ObjectStore();
 
   StoreHandle id() const {
@@ -99,6 +117,11 @@ class ObjectStore {
         << (sizeof(ResourceHandle) * 8);
     ObjectHandle objHandle = prefix + rh;
     return objHandle;
+  }
+
+  std::string_view storedTypeNameInternal(ResourceHandle handle) {
+    const std::lock_guard<std::mutex> lock(mtx_);
+    return aliveObjects_.at(handle);
   }
 
   template <typename T>

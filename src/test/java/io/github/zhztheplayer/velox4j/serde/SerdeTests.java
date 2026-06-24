@@ -27,7 +27,6 @@ import org.junit.ComparisonFailure;
 import io.github.zhztheplayer.velox4j.aggregate.Aggregate;
 import io.github.zhztheplayer.velox4j.aggregate.AggregateStep;
 import io.github.zhztheplayer.velox4j.connector.*;
-import io.github.zhztheplayer.velox4j.exception.VeloxException;
 import io.github.zhztheplayer.velox4j.expression.CallTypedExpr;
 import io.github.zhztheplayer.velox4j.expression.FieldAccessTypedExpr;
 import io.github.zhztheplayer.velox4j.filter.AlwaysTrue;
@@ -111,9 +110,6 @@ public final class SerdeTests {
 
   public static <T> ObjectAndJson<Object> testJavaBeanRoundTrip(T inObj) {
     try {
-      if (inObj instanceof NativeBean) {
-        throw new VeloxException("Cannot round trip NativeBean");
-      }
       final Class<?> clazz = inObj.getClass();
       final ObjectMapper jsonMapper = Serde.jsonMapper();
       final String inJson = jsonMapper.writeValueAsString(inObj);

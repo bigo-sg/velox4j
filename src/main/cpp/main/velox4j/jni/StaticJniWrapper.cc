@@ -38,7 +38,6 @@ using namespace facebook::velox;
 
 namespace {
 const char* kClassName = "io/github/zhztheplayer/velox4j/jni/StaticJniWrapper";
-const bool stateful = true;
 
 void initialize0(JNIEnv* env, jobject javaThis, jstring globalConfJson) {
   JNI_METHOD_START
@@ -112,24 +111,18 @@ void serialTaskAddSplit(
     jint groupId,
     jstring connectorSplitJson) {
   JNI_METHOD_START
-  if (stateful) {
-    auto serialTask = ObjectStore::retrieve<StatefulSerialTask>(stId);
-    spotify::jni::JavaString jPlanNodeId{env, planNodeId};
-    spotify::jni::JavaString jConnectorSplitJson{env, connectorSplitJson};
-    auto jConnectorSplitDynamic = folly::parseJson(jConnectorSplitJson.get());
-    auto connectorSplit = std::const_pointer_cast<connector::ConnectorSplit>(
-        ISerializable::deserialize<connector::ConnectorSplit>(
-            jConnectorSplitDynamic));
+  spotify::jni::JavaString jPlanNodeId{env, planNodeId};
+  spotify::jni::JavaString jConnectorSplitJson{env, connectorSplitJson};
+  auto jConnectorSplitDynamic = folly::parseJson(jConnectorSplitJson.get());
+  auto connectorSplit = std::const_pointer_cast<connector::ConnectorSplit>(
+      ISerializable::deserialize<connector::ConnectorSplit>(
+          jConnectorSplitDynamic));
+  if (auto serialTask = ObjectStore::dynamicRetrieve<StatefulSerialTask>(stId)) {
+    serialTask->addSplit(jPlanNodeId.get(), groupId, connectorSplit);
+  } else if (auto serialTask = ObjectStore::dynamicRetrieve<SerialTask>(stId)) {
     serialTask->addSplit(jPlanNodeId.get(), groupId, connectorSplit);
   } else {
-    auto serialTask = ObjectStore::retrieve<SerialTask>(stId);
-    spotify::jni::JavaString jPlanNodeId{env, planNodeId};
-    spotify::jni::JavaString jConnectorSplitJson{env, connectorSplitJson};
-    auto jConnectorSplitDynamic = folly::parseJson(jConnectorSplitJson.get());
-    auto connectorSplit = std::const_pointer_cast<connector::ConnectorSplit>(
-        ISerializable::deserialize<connector::ConnectorSplit>(
-            jConnectorSplitDynamic));
-    serialTask->addSplit(jPlanNodeId.get(), groupId, connectorSplit);
+    VELOX_FAIL("Invalid SerialTask handle: {}", stId);
   }
   JNI_METHOD_END()
 }
@@ -140,33 +133,32 @@ void serialTaskNoMoreSplits(
     jlong stId,
     jstring planNodeId) {
   JNI_METHOD_START
-  if (stateful) {
-    auto serialTask = ObjectStore::retrieve<StatefulSerialTask>(stId);
-    spotify::jni::JavaString jPlanNodeId{env, planNodeId};
+  spotify::jni::JavaString jPlanNodeId{env, planNodeId};
+  if (auto serialTask = ObjectStore::dynamicRetrieve<StatefulSerialTask>(stId)) {
+    serialTask->noMoreSplits(jPlanNodeId.get());
+  } else if (auto serialTask = ObjectStore::dynamicRetrieve<SerialTask>(stId)) {
     serialTask->noMoreSplits(jPlanNodeId.get());
   } else {
-    auto serialTask = ObjectStore::retrieve<SerialTask>(stId);
-    spotify::jni::JavaString jPlanNodeId{env, planNodeId};
-    serialTask->noMoreSplits(jPlanNodeId.get());
+    VELOX_FAIL("Invalid SerialTask handle: {}", stId);
   }
   JNI_METHOD_END()
 }
 
 jstring serialTaskCollectStats(JNIEnv* env, jobject javaThis, jlong stId) {
   JNI_METHOD_START
-  if (stateful) {
-    auto serialTask = ObjectStore::retrieve<StatefulSerialTask>(stId);
-    const auto stats = serialTask->collectStats();
-    const auto statsDynamic = stats->toJson();
-    const auto statsJson = folly::toPrettyJson(statsDynamic);
-    return env->NewStringUTF(statsJson.data());
-  } else {
-    auto serialTask = ObjectStore::retrieve<SerialTask>(stId);
+  if (auto serialTask = ObjectStore::dynamicRetrieve<StatefulSerialTask>(stId)) {
     const auto stats = serialTask->collectStats();
     const auto statsDynamic = stats->toJson();
     const auto statsJson = folly::toPrettyJson(statsDynamic);
     return env->NewStringUTF(statsJson.data());
   }
+  if (auto serialTask = ObjectStore::dynamicRetrieve<SerialTask>(stId)) {
+    const auto stats = serialTask->collectStats();
+    const auto statsDynamic = stats->toJson();
+    const auto statsJson = folly::toPrettyJson(statsDynamic);
+    return env->NewStringUTF(statsJson.data());
+  }
+  VELOX_FAIL("Invalid SerialTask handle: {}", stId);
   JNI_METHOD_END(nullptr)
 }
 

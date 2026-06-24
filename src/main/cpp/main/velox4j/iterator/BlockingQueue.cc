@@ -56,12 +56,10 @@ std::optional<RowVectorPtr> BlockingQueue::read(ContinueFuture& future) {
     }
   }
 
-  /**
   // Blocked. Async wait for a new element.
   auto [readPromise, readFuture] =
       makeVeloxContinuePromiseContract(fmt::format("BlockingQueue::read"));
-  // Returns a future that is fulfilled immediately to signal Velox
-  // that this stream is still open and is currently waiting for input.
+  // Returns a future that is fulfilled when new input arrives.
   future = std::move(readFuture);
   {
     std::lock_guard l(mutex_);
@@ -103,7 +101,7 @@ std::optional<RowVectorPtr> BlockingQueue::read(ContinueFuture& future) {
       }
     }
   });
-  */
+
   return std::nullopt;
 }
 

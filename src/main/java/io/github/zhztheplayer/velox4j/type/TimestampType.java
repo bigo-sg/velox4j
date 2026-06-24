@@ -30,9 +30,10 @@ public class TimestampType extends Type {
 
   @JsonCreator
   public TimestampType(
-      @JsonProperty("precision") int precision, @JsonProperty("localZoned") boolean localZoned) {
-    this.precision = precision;
-    this.localZoned = localZoned;
+      @JsonProperty("precision") Integer precision, @JsonProperty("localZoned") Boolean localZoned) {
+    // Velox TIMESTAMP has no precision/localZoned; default when absent after C++ round trip.
+    this.precision = precision == null ? 6 : precision;
+    this.localZoned = localZoned != null && localZoned;
   }
 
   @JsonGetter("precision")

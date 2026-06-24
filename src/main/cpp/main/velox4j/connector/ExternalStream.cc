@@ -147,7 +147,10 @@ std::optional<RowVectorPtr> ExternalStreamDataSource::next(
       */
       // Stateful doesn't need to check thread any more.
       const std::optional<RowVectorPtr> vector = current_->read(future);
-      if (vector == nullptr) {
+      if (future.valid()) {
+        return std::nullopt;
+      }
+      if (!vector.has_value() || vector.value() == nullptr) {
         // End of the current stream.
         current_ = nullptr;
         continue;
