@@ -16,23 +16,15 @@
 */
 package io.github.zhztheplayer.velox4j.connector;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonGetter;
-import com.fasterxml.jackson.annotation.JsonProperty;
-
-public class NexmarkConnectorSplit extends ConnectorSplit {
-  private final NexmarkGeneratorConfig config;
-
-  @JsonCreator
-  public NexmarkConnectorSplit(
-      @JsonProperty("connectorId") String connectorId,
-      @JsonProperty("config") NexmarkGeneratorConfig config) {
-    super(connectorId, 0, true);
-    this.config = config;
+/**
+ * A specialized ConnectorSplit that supports parallel splitting. Subclasses compute per-subtask
+ * splits at runtime based on subtask index and total parallelism.
+ */
+public abstract class ParallelSplit extends ConnectorSplit {
+  protected ParallelSplit(String connectorId, long splitWeight, boolean cacheable) {
+    super(connectorId, splitWeight, cacheable);
   }
 
-  @JsonGetter("config")
-  public NexmarkGeneratorConfig getConfig() {
-    return config;
-  }
+  /** Create the per-subtask ConnectorSplit for the given subtask index. */
+  public abstract ConnectorSplit getSubtaskSplit(int index, int parallelism);
 }
