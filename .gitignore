@@ -29,3 +29,6 @@ replay_pid*
 /src/main/cpp/cmake-build-*
 /src/main/cpp/build
 a.out
+
+.ccache
+.vscode
