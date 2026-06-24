@@ -42,6 +42,7 @@ import io.github.zhztheplayer.velox4j.query.SerialTask;
 import io.github.zhztheplayer.velox4j.serde.Serde;
 import io.github.zhztheplayer.velox4j.serializable.ISerializable;
 import io.github.zhztheplayer.velox4j.serializable.ISerializableCo;
+import io.github.zhztheplayer.velox4j.stateful.NativeCallbackTarget;
 import io.github.zhztheplayer.velox4j.stateful.StatefulElement;
 import io.github.zhztheplayer.velox4j.stateful.StatefulRecord;
 import io.github.zhztheplayer.velox4j.type.RowType;
@@ -95,6 +96,14 @@ public final class JniApi {
       record.setRowVector(baseVectorWrap(record.getRowVectorId()).asRowVector());
     }
     return result;
+  }
+
+  public void bindNativeCallbackTarget(UpIterator itr, NativeCallbackTarget callbackTarget) {
+    jni.bindNativeCallbackTarget(itr.id(), callbackTarget);
+  }
+
+  public void unbindNativeCallbackTarget(UpIterator itr) {
+    jni.unbindNativeCallbackTarget(itr.id());
   }
 
   public void notifyWatermark(UpIterator itr, long watermark, int index) {
