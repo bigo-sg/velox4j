@@ -23,6 +23,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import io.github.zhztheplayer.velox4j.exception.VeloxException;
+import io.github.zhztheplayer.velox4j.serializable.ISerializable;
 import io.github.zhztheplayer.velox4j.test.Velox4jTests;
 import io.github.zhztheplayer.velox4j.type.ArrayType;
 import io.github.zhztheplayer.velox4j.type.BigIntType;
@@ -30,6 +31,8 @@ import io.github.zhztheplayer.velox4j.type.BooleanType;
 import io.github.zhztheplayer.velox4j.type.DateType;
 import io.github.zhztheplayer.velox4j.type.DecimalType;
 import io.github.zhztheplayer.velox4j.type.DoubleType;
+import io.github.zhztheplayer.velox4j.type.FlinkTimestampLtzType;
+import io.github.zhztheplayer.velox4j.type.FlinkTimestampType;
 import io.github.zhztheplayer.velox4j.type.FunctionType;
 import io.github.zhztheplayer.velox4j.type.HugeIntType;
 import io.github.zhztheplayer.velox4j.type.IntegerType;
@@ -106,10 +109,22 @@ public class TypeSerdeTest {
   @Test
   public void testTimestampType() {
     SerdeTests.testISerializableRoundTrip(new TimestampType());
+    SerdeTests.testISerializableRoundTrip(new FlinkTimestampType(6));
+    SerdeTests.testISerializableRoundTrip(new FlinkTimestampLtzType(9));
     final TimestampType timestampType =
-        Serde.fromJson(Serde.toPrettyJson(new TimestampType(6, true)), TimestampType.class);
+        (TimestampType)
+            Serde.fromJson(Serde.toPrettyJson(new TimestampType(6, true)), ISerializable.class);
     Assert.assertEquals(6, timestampType.getPrecision());
     Assert.assertTrue(timestampType.isLocalZoned());
+    Assert.assertEquals(
+        "{\"name\":\"Type\",\"type\":\"FLINK_TIMESTAMP\",\"precision\":0}",
+        Serde.toJson(new TimestampType(0, false)));
+    Assert.assertEquals(
+        "{\"name\":\"Type\",\"type\":\"FLINK_TIMESTAMP\",\"precision\":6}",
+        Serde.toJson(new TimestampType(6, false)));
+    Assert.assertEquals(
+        "{\"name\":\"Type\",\"type\":\"FLINK_TIMESTAMP_LTZ\",\"precision\":6}",
+        Serde.toJson(new TimestampType(6, true)));
   }
 
   @Test

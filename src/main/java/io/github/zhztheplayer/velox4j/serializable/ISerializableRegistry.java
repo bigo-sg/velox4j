@@ -75,6 +75,8 @@ import io.github.zhztheplayer.velox4j.type.BooleanType;
 import io.github.zhztheplayer.velox4j.type.DateType;
 import io.github.zhztheplayer.velox4j.type.DecimalType;
 import io.github.zhztheplayer.velox4j.type.DoubleType;
+import io.github.zhztheplayer.velox4j.type.FlinkTimestampLtzType;
+import io.github.zhztheplayer.velox4j.type.FlinkTimestampType;
 import io.github.zhztheplayer.velox4j.type.FunctionType;
 import io.github.zhztheplayer.velox4j.type.HugeIntType;
 import io.github.zhztheplayer.velox4j.type.IntegerType;
@@ -125,6 +127,8 @@ public final class ISerializableRegistry {
     typeRegistry.registerClass("VARCHAR", VarCharType.class);
     typeRegistry.registerClass("VARBINARY", VarbinaryType.class);
     typeRegistry.registerClass("TIMESTAMP", TimestampType.class);
+    typeRegistry.registerClass("FLINK_TIMESTAMP", FlinkTimestampType.class);
+    typeRegistry.registerClass("FLINK_TIMESTAMP_LTZ", FlinkTimestampLtzType.class);
     typeRegistry.registerClass("ARRAY", ArrayType.class);
     typeRegistry.registerClass("MAP", MapType.class);
     typeRegistry.registerClass("ROW", RowType.class);

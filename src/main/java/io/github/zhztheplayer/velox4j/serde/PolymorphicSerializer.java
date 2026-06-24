@@ -30,6 +30,8 @@ import com.fasterxml.jackson.databind.ser.std.BeanSerializerBase;
 import com.fasterxml.jackson.databind.ser.std.ToEmptyObjectSerializer;
 import com.google.common.base.Preconditions;
 
+import io.github.zhztheplayer.velox4j.type.TimestampType;
+
 public final class PolymorphicSerializer {
   private PolymorphicSerializer() {}
 
@@ -41,7 +43,7 @@ public final class PolymorphicSerializer {
       final Class<?> clazz = bean.getClass();
       final List<SerdeRegistry.KvPair> kvs = SerdeRegistry.findKvPairs(clazz);
       for (SerdeRegistry.KvPair kv : kvs) {
-        gen.writeStringField(kv.getKey(), kv.getValue());
+        gen.writeStringField(kv.getKey(), serdeValue(bean, kv));
       }
       gen.writeEndObject();
     }
@@ -58,10 +60,17 @@ public final class PolymorphicSerializer {
       final Class<?> clazz = bean.getClass();
       final List<SerdeRegistry.KvPair> kvs = SerdeRegistry.findKvPairs(clazz);
       for (SerdeRegistry.KvPair kv : kvs) {
-        gen.writeStringField(kv.getKey(), kv.getValue());
+        gen.writeStringField(kv.getKey(), serdeValue(bean, kv));
       }
       super.serializeFields(bean, gen, provider);
     }
+  }
+
+  private static String serdeValue(Object bean, SerdeRegistry.KvPair kv) {
+    if ("type".equals(kv.getKey()) && bean instanceof TimestampType) {
+      return ((TimestampType) bean).getSerdeTypeName();
+    }
+    return kv.getValue();
   }
 
   public static class Modifier extends BeanSerializerModifier {

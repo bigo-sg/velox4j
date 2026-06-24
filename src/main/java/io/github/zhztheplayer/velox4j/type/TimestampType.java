@@ -18,32 +18,65 @@ package io.github.zhztheplayer.velox4j.type;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-@JsonInclude(JsonInclude.Include.NON_DEFAULT)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class TimestampType extends Type {
-  private final int precision;
-  private final boolean localZoned;
+  private final Integer precision;
+  private final Boolean localZoned;
 
   public TimestampType() {
-    this(0, false);
+    this(null, null);
+  }
+
+  public TimestampType(Integer precision, Boolean localZoned) {
+    this(precision, localZoned, null);
   }
 
   @JsonCreator
   public TimestampType(
-      @JsonProperty("precision") int precision, @JsonProperty("localZoned") boolean localZoned) {
+      @JsonProperty("precision") Integer precision,
+      @JsonProperty("localZoned") Boolean localZoned,
+      @JsonProperty("type") String serdeTypeName) {
     this.precision = precision;
-    this.localZoned = localZoned;
+    this.localZoned =
+        Boolean.TRUE.equals(localZoned) || "FLINK_TIMESTAMP_LTZ".equals(serdeTypeName)
+            ? true
+            : null;
+  }
+
+  @JsonIgnore
+  public int getPrecision() {
+    return precision == null ? 0 : precision;
   }
 
   @JsonGetter("precision")
-  public int getPrecision() {
+  public Integer getSerializedPrecision() {
     return precision;
   }
 
-  @JsonGetter("localZoned")
+  @JsonIgnore
   public boolean isLocalZoned() {
+    return localZoned != null && localZoned;
+  }
+
+  @JsonIgnore
+  public Boolean getSerializedLocalZoned() {
     return localZoned;
+  }
+
+  @JsonIgnore
+  public boolean hasFlinkTimestampMetadata() {
+    return precision != null || localZoned != null;
+  }
+
+  @JsonIgnore
+  public String getSerdeTypeName() {
+    if (!hasFlinkTimestampMetadata()) {
+      return "TIMESTAMP";
+    }
+    return isLocalZoned() ? "FLINK_TIMESTAMP_LTZ" : "FLINK_TIMESTAMP";
   }
 }
