@@ -16,12 +16,12 @@
  */
 
 #include "StatefulQueryExecutor.h"
-#include <exception>
 #include <folly/json.h>
 #include <folly/json/dynamic.h>
 #include <folly/json/json.h>
 #include <velox/experimental/stateful/state/RocksDBStateBackend.h>
 #include <velox/experimental/stateful/state/StateBackend.h>
+#include <exception>
 #include <string>
 #include <utility>
 #include "velox4j/query/Query.h"
@@ -155,11 +155,11 @@ void StatefulSerialTask::initializeState(
 }
 
 void StatefulSerialTask::snapshotState(long checkpointId) {
-  task_->snapshotState();
+  sourceStateSnapshots_ = task_->snapshotState(checkpointId);
 }
 
 std::vector<std::string> StatefulSerialTask::snapshotSourceState() {
-  return task_->snapshotSourceState();
+  return sourceStateSnapshots_;
 }
 
 std::vector<std::string> StatefulSerialTask::notifyCheckpointComplete(
