@@ -75,6 +75,7 @@ class StatefulSerialTask : public UpIterator {
   MemoryManager* const memoryManager_;
   std::shared_ptr<const Query> query_;
   std::shared_ptr<facebook::velox::stateful::StatefulTask> task_;
+  std::vector<std::string> sourceStateSnapshots_;
   facebook::velox::stateful::StreamElementPtr pending_{nullptr};
   facebook::velox::ContinueFuture blockingFuture_{
       facebook::velox::ContinueFuture::makeEmpty()};
