@@ -34,11 +34,6 @@
 #include <velox/connectors/nexmark/NexmarkConnectorSplit.h>
 #include <velox/connectors/print/PrintConnector.h>
 #include <velox/connectors/print/PrintTableHandle.h>
-#include <velox/connectors/from_elements/FromElementsConnector.h>
-#include <velox/connectors/from_elements/FromElementsConnectorSplit.h>
-#include <velox/connectors/from_elements/FromElementsTableHandle.h>
-#include <velox/connectors/filesystem/FileSystemConnector.h>
-#include <velox/connectors/filesystem/FileSystemInsertTableHandle.h>
 #include <velox/connectors/pulsar/PulsarConnector.h>
 #include <velox/connectors/pulsar/PulsarConnectorSplit.h>
 #include <velox/connectors/pulsar/PulsarTableHandle.h>
@@ -54,12 +49,12 @@
 #include <velox/experimental/stateful/state/RocksDBStateBackend.h>
 #include <velox/experimental/stateful/state/StateBackend.h>
 #include <velox/experimental/stateful/udf/Register.h>
+#include <velox/functions/lib/Re2Functions.h>
 #include <velox/functions/prestosql/aggregates/RegisterAggregateFunctions.h>
 #include <velox/functions/prestosql/window/WindowFunctionsRegistration.h>
 #include <velox/functions/sparksql/aggregates/Register.h>
 #include <velox/functions/sparksql/registration/Register.h>
 #include <velox/functions/sparksql/window/WindowFunctionsRegistration.h>
-#include <velox/functions/lib/Re2Functions.h>
 #include <velox/connectors/fuzzer/DiscardDataSink.cpp>
 #include <velox/connectors/fuzzer/FuzzerConnector.cpp>
 #include <velox/vector/fuzzer/ConstrainedVectorGenerator.cpp>

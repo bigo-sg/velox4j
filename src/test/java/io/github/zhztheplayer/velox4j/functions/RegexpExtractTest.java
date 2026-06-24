@@ -47,6 +47,7 @@ import io.github.zhztheplayer.velox4j.memory.AllocationListener;
 import io.github.zhztheplayer.velox4j.memory.MemoryManager;
 import io.github.zhztheplayer.velox4j.session.Session;
 import io.github.zhztheplayer.velox4j.test.Velox4jTests;
+import io.github.zhztheplayer.velox4j.type.BooleanType;
 import io.github.zhztheplayer.velox4j.type.IntegerType;
 import io.github.zhztheplayer.velox4j.type.VarCharType;
 import io.github.zhztheplayer.velox4j.variant.IntegerValue;
@@ -110,28 +111,61 @@ public class RegexpExtractTest {
     return evaluator.eval(sv, input);
   }
 
+  private BaseVector evalRegexpExtractIsNotNull(RowVector input, String pattern, int groupIdx) {
+    SelectivityVector sv = session.selectivityVectorOps().create(input.getSize());
+    CallTypedExpr regexpExpr =
+        new CallTypedExpr(
+            new VarCharType(),
+            List.of(
+                FieldAccessTypedExpr.create(new VarCharType(), "c0"),
+                new ConstantTypedExpr(new VarCharType(), new VarCharValue(pattern), null),
+                new ConstantTypedExpr(new IntegerType(), new IntegerValue(groupIdx), null)),
+            "regexp_extract");
+    CallTypedExpr isNotNullExpr =
+        new CallTypedExpr(new BooleanType(), List.of(regexpExpr), "isnotnull");
+    Evaluation eval = new Evaluation(isNotNullExpr, Config.empty(), ConnectorConfig.empty());
+    Evaluator evaluator = session.evaluationOps().createEvaluator(eval);
+    return evaluator.eval(sv, input);
+  }
+
   @Test
   public void testRegexpExtractReturnsNullOnNoMatch() {
-    RowVector input = makeVarcharRowVector("no_match_here");
-    BaseVector result = evalRegexpExtract(input, "channel_id=([^&]*)", 1);
-    try (BufferAllocator alloc = new RootAllocator();
-        FieldVector fv = Arrow.toArrowVector(alloc, result)) {
-      Assert.assertEquals(1, fv.getValueCount());
-      Assert.assertTrue("Expected null for no match", fv.isNull(0));
+    try (RowVector input = makeVarcharRowVector("no_match_here")) {
+      BaseVector result = evalRegexpExtract(input, "channel_id=([^&]*)", 1);
+      try (BufferAllocator alloc = new RootAllocator();
+          FieldVector fv = Arrow.toArrowVector(alloc, result)) {
+        Assert.assertEquals(1, fv.getValueCount());
+        Assert.assertTrue("Expected null for no match", fv.isNull(0));
+      }
     }
   }
 
   @Test
   public void testRegexpExtractReturnsValueOnMatch() {
-    RowVector input = makeVarcharRowVector("url?channel_id=123&other=1");
-    BaseVector result = evalRegexpExtract(input, "channel_id=([^&]*)", 1);
-    try (BufferAllocator alloc = new RootAllocator();
-        FieldVector fv = Arrow.toArrowVector(alloc, result)) {
-      Assert.assertEquals(1, fv.getValueCount());
-      Assert.assertFalse("Expected non-null for match", fv.isNull(0));
-      VarCharVector varCharVec = (VarCharVector) fv;
-      String value = new String(varCharVec.get(0), StandardCharsets.UTF_8);
-      Assert.assertEquals("123", value);
+    try (RowVector input = makeVarcharRowVector("url?channel_id=123&other=1")) {
+      BaseVector result = evalRegexpExtract(input, "channel_id=([^&]*)", 1);
+      try (BufferAllocator alloc = new RootAllocator();
+          FieldVector fv = Arrow.toArrowVector(alloc, result)) {
+        Assert.assertEquals(1, fv.getValueCount());
+        Assert.assertFalse("Expected non-null for match", fv.isNull(0));
+        VarCharVector varCharVec = (VarCharVector) fv;
+        String value = new String(varCharVec.get(0), StandardCharsets.UTF_8);
+        Assert.assertEquals("123", value);
+      }
+    }
+  }
+
+  @Test
+  public void testRegexpExtractIsNotNullReturnsFalseOnNoMatch() {
+    try (RowVector input = makeVarcharRowVector("no_match_here")) {
+      BaseVector result = evalRegexpExtractIsNotNull(input, "channel_id=([^&]*)", 1);
+      try (BufferAllocator alloc = new RootAllocator();
+          FieldVector fv = Arrow.toArrowVector(alloc, result)) {
+        Assert.assertEquals(1, fv.getValueCount());
+        Assert.assertFalse(
+            "Expected isnotnull to be false on no match (so WHERE ... IS NOT NULL filters it out)",
+            (Boolean) fv.getObject(0));
+      }
     }
   }
 }
