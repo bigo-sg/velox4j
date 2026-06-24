@@ -216,6 +216,23 @@ void snapshotState(JNIEnv* env, jobject javaThis, jlong itrId, jlong context) {
   JNI_METHOD_END()
 }
 
+jobject snapshotSourceState(JNIEnv* env, jobject javaThis, jlong itrId) {
+  JNI_METHOD_START
+  auto itr = ObjectStore::retrieve<StatefulSerialTask>(itrId);
+  std::vector<std::string> states = itr->snapshotSourceState();
+  jclass stringClass = env->FindClass("java/lang/String");
+  jobjectArray result =
+      env->NewObjectArray(states.size(), stringClass, nullptr);
+  for (size_t i = 0; i < states.size(); ++i) {
+    jstring str = env->NewStringUTF(states[i].c_str());
+    env->SetObjectArrayElement(result, i, str);
+    env->DeleteLocalRef(str);
+  }
+  env->DeleteLocalRef(stringClass);
+  return result;
+  JNI_METHOD_END(nullptr)
+}
+
 jobject notifyCheckpointComplete(
     JNIEnv* env,
     jobject javaThis,
@@ -533,6 +550,12 @@ void JniWrapper::initialize(JNIEnv* env) {
       (void*)snapshotState,
       kTypeVoid,
       kTypeLong,
+      kTypeLong,
+      nullptr);
+  addNativeMethod(
+      "snapshotSourceState",
+      (void*)snapshotSourceState,
+      "[Ljava/lang/String;",
       kTypeLong,
       nullptr);
   addNativeMethod(

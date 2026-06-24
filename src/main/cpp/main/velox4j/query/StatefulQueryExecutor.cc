@@ -158,6 +158,10 @@ void StatefulSerialTask::snapshotState(long checkpointId) {
   task_->snapshotState();
 }
 
+std::vector<std::string> StatefulSerialTask::snapshotSourceState() {
+  return task_->snapshotSourceState();
+}
+
 std::vector<std::string> StatefulSerialTask::notifyCheckpointComplete(
     long checkpointId) {
   return task_->notifyCheckpointComplete(checkpointId);

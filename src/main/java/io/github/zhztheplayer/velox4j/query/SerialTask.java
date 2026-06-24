@@ -92,6 +92,10 @@ public class SerialTask implements UpIterator {
     jniApi.snapshotState(this, context);
   }
 
+  public String[] snapshotSourceState() {
+    return jniApi.snapshotSourceState(this);
+  }
+
   public String[] notifyCheckpointComplete(long checkpointId) {
     return jniApi.notifyCheckpointComplete(this, checkpointId);
   }

@@ -113,6 +113,10 @@ public final class JniApi {
     jni.snapshotState(itr.id(), context);
   }
 
+  public String[] snapshotSourceState(UpIterator itr) {
+    return jni.snapshotSourceState(itr.id());
+  }
+
   public String[] notifyCheckpointComplete(UpIterator itr, long checkpointId) {
     return jni.notifyCheckpointComplete(itr.id(), checkpointId);
   }
