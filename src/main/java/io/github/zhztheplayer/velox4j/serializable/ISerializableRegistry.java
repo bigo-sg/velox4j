@@ -55,11 +55,13 @@ import io.github.zhztheplayer.velox4j.plan.StreamWindowAggregationNode;
 import io.github.zhztheplayer.velox4j.plan.StreamWindowJoinNode;
 import io.github.zhztheplayer.velox4j.plan.StreamWindowPartitionFunctionSpec;
 import io.github.zhztheplayer.velox4j.plan.TableScanNode;
+import io.github.zhztheplayer.velox4j.plan.TableScanWithWatermarkNode;
 import io.github.zhztheplayer.velox4j.plan.TableWriteNode;
 import io.github.zhztheplayer.velox4j.plan.TopNNode;
 import io.github.zhztheplayer.velox4j.plan.TopNRowNumberNode;
 import io.github.zhztheplayer.velox4j.plan.ValuesNode;
 import io.github.zhztheplayer.velox4j.plan.WatermarkAssignerNode;
+import io.github.zhztheplayer.velox4j.plan.WatermarkPushDownSpec;
 import io.github.zhztheplayer.velox4j.plan.WindowNode;
 import io.github.zhztheplayer.velox4j.query.Query;
 import io.github.zhztheplayer.velox4j.serde.Serde;
@@ -187,6 +189,7 @@ public final class ISerializableRegistry {
   private static void registerPlanNodes() {
     NAME_REGISTRY.registerClass("ValuesNode", ValuesNode.class);
     NAME_REGISTRY.registerClass("TableScanNode", TableScanNode.class);
+    NAME_REGISTRY.registerClass("TableScanWithWatermarkNode", TableScanWithWatermarkNode.class);
     NAME_REGISTRY.registerClass("Aggregate", Aggregate.class);
     NAME_REGISTRY.registerClass("AggregationNode", AggregationNode.class);
     NAME_REGISTRY.registerClass("ProjectNode", ProjectNode.class);
@@ -196,6 +199,7 @@ public final class ISerializableRegistry {
     NAME_REGISTRY.registerClass("LimitNode", LimitNode.class);
     NAME_REGISTRY.registerClass("TableWriteNode", TableWriteNode.class);
     NAME_REGISTRY.registerClass("WatermarkAssignerNode", WatermarkAssignerNode.class);
+    NAME_REGISTRY.registerClass("WatermarkPushDownSpec", WatermarkPushDownSpec.class);
     NAME_REGISTRY.registerClass("StatefulPlanNode", StatefulPlanNode.class);
     NAME_REGISTRY.registerClass("EmptyNode", EmptyNode.class);
     NAME_REGISTRY.registerClass("StreamJoinNode", StreamJoinNode.class);
