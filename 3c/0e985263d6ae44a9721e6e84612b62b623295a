@@ -1,0 +1,21 @@
+.github/workflows/build.yml
+  s_2f3910931a231d::t_85c6e82bb559cb 1-62,64,66-73
+  s_2f3910931a231d::t_51854675a3bde2 63
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.13",
+  "base_commit_sha": "3c0e985263d6ae44a9721e6e84612b62b623295a",
+  "prompts": {},
+  "logical_commit_id": "3c0e985263d6ae44a9721e6e84612b62b623295a",
+  "sessions": {
+    "s_2f3910931a231d": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_101cc0f07ffehex9BnnRL96thY",
+        "model": "deepseek-v4-flash-free"
+      },
+      "human_author": "lgbo-ustc <lgbo.ustc@gmail.com>"
+    }
+  }
+}
