@@ -60,6 +60,11 @@ public class StatefulRecord extends StatefulElement {
     return true;
   }
 
+  @Override
+  public boolean isBarrier() {
+    return false;
+  }
+
   public boolean hasTimestamp() {
     return hasTimestamp;
   }

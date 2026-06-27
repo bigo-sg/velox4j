@@ -183,6 +183,21 @@ jobject statefulTaskGet(JNIEnv* env, jobject javaThis, jlong itrId) {
     env->DeleteLocalRef(id);
     env->DeleteLocalRef(resultClass);
     return result;
+  } else if (element->isBarrier()) {
+    auto barrier = std::static_pointer_cast<stateful::Barrier>(element);
+
+    jclass resultClass = env->FindClass(
+        "io/github/zhztheplayer/velox4j/stateful/StatefulBarrier");
+    jmethodID constructor =
+        env->GetMethodID(resultClass, "<init>", "(Ljava/lang/String;J)V");
+
+    jstring id = env->NewStringUTF(barrier->nodeId().c_str());
+    jobject result =
+        env->NewObject(resultClass, constructor, id, barrier->checkpointId());
+
+    env->DeleteLocalRef(id);
+    env->DeleteLocalRef(resultClass);
+    return result;
   } else {
     VELOX_CHECK(element->isRecord());
     auto record = std::static_pointer_cast<stateful::StreamRecord>(element);
@@ -348,6 +363,18 @@ void notifyCheckpointAborted(
   JNI_METHOD_START
   auto itr = ObjectStore::retrieve<StatefulSerialTask>(itrId);
   itr->notifyCheckpointAborted(checkpointId);
+  JNI_METHOD_END()
+}
+
+
+void injectBarrier(
+    JNIEnv* env,
+    jobject javaThis,
+    jlong itrId,
+    jlong checkpointId) {
+  JNI_METHOD_START
+  auto itr = ObjectStore::retrieve<StatefulSerialTask>(itrId);
+  itr->injectBarrier(checkpointId);
   JNI_METHOD_END()
 }
 
@@ -667,6 +694,13 @@ void JniWrapper::initialize(JNIEnv* env) {
   addNativeMethod(
       "notifyCheckpointAborted",
       (void*)notifyCheckpointAborted,
+      kTypeVoid,
+      kTypeLong,
+      kTypeLong,
+      nullptr);
+  addNativeMethod(
+      "injectBarrier",
+      (void*)injectBarrier,
       kTypeVoid,
       kTypeLong,
       kTypeLong,

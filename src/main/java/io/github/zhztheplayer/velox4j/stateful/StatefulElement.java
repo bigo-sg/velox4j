@@ -31,12 +31,20 @@ public abstract class StatefulElement {
 
   public abstract boolean isRecord();
 
+  public boolean isBarrier() {
+    return false;
+  }
+
   public StatefulWatermark asWatermark() {
     return (StatefulWatermark) this;
   }
 
   public StatefulRecord asRecord() {
     return (StatefulRecord) this;
+  }
+
+  public StatefulBarrier asBarrier() {
+    return (StatefulBarrier) this;
   }
 
   public void close() {}

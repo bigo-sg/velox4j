@@ -76,6 +76,8 @@ final class JniWrapper {
 
   native void notifyCheckpointAborted(long id, long checkpointId);
 
+  native void injectBarrier(long id, long checkpointId);
+
   native long createBlockingQueue();
 
   // For BaseVector / RowVector / SelectivityVector.

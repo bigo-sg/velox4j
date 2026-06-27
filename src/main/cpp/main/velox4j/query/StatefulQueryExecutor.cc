@@ -170,7 +170,6 @@ void StatefulSerialTask::snapshotState(long checkpointId) {
 std::vector<std::string> StatefulSerialTask::snapshotSourceState() {
   return sourceStateSnapshots_;
 }
-}
 
 std::vector<std::string> StatefulSerialTask::notifyCheckpointComplete(
     long checkpointId) {
@@ -231,6 +230,11 @@ StatefulQueryExecutor::StatefulQueryExecutor(
 
 std::unique_ptr<StatefulSerialTask> StatefulQueryExecutor::execute() const {
   return std::make_unique<StatefulSerialTask>(memoryManager_, query_);
+}
+
+
+void StatefulSerialTask::injectBarrier(long checkpointId) {
+  task_->injectBarrier(checkpointId);
 }
 
 } // namespace velox4j

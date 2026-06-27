@@ -122,6 +122,11 @@ public class SerialTask implements UpIterator {
     jniApi.notifyCheckpointAborted(this, checkpointId);
   }
 
+  // This method is for Flink
+  public void injectBarrier(long checkpointId) {
+    jniApi.injectBarrier(this, checkpointId);
+  }
+
   @Override
   public void close() {
     StaticJniApi.get().releaseCppObject(this);

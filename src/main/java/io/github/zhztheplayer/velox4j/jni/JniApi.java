@@ -138,6 +138,11 @@ public final class JniApi {
     jni.notifyCheckpointAborted(itr.id(), checkpointId);
   }
 
+  // This method is for Flink
+  public void injectBarrier(UpIterator itr, long checkpointId) {
+    jni.injectBarrier(itr.id(), checkpointId);
+  }
+
   public ExternalStream createExternalStreamFromDownIterator(DownIterator itr) {
     return new ExternalStreams.GenericExternalStream(jni.createExternalStreamFromDownIterator(itr));
   }
