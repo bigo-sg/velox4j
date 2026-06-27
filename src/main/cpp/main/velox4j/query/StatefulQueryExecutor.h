@@ -44,6 +44,10 @@ class StatefulSerialTask : public UpIterator {
 
   facebook::velox::stateful::StreamElementPtr statefulGet();
 
+  void setNativeCallbackBridge(
+      std::shared_ptr<facebook::velox::stateful::NativeCallbackBridge>
+          callbackBridge);
+
   void notifyWatermark(long watermark, int index);
 
   void notifyWatermark(long watermark);
@@ -54,6 +58,8 @@ class StatefulSerialTask : public UpIterator {
       std::vector<std::string> checkpointRecords);
 
   std::vector<std::string> snapshotState(long checkpointId);
+
+  std::vector<std::string> snapshotSourceState();
 
   std::vector<std::string> notifyCheckpointComplete(long checkpointId);
 
@@ -75,7 +81,12 @@ class StatefulSerialTask : public UpIterator {
   MemoryManager* const memoryManager_;
   std::shared_ptr<const Query> query_;
   std::shared_ptr<facebook::velox::stateful::StatefulTask> task_;
+  std::vector<std::string> sourceStateSnapshots_;
   facebook::velox::stateful::StreamElementPtr pending_{nullptr};
+  facebook::velox::ContinueFuture blockingFuture_{
+      facebook::velox::ContinueFuture::makeEmpty()};
+  State pendingState_{State::AVAILABLE};
+  bool hasPendingState_{false};
   std::string outNodeId_;
 };
 

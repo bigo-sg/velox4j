@@ -25,16 +25,19 @@ public class PrintTableHandle extends ConnectorInsertTableHandle {
 
   private String tableName;
   private RowType dataColumns;
-  private String path;
+  private String printIdentifier;
+  private boolean isStdErr;
 
   @JsonCreator
   public PrintTableHandle(
       @JsonProperty("tableName") String tableName,
       @JsonProperty("dataColumns") RowType dataColumns,
-      @JsonProperty("path") String path) {
+      @JsonProperty("printIdentifier") String printIdentifier,
+      @JsonProperty("isStdErr") boolean isStdErr) {
     this.tableName = tableName;
     this.dataColumns = dataColumns;
-    this.path = path;
+    this.printIdentifier = printIdentifier == null ? "" : printIdentifier;
+    this.isStdErr = isStdErr;
   }
 
   @Override
@@ -52,8 +55,13 @@ public class PrintTableHandle extends ConnectorInsertTableHandle {
     return dataColumns;
   }
 
-  @JsonProperty("path")
-  public String getPath() {
-    return path;
+  @JsonProperty("printIdentifier")
+  public String getPrintIdentifier() {
+    return printIdentifier;
+  }
+
+  @JsonProperty("isStdErr")
+  public boolean isStdErr() {
+    return isStdErr;
   }
 }

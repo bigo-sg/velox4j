@@ -16,23 +16,42 @@
 */
 package io.github.zhztheplayer.velox4j.connector;
 
+import java.util.Map;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class NexmarkConnectorSplit extends ConnectorSplit {
-  private final NexmarkGeneratorConfig config;
+import io.github.zhztheplayer.velox4j.type.RowType;
+
+public class PulsarTableHandle extends ConnectorTableHandle {
+  private final String tableName;
+  private final RowType dataColumns;
+  private final Map<String, String> tableParameters;
 
   @JsonCreator
-  public NexmarkConnectorSplit(
+  public PulsarTableHandle(
       @JsonProperty("connectorId") String connectorId,
-      @JsonProperty("config") NexmarkGeneratorConfig config) {
-    super(connectorId, 0, true);
-    this.config = config;
+      @JsonProperty("tableName") String tableName,
+      @JsonProperty("dataColumns") RowType dataColumns,
+      @JsonProperty("tableParameters") Map<String, String> tableParameters) {
+    super(connectorId);
+    this.tableName = tableName;
+    this.dataColumns = dataColumns;
+    this.tableParameters = tableParameters;
   }
 
-  @JsonGetter("config")
-  public NexmarkGeneratorConfig getConfig() {
-    return config;
+  @JsonProperty("tableName")
+  public String getTableName() {
+    return tableName;
+  }
+
+  @JsonProperty("dataColumns")
+  public RowType getDataColumns() {
+    return dataColumns;
+  }
+
+  @JsonProperty("tableParameters")
+  public Map<String, String> getTableParameters() {
+    return tableParameters;
   }
 }

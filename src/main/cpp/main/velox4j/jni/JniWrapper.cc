@@ -41,6 +41,44 @@ namespace {
 const char* kClassName = "io/github/zhztheplayer/velox4j/jni/JniWrapper";
 const bool stateful = true;
 
+class JniNativeCallbackBridge : public stateful::NativeCallbackBridge {
+ public:
+  JniNativeCallbackBridge(JNIEnv* env, jobject callbackTarget) {
+    VELOX_CHECK_NOT_NULL(callbackTarget, "Native callback target is null");
+    callbackTarget_ = env->NewGlobalRef(callbackTarget);
+    VELOX_CHECK_NOT_NULL(
+        callbackTarget_, "Failed to create native callback target global ref");
+
+    jclass callbackTargetClass = env->GetObjectClass(callbackTarget);
+    VELOX_CHECK_NOT_NULL(
+        callbackTargetClass, "Failed to get native callback target class");
+    onProcessingTime_ =
+        env->GetMethodID(callbackTargetClass, "onProcessingTime", "(J)V");
+    env->DeleteLocalRef(callbackTargetClass);
+    VELOX_CHECK_NOT_NULL(
+        onProcessingTime_,
+        "Failed to find NativeCallbackTarget.onProcessingTime(long)");
+  }
+
+  ~JniNativeCallbackBridge() override {
+    if (callbackTarget_ != nullptr) {
+      JNIEnv* env = getLocalJNIEnv();
+      env->DeleteGlobalRef(callbackTarget_);
+      callbackTarget_ = nullptr;
+    }
+  }
+
+  void onProcessingTime(int64_t timestamp) override {
+    JNIEnv* env = getLocalJNIEnv();
+    env->CallVoidMethod(callbackTarget_, onProcessingTime_, timestamp);
+    checkException(env);
+  }
+
+ private:
+  jobject callbackTarget_{nullptr};
+  jmethodID onProcessingTime_{nullptr};
+};
+
 Session* sessionOf(JNIEnv* env, jobject javaThis) {
   static const auto* clazz = jniClassRegistry()->get(kClassName);
   static jmethodID methodId = clazz->getMethod("sessionId");
@@ -173,6 +211,29 @@ jobject statefulTaskGet(JNIEnv* env, jobject javaThis, jlong itrId) {
   JNI_METHOD_END(nullptr)
 }
 
+void bindNativeCallbackTarget(
+    JNIEnv* env,
+    jobject javaThis,
+    jlong itrId,
+    jobject callbackTarget) {
+  JNI_METHOD_START
+  auto itr = ObjectStore::retrieve<StatefulSerialTask>(itrId);
+  if (callbackTarget == nullptr) {
+    itr->setNativeCallbackBridge(nullptr);
+    return;
+  }
+  itr->setNativeCallbackBridge(
+      std::make_shared<JniNativeCallbackBridge>(env, callbackTarget));
+  JNI_METHOD_END()
+}
+
+void unbindNativeCallbackTarget(JNIEnv* env, jobject javaThis, jlong itrId) {
+  JNI_METHOD_START
+  auto itr = ObjectStore::retrieve<StatefulSerialTask>(itrId);
+  itr->setNativeCallbackBridge(nullptr);
+  JNI_METHOD_END()
+}
+
 void notifyIndexedWatermark(
     JNIEnv* env,
     jobject javaThis,
@@ -232,6 +293,23 @@ snapshotState(JNIEnv* env, jobject javaThis, jlong itrId, jlong context) {
       env->NewObjectArray(snapshots.size(), stringClass, nullptr);
   for (size_t i = 0; i < snapshots.size(); ++i) {
     jstring str = env->NewStringUTF(snapshots[i].c_str());
+    env->SetObjectArrayElement(result, i, str);
+    env->DeleteLocalRef(str);
+  }
+  env->DeleteLocalRef(stringClass);
+  return result;
+  JNI_METHOD_END(nullptr)
+}
+
+jobject snapshotSourceState(JNIEnv* env, jobject javaThis, jlong itrId) {
+  JNI_METHOD_START
+  auto itr = ObjectStore::retrieve<StatefulSerialTask>(itrId);
+  std::vector<std::string> states = itr->snapshotSourceState();
+  jclass stringClass = env->FindClass("java/lang/String");
+  jobjectArray result =
+      env->NewObjectArray(states.size(), stringClass, nullptr);
+  for (size_t i = 0; i < states.size(); ++i) {
+    jstring str = env->NewStringUTF(states[i].c_str());
     env->SetObjectArrayElement(result, i, str);
     env->DeleteLocalRef(str);
   }
@@ -530,6 +608,19 @@ void JniWrapper::initialize(JNIEnv* env) {
       kTypeLong,
       nullptr);
   addNativeMethod(
+      "bindNativeCallbackTarget",
+       (void*)bindNativeCallbackTarget,
+       kTypeVoid,
+       kTypeLong,
+       "io/github/zhztheplayer/velox4j/stateful/NativeCallbackTarget",
+       nullptr);
+  addNativeMethod(
+      "unbindNativeCallbackTarget",
+       (void*)unbindNativeCallbackTarget,
+       kTypeVoid,
+       kTypeLong,
+       nullptr);
+  addNativeMethod(
       "notifyIndexedWatermark",
       (void*)notifyIndexedWatermark,
       kTypeVoid,
@@ -558,6 +649,12 @@ void JniWrapper::initialize(JNIEnv* env) {
       (void*)snapshotState,
       "[Ljava/lang/String;",
       kTypeLong,
+      kTypeLong,
+      nullptr);
+  addNativeMethod(
+      "snapshotSourceState",
+      (void*)snapshotSourceState,
+      "[Ljava/lang/String;",
       kTypeLong,
       nullptr);
   addNativeMethod(

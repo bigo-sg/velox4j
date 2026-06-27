@@ -21,6 +21,7 @@
 #include <folly/json/json.h>
 #include <velox/experimental/stateful/state/RocksDBStateBackend.h>
 #include <velox/experimental/stateful/state/StateBackend.h>
+#include <exception>
 #include <string>
 #include <utility>
 #include "velox4j/query/Query.h"
@@ -62,7 +63,21 @@ StatefulSerialTask::StatefulSerialTask(
       std::move(queryCtx));
 
   task_ = task;
-  task_->init();
+  try {
+    task_->init();
+  } catch (...) {
+    const auto exception = std::current_exception();
+    try {
+      task_->finish();
+    } catch (...) {
+      try {
+        task_->requestCancel().wait();
+      } catch (...) {
+      }
+    }
+    task_.reset();
+    std::rethrow_exception(exception);
+  }
 }
 
 StatefulSerialTask::~StatefulSerialTask() {
@@ -73,15 +88,34 @@ StatefulSerialTask::~StatefulSerialTask() {
     //  mode.
     task_->requestCancel().wait();
   }
+  if (task_ != nullptr) {
+    task_->setNativeCallbackBridge(nullptr);
+  }
   task_.reset();
 }
 
 UpIterator::State StatefulSerialTask::advance() {
+  if (hasPendingState_) {
+    hasPendingState_ = false;
+    return pendingState_;
+  }
+  if (blockingFuture_.valid()) {
+    return State::BLOCKED;
+  }
   VELOX_CHECK_NULL(pending_);
   return advance0(false);
 }
 
-void StatefulSerialTask::wait() {}
+void StatefulSerialTask::wait() {
+  VELOX_CHECK(!hasPendingState_);
+  VELOX_CHECK_NULL(pending_);
+  if (blockingFuture_.valid()) {
+    std::move(blockingFuture_).wait(std::chrono::seconds(1));
+    blockingFuture_ = ContinueFuture::makeEmpty();
+  }
+  pendingState_ = advance0(true);
+  hasPendingState_ = true;
+}
 
 RowVectorPtr StatefulSerialTask::get() {
   VELOX_CHECK(false, "Should not call get for stateful task.");
@@ -96,6 +130,11 @@ stateful::StreamElementPtr StatefulSerialTask::statefulGet() {
   const auto out = std::move(pending_);
   pending_ = nullptr;
   return out;
+}
+
+void StatefulSerialTask::setNativeCallbackBridge(
+    std::shared_ptr<stateful::NativeCallbackBridge> callbackBridge) {
+  task_->setNativeCallbackBridge(std::move(callbackBridge));
 }
 
 void StatefulSerialTask::notifyWatermark(long watermark, int index) {
@@ -124,8 +163,13 @@ void StatefulSerialTask::initializeState(
   }
 }
 
-std::vector<std::string> StatefulSerialTask::snapshotState(long checkpointId) {
-  return task_->snapshotState(checkpointId);
+void StatefulSerialTask::snapshotState(long checkpointId) {
+  sourceStateSnapshots_ = task_->snapshotState(checkpointId);
+}
+
+std::vector<std::string> StatefulSerialTask::snapshotSourceState() {
+  return sourceStateSnapshots_;
+}
 }
 
 std::vector<std::string> StatefulSerialTask::notifyCheckpointComplete(
@@ -157,7 +201,18 @@ std::unique_ptr<SerialTaskStats> StatefulSerialTask::collectStats() {
 UpIterator::State StatefulSerialTask::advance0(bool wait) {
   while (true) {
     int32_t retCode = 0;
-    auto out = task_->next(retCode);
+    auto future = ContinueFuture::makeEmpty();
+    auto out = task_->next(&future, retCode);
+    if (future.valid()) {
+      VELOX_CHECK_NULL(
+          out, "Expected blocked state but got non-null stateful output");
+      if (!wait) {
+        blockingFuture_ = std::move(future);
+        return State::BLOCKED;
+      }
+      std::move(future).wait(std::chrono::seconds(1));
+      continue;
+    }
     if (out != nullptr) {
       pending_ = std::move(out);
       return State::AVAILABLE;

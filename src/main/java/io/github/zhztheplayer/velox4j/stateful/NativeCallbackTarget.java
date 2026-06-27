@@ -14,25 +14,9 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-package io.github.zhztheplayer.velox4j.connector;
+package io.github.zhztheplayer.velox4j.stateful;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonGetter;
-import com.fasterxml.jackson.annotation.JsonProperty;
-
-public class NexmarkConnectorSplit extends ConnectorSplit {
-  private final NexmarkGeneratorConfig config;
-
-  @JsonCreator
-  public NexmarkConnectorSplit(
-      @JsonProperty("connectorId") String connectorId,
-      @JsonProperty("config") NexmarkGeneratorConfig config) {
-    super(connectorId, 0, true);
-    this.config = config;
-  }
-
-  @JsonGetter("config")
-  public NexmarkGeneratorConfig getConfig() {
-    return config;
-  }
+/** Target for callbacks initiated by native stateful execution. */
+public interface NativeCallbackTarget {
+  void onProcessingTime(long timestamp);
 }

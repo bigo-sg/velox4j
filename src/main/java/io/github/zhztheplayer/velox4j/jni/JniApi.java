@@ -42,6 +42,7 @@ import io.github.zhztheplayer.velox4j.query.SerialTask;
 import io.github.zhztheplayer.velox4j.serde.Serde;
 import io.github.zhztheplayer.velox4j.serializable.ISerializable;
 import io.github.zhztheplayer.velox4j.serializable.ISerializableCo;
+import io.github.zhztheplayer.velox4j.stateful.NativeCallbackTarget;
 import io.github.zhztheplayer.velox4j.stateful.StatefulElement;
 import io.github.zhztheplayer.velox4j.stateful.StatefulRecord;
 import io.github.zhztheplayer.velox4j.type.RowType;
@@ -97,6 +98,14 @@ public final class JniApi {
     return result;
   }
 
+  public void bindNativeCallbackTarget(UpIterator itr, NativeCallbackTarget callbackTarget) {
+    jni.bindNativeCallbackTarget(itr.id(), callbackTarget);
+  }
+
+  public void unbindNativeCallbackTarget(UpIterator itr) {
+    jni.unbindNativeCallbackTarget(itr.id());
+  }
+
   public void notifyWatermark(UpIterator itr, long watermark, int index) {
     jni.notifyIndexedWatermark(itr.id(), watermark, index);
   }
@@ -115,6 +124,10 @@ public final class JniApi {
 
   public String[] snapshotState(UpIterator itr, long context) {
     return jni.snapshotState(itr.id(), context);
+  }
+
+  public String[] snapshotSourceState(UpIterator itr) {
+    return jni.snapshotSourceState(itr.id());
   }
 
   public String[] notifyCheckpointComplete(UpIterator itr, long checkpointId) {

@@ -16,6 +16,7 @@
 */
 package io.github.zhztheplayer.velox4j.serde;
 
+import java.util.Map;
 import java.util.OptionalLong;
 
 import org.junit.Assert;
@@ -95,6 +96,33 @@ public class ConnectorSerdeTest {
   }
 
   @Test
+  public void testPulsarTableHandle() {
+    final ConnectorTableHandle handle =
+        new PulsarTableHandle(
+            "connector-pulsar",
+            "persistent://public/default/orders",
+            SerdeTests.newSampleOutputType(),
+            Map.of("format", "json", "service.url", "pulsar://localhost:6650"));
+    SerdeTests.testISerializableRoundTrip(handle);
+  }
+
+  @Test
+  public void testPulsarConnectorSplit() {
+    final ConnectorSplit split =
+        new PulsarConnectorSplit(
+            "connector-pulsar",
+            "pulsar://localhost:6650",
+            "persistent://public/default/orders",
+            "velox4j-subscription",
+            "json",
+            3,
+            "1:2",
+            "3:4",
+            false);
+    SerdeTests.testISerializableRoundTrip(split);
+  }
+
+  @Test
   public void testExternalStreamConnectorSplit() {
     final ConnectorSplit split = new ExternalStreamConnectorSplit("id-1", 100);
     SerdeTests.testISerializableRoundTrip(split);
@@ -103,6 +131,20 @@ public class ConnectorSerdeTest {
   @Test
   public void testExternalStreamTableHandle() {
     final ExternalStreamTableHandle handle = new ExternalStreamTableHandle("id-1");
+    SerdeTests.testISerializableRoundTrip(handle);
+  }
+
+  @Test
+  public void testPrintTableHandle() {
+    final PrintTableHandle handle =
+        new PrintTableHandle("print-table", SerdeTests.newSampleOutputType(), "foo", true);
+    SerdeTests.testISerializableRoundTrip(handle);
+  }
+
+  @Test
+  public void testPrintTableHandleEmptyIdentifier() {
+    final PrintTableHandle handle =
+        new PrintTableHandle("print-table", SerdeTests.newSampleOutputType(), null, false);
     SerdeTests.testISerializableRoundTrip(handle);
   }
 
