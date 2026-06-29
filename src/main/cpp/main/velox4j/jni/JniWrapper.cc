@@ -585,17 +585,17 @@ void JniWrapper::initialize(JNIEnv* env) {
       nullptr);
   addNativeMethod(
       "bindNativeCallbackTarget",
-       (void*)bindNativeCallbackTarget,
-       kTypeVoid,
-       kTypeLong,
-       "io/github/zhztheplayer/velox4j/stateful/NativeCallbackTarget",
-       nullptr);
+      (void*)bindNativeCallbackTarget,
+      kTypeVoid,
+      kTypeLong,
+      "io/github/zhztheplayer/velox4j/stateful/NativeCallbackTarget",
+      nullptr);
   addNativeMethod(
       "unbindNativeCallbackTarget",
-       (void*)unbindNativeCallbackTarget,
-       kTypeVoid,
-       kTypeLong,
-       nullptr);
+      (void*)unbindNativeCallbackTarget,
+      kTypeVoid,
+      kTypeLong,
+      nullptr);
   addNativeMethod(
       "notifyIndexedWatermark",
       (void*)notifyIndexedWatermark,
