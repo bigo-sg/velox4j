@@ -60,7 +60,7 @@ jobs:
           path: '${{ env.HOST_CCACHE_DIR }}'
           key: ut-cpp-ut-streaming-ubuntu24-ccache-${{github.sha}}
 
-  ut-centos7:
+  ut-ubuntu24:
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     env:
@@ -71,19 +71,19 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: '${{ env.HOST_CCACHE_DIR }}'
-          key: ut-cpp-ut-centos7-ccache-${{github.sha}}
+          key: ut-cpp-ut-ubuntu24-ccache-${{github.sha}}
           restore-keys: |
-            ut-cpp-ut-centos7-ccache-
+            ut-cpp-ut-ubuntu24-ccache-
       - name: Run setup script / Build and run UTs
         run: |
-          docker run -v ${{ github.workspace }}:/work -w /work centos:7 bash -c "
-            export CCACHE_DIR=/work/.ccache
+          docker run -v ${{ github.workspace }}:/velox4j -w /velox4j ubuntu:24.04 bash -c "
+            export CCACHE_DIR=/velox4j/.ccache
             export CCACHE_MAXSIZE=3000M
-            bash .github/workflows/scripts/ut-cpp/setup-centos7.sh
+            bash .github/workflows/scripts/ut-cpp/setup-ubuntu24.sh
             bash src/main/cpp/test.sh
           "
       - name: Save Ccache
         uses: actions/cache/save@v4
         with:
           path: '${{ env.HOST_CCACHE_DIR }}'
-          key: ut-cpp-ut-centos7-ccache-${{github.sha}}
+          key: ut-cpp-ut-ubuntu24-ccache-${{github.sha}}

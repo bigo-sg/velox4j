@@ -65,15 +65,7 @@ jobs:
 
   ut-ubuntu24:
     if: github.event_name != 'pull_request'
-    strategy:
-      matrix:
-        runner: [
-          "ubuntu-latest",
-          "ubuntu-24.04-arm"
-        ]
-        exclude:
-          - runner: "ubuntu-24.04-arm"
-    runs-on: ${{ matrix.runner }}
+    runs-on: ubuntu-latest
     env:
       HOST_CCACHE_DIR: "${{ github.workspace }}/.ccache"
       CCACHE_MAXSIZE: 3000M
@@ -100,32 +92,3 @@ jobs:
         with:
           path: '${{ env.HOST_CCACHE_DIR }}'
           key: ut-java-ut-ubuntu24-${{runner.arch}}-ccache-${{github.sha}}
-
-  ut-centos7:
-    if: github.event_name != 'pull_request'
-    runs-on: ubuntu-latest
-    env:
-      HOST_CCACHE_DIR: "${{ github.workspace }}/.ccache"
-    steps:
-      - uses: actions/checkout@v4
-      - name: Restore Ccache
-        uses: actions/cache/restore@v4
-        with:
-          path: '${{ env.HOST_CCACHE_DIR }}'
-          key: ut-java-ut-centos7-ccache-${{github.sha}}
-          restore-keys: |
-            ut-java-ut-centos7-ccache-
-      - name: Run setup script / Build and run UTs
-        run: |
-          docker run -v ${{ github.workspace }}:/velox4j -w / centos:7 bash -c "
-            export CCACHE_DIR=/velox4j/.ccache
-            export CCACHE_MAXSIZE=3000M
-            cd /velox4j
-            bash .github/workflows/scripts/ut-java/setup-centos7.sh
-            mvn clean test
-          "
-      - name: Save Ccache
-        uses: actions/cache/save@v4
-        with:
-          path: '${{ env.HOST_CCACHE_DIR }}'
-          key: ut-java-ut-centos7-ccache-${{github.sha}}
