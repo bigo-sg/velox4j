@@ -37,3 +37,9 @@ add_executable(velox4j_blocking_queue_test
 target_link_libraries(
   velox4j_blocking_queue_test velox4j_test)
 add_test(velox4j_blocking_queue_test velox4j_blocking_queue_test)
+
+add_executable(velox4j_stateful_streaming_test
+               ${TEST_OBJECT_FILES} velox4j/query/StatefulStreamingTest.cc)
+target_link_libraries(
+  velox4j_stateful_streaming_test velox4j_test)
+add_test(velox4j_stateful_streaming_test velox4j_stateful_streaming_test)
