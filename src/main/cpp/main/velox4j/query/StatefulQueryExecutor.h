@@ -65,8 +65,6 @@ class StatefulSerialTask : public UpIterator {
 
   void notifyCheckpointAborted(long checkpointId);
 
-  void injectBarrier(long checkpointId);
-
   void addSplit(
       const facebook::velox::core::PlanNodeId& planNodeId,
       int32_t groupId,

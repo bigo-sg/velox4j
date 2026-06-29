@@ -37,9 +37,4 @@ public class StatefulWatermark extends StatefulElement {
   public boolean isRecord() {
     return false;
   }
-
-  @Override
-  public boolean isBarrier() {
-    return false;
-  }
 }
