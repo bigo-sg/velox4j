@@ -33,6 +33,7 @@ concurrency:
 jobs:
 
   ut-streaming-ubuntu24:
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     env:
       HOST_CCACHE_DIR: "${{ github.workspace }}/.ccache"
@@ -60,6 +61,7 @@ jobs:
           key: ut-cpp-ut-streaming-ubuntu24-ccache-${{github.sha}}
 
   ut-centos7:
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     env:
       HOST_CCACHE_DIR: "${{ github.workspace }}/.ccache"
