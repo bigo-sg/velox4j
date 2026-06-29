@@ -163,9 +163,8 @@ void StatefulSerialTask::initializeState(
   }
 }
 
-std::vector<std::string> StatefulSerialTask::snapshotState(long checkpointId) {
+void StatefulSerialTask::snapshotState(long checkpointId) {
   sourceStateSnapshots_ = task_->snapshotState(checkpointId);
-  return sourceStateSnapshots_;
 }
 
 std::vector<std::string> StatefulSerialTask::snapshotSourceState() {
