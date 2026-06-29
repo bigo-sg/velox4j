@@ -19,12 +19,45 @@ on:
   workflow_dispatch:
   schedule:
     - cron: "0 8 * * *"
+  pull_request:
+    types: [ opened, reopened, synchronize ]
+    paths:
+      - 'src/main/cpp/**'
+      - '.github/workflows/ut-cpp.yml'
+      - '.github/workflows/scripts/ut-cpp/**'
 
 concurrency:
   group: ${{ github.repository }}-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
+
+  ut-streaming-ubuntu24:
+    runs-on: ubuntu-latest
+    env:
+      HOST_CCACHE_DIR: "${{ github.workspace }}/.ccache"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore Ccache
+        uses: actions/cache/restore@v4
+        with:
+          path: '${{ env.HOST_CCACHE_DIR }}'
+          key: ut-cpp-ut-streaming-ubuntu24-ccache-${{github.sha}}
+          restore-keys: |
+            ut-cpp-ut-streaming-ubuntu24-ccache-
+      - name: Run setup script / Build and run streaming test
+        run: |
+          docker run -v ${{ github.workspace }}:/velox4j -w /velox4j ubuntu:24.04 bash -c "
+            export CCACHE_DIR=/velox4j/.ccache
+            export CCACHE_MAXSIZE=3000M
+            bash .github/workflows/scripts/ut-cpp/setup-ubuntu24.sh
+            bash src/main/cpp/test-streaming.sh
+          "
+      - name: Save Ccache
+        uses: actions/cache/save@v4
+        with:
+          path: '${{ env.HOST_CCACHE_DIR }}'
+          key: ut-cpp-ut-streaming-ubuntu24-ccache-${{github.sha}}
 
   ut-centos7:
     runs-on: ubuntu-latest
