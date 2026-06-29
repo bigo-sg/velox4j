@@ -20,6 +20,7 @@
 #include <velox/experimental/stateful/StatefulTask.h>
 #include <velox/experimental/stateful/StreamElement.h>
 #include <string>
+#include <vector>
 #include "Query.h"
 #include "velox4j/iterator/UpIterator.h"
 #include "velox4j/memory/MemoryManager.h"
@@ -53,9 +54,10 @@ class StatefulSerialTask : public UpIterator {
 
   void initializeState(
       long checkpointId,
-      std::string keyedStateBackendConfigString);
+      std::string keyedStateBackendConfigString,
+      std::vector<std::string> checkpointRecords);
 
-  void snapshotState(long checkpointId);
+  std::vector<std::string> snapshotState(long checkpointId);
 
   std::vector<std::string> snapshotSourceState();
 

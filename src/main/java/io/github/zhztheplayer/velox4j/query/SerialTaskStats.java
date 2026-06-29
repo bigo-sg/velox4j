@@ -62,4 +62,12 @@ public class SerialTaskStats {
     }
     return out.get(0);
   }
+
+  public List<ObjectNode> planStats() {
+    final List<ObjectNode> out = new ArrayList<>();
+    for (JsonNode each : planStatsDynamic) {
+      out.add((ObjectNode) each);
+    }
+    return out;
+  }
 }

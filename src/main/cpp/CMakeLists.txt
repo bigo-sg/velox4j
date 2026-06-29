@@ -84,7 +84,7 @@ else()
     GIT_REPOSITORY
     ${VELOX_SOURCE_URL}
     GIT_TAG
-    dd42008e5a4d05ca25eb1827b235f6a17fb8e35a)
+    ${VELOX_REF})
 endif()
 if(TARGET gflags::gflags_shared)
   get_target_property(GFLAGS_SHARED_LIBRARY gflags::gflags_shared IMPORTED_LOCATION_RELEASE)
@@ -110,7 +110,6 @@ foreach(ROCKSDB_TARGET rocksdb rocksdb-shared RocksDB::rocksdb RocksDB::rocksdb-
     endforeach()
   endif()
 endforeach()
-
 
 # Import JniHelpers.
 set(JNI_HELPERS_REPO zhztheplayer/JniHelpersCpp)
