@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-name: Java UT
+name: UT
 
 on:
   workflow_dispatch:
@@ -39,33 +39,54 @@ jobs:
     runs-on: ubuntu-latest
     env:
       HOST_CCACHE_DIR: "${{ github.workspace }}/.ccache"
-      CCACHE_MAXSIZE: 3000M
     steps:
       - uses: actions/checkout@v4
       - name: Restore Ccache
         uses: actions/cache/restore@v4
         with:
           path: '${{ env.HOST_CCACHE_DIR }}'
-          key: ut-java-ubuntu20-ccache
+          key: ut-ubuntu20-ccache
           restore-keys: |
-            ut-java-ubuntu20-ccache
-      - name: Run setup script / Build and run tests
+            ut-ubuntu20-ccache
+      - name: Setup / Build native / Run tests
         env:
           EVENT_NAME: ${{ github.event_name }}
         run: |
-          docker run -v ${{ github.workspace }}:/velox4j -w / -e EVENT_NAME ubuntu:20.04 bash -c "
+          docker run -v ${{ github.workspace }}:/velox4j -w /velox4j -e EVENT_NAME ubuntu:20.04 bash -c '
             export CCACHE_DIR=/velox4j/.ccache
             export CCACHE_MAXSIZE=3000M
-            cd /velox4j
+            export DEBIAN_FRONTEND=noninteractive
+
+            # 1. Install build dependencies.
             bash .github/workflows/scripts/ut-java/setup-ubuntu20.sh
-            if [ \"\$EVENT_NAME\" = \"pull_request\" ]; then
-              mvn clean test -Dtest=StatefulStreamingTest -DfailIfNoTests=false
+
+            # 2. Build native libraries (Velox + velox4j_shared) with ccache.
+            bash src/main/cpp/build.sh
+
+            if [ "$EVENT_NAME" = "pull_request" ]; then
+              # 3a. C++ streaming test: reconfigure with testing ON, build only the test target.
+              cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=/usr/local \
+                -DBoost_DIR=/usr/local/lib/cmake/Boost-1.84.0 \
+                -DVELOX4J_ENABLE_CCACHE=ON -DVELOX4J_BUILD_TESTING=ON \
+                -S src/main/cpp -B src/main/cpp/build
+              cmake --build src/main/cpp/build --target velox4j_stateful_streaming_test -j $(nproc)
+              src/main/cpp/build/test/velox4j_stateful_streaming_test
+
+              # 3b. Java streaming test: skip native build, reuse the already-built library.
+              mvn test -Dtest=StatefulStreamingTest -DfailIfNoTests=false -Dexec.skip=true
             else
-              mvn clean test
+              # Full test suite.
+              cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=/usr/local \
+                -DBoost_DIR=/usr/local/lib/cmake/Boost-1.84.0 \
+                -DVELOX4J_ENABLE_CCACHE=ON -DVELOX4J_BUILD_TESTING=ON \
+                -S src/main/cpp -B src/main/cpp/build
+              cmake --build src/main/cpp/build -j $(nproc)
+              cd src/main/cpp/build/test && ctest -V && cd /velox4j
+              mvn test -Dexec.skip=true
             fi
-          "
+          '
       - name: Save Ccache
         uses: actions/cache/save@v4
         with:
           path: '${{ env.HOST_CCACHE_DIR }}'
-          key: ut-java-ubuntu20-ccache
+          key: ut-ubuntu20-ccache
