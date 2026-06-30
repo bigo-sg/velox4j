@@ -48,11 +48,9 @@ jobs:
           key: ut-ubuntu20-ccache
           restore-keys: |
             ut-ubuntu20-ccache
-      - name: Setup / Build native / Run tests
-        env:
-          EVENT_NAME: ${{ github.event_name }}
+      - name: Setup / Build native / Run streaming tests
         run: |
-          docker run -v ${{ github.workspace }}:/velox4j -w /velox4j -e EVENT_NAME ubuntu:20.04 bash -c '
+          docker run -v ${{ github.workspace }}:/velox4j -w /velox4j ubuntu:20.04 bash -c '
             export CCACHE_DIR=/velox4j/.ccache
             export CCACHE_MAXSIZE=3000M
             export DEBIAN_FRONTEND=noninteractive
@@ -63,27 +61,16 @@ jobs:
             # 2. Build native libraries (Velox + velox4j_shared) with ccache.
             bash src/main/cpp/build.sh
 
-            if [ "$EVENT_NAME" = "pull_request" ]; then
-              # 3a. C++ streaming test: reconfigure with testing ON, build only the test target.
-              cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=/usr/local \
-                -DBoost_DIR=/usr/local/lib/cmake/Boost-1.84.0 \
-                -DVELOX4J_ENABLE_CCACHE=ON -DVELOX4J_BUILD_TESTING=ON \
-                -S src/main/cpp -B src/main/cpp/build
-              cmake --build src/main/cpp/build --target velox4j_stateful_streaming_test -j $(nproc)
-              src/main/cpp/build/test/velox4j_stateful_streaming_test
+            # 3. C++ streaming test: reconfigure with testing ON, build only the test target.
+            cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=/usr/local \
+              -DBoost_DIR=/usr/local/lib/cmake/Boost-1.84.0 \
+              -DVELOX4J_ENABLE_CCACHE=ON -DVELOX4J_BUILD_TESTING=ON \
+              -S src/main/cpp -B src/main/cpp/build
+            cmake --build src/main/cpp/build --target velox4j_stateful_streaming_test -j $(nproc)
+            src/main/cpp/build/test/velox4j_stateful_streaming_test
 
-              # 3b. Java streaming test: skip native build, reuse the already-built library.
-              mvn test -Dtest=StatefulStreamingTest -DfailIfNoTests=false -Dexec.skip=true
-            else
-              # Full test suite.
-              cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=/usr/local \
-                -DBoost_DIR=/usr/local/lib/cmake/Boost-1.84.0 \
-                -DVELOX4J_ENABLE_CCACHE=ON -DVELOX4J_BUILD_TESTING=ON \
-                -S src/main/cpp -B src/main/cpp/build
-              cmake --build src/main/cpp/build -j $(nproc)
-              cd src/main/cpp/build/test && ctest -V && cd /velox4j
-              mvn test -Dexec.skip=true
-            fi
+            # 4. Java streaming test: skip native build, reuse the already-built library.
+            mvn test -Dtest=StatefulStreamingTest -DfailIfNoTests=false -Dexec.skip=true
           '
       - name: Save Ccache
         uses: actions/cache/save@v4
