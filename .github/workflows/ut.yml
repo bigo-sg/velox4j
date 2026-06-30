@@ -58,8 +58,8 @@ jobs:
             # 1. Install build dependencies.
             bash .github/workflows/scripts/ut-java/setup-ubuntu20.sh
 
-            # 2. Build native libraries (Velox + velox4j_shared) with ccache.
-            bash src/main/cpp/build.sh
+            # 2. Build native + run Java streaming test (Maven calls build.sh internally).
+            mvn test -Dtest=StatefulStreamingTest -DfailIfNoTests=false
 
             # 3. C++ streaming test: reconfigure with testing ON, build only the test target.
             cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=/usr/local \
@@ -68,9 +68,6 @@ jobs:
               -S src/main/cpp -B src/main/cpp/build
             cmake --build src/main/cpp/build --target velox4j_stateful_streaming_test -j $(nproc)
             src/main/cpp/build/test/velox4j_stateful_streaming_test
-
-            # 4. Java streaming test: skip native build, reuse the already-built library.
-            mvn test -Dtest=StatefulStreamingTest -DfailIfNoTests=false -Dexec.skip=true
           '
       - name: Save Ccache
         uses: actions/cache/save@v4
