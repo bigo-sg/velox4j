@@ -1,13 +1,17 @@
 # GitLab CI/CD for velox4j streaming tests.
 # Mirror triggers: GitHub PRs are mirrored as merge requests, which
 # automatically trigger this pipeline.
+#
+# Prerequisite: build the CI image on the runner host:
+#   docker build -t velox4j-ci:ubuntu20 \
+#     -f .github/workflows/scripts/Dockerfile.ubuntu20 \
+#     .github/workflows/scripts/
 
 variables:
   CCACHE_DIR: "/data/build/ccache"
   CCACHE_MAXSIZE: "3G"
   DEBIAN_FRONTEND: "noninteractive"
 
-# Cancel outdated pipelines on the same ref.
 workflow:
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
@@ -19,16 +23,13 @@ streaming-tests:
   tags:
     - velox4j
   stage: test
-  image: ubuntu:20.04
+  image: velox4j-ci:ubuntu20
   interruptible: true
   script:
-    # 1. Install build dependencies.
-    - bash .github/workflows/scripts/ut-java/setup-ubuntu20.sh
-
-    # 2. Build native + run Java streaming test (Maven calls build.sh internally).
+    # 1. Build native + run Java streaming test (Maven calls build.sh internally).
     - mvn test -Dtest=StatefulStreamingTest -DfailIfNoTests=false
 
-    # 3. C++ streaming test: reconfigure with testing ON, build only the test target.
+    # 2. C++ streaming test: reconfigure with testing ON, build only the test target.
     - >
       cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=/usr/local
       -DBoost_DIR=/usr/local/lib/cmake/Boost-1.84.0

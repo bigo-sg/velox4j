@@ -1,0 +1,13 @@
+FROM ubuntu:20.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Copy and run the setup script.
+COPY common/setup-ubuntu20.sh /tmp/setup-ubuntu20.sh
+RUN bash /tmp/setup-ubuntu20.sh && rm -rf /tmp/velox-setup /tmp/setup-ubuntu20.sh
+
+# Set default compilers.
+ENV CC=/usr/bin/gcc-11
+ENV CXX=/usr/bin/g++-11
+
+WORKDIR /velox4j
