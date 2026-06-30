@@ -43,22 +43,22 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: '${{ env.HOST_CCACHE_DIR }}'
-          key: ut-cpp-ubuntu24-ccache
+          key: ut-cpp-ubuntu20-ccache
           restore-keys: |
-            ut-cpp-ubuntu24-ccache
+            ut-cpp-ubuntu20-ccache
       - name: Run setup script / Build and run streaming test
         run: |
-          docker run -v ${{ github.workspace }}:/velox4j -w /velox4j ubuntu:24.04 bash -c "
+          docker run -v ${{ github.workspace }}:/velox4j -w /velox4j ubuntu:20.04 bash -c "
             export CCACHE_DIR=/velox4j/.ccache
             export CCACHE_MAXSIZE=3000M
-            bash .github/workflows/scripts/ut-cpp/setup-ubuntu24.sh
+            bash .github/workflows/scripts/ut-cpp/setup-ubuntu20.sh
             bash src/main/cpp/test-streaming.sh
           "
       - name: Save Ccache
         uses: actions/cache/save@v4
         with:
           path: '${{ env.HOST_CCACHE_DIR }}'
-          key: ut-cpp-ubuntu24-ccache
+          key: ut-cpp-ubuntu20-ccache
 
   ut-ubuntu24:
     if: github.event_name != 'pull_request'
@@ -71,19 +71,19 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: '${{ env.HOST_CCACHE_DIR }}'
-          key: ut-cpp-ubuntu24-ccache
+          key: ut-cpp-ubuntu20-ccache
           restore-keys: |
-            ut-cpp-ubuntu24-ccache
+            ut-cpp-ubuntu20-ccache
       - name: Run setup script / Build and run UTs
         run: |
-          docker run -v ${{ github.workspace }}:/velox4j -w /velox4j ubuntu:24.04 bash -c "
+          docker run -v ${{ github.workspace }}:/velox4j -w /velox4j ubuntu:20.04 bash -c "
             export CCACHE_DIR=/velox4j/.ccache
             export CCACHE_MAXSIZE=3000M
-            bash .github/workflows/scripts/ut-cpp/setup-ubuntu24.sh
+            bash .github/workflows/scripts/ut-cpp/setup-ubuntu20.sh
             bash src/main/cpp/test.sh
           "
       - name: Save Ccache
         uses: actions/cache/save@v4
         with:
           path: '${{ env.HOST_CCACHE_DIR }}'
-          key: ut-cpp-ubuntu24-ccache
+          key: ut-cpp-ubuntu20-ccache

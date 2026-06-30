@@ -1,0 +1,1 @@
+../common/setup-ubuntu20.sh
