@@ -31,14 +31,14 @@ done
 for file in "$INSTALL_DESTINATION"/*
 do
   echo "Removing RUNPATH on file: $file ..."
-  patchelf --remove-rpath "$file"
+  patchelf --remove-rpath "$file" || echo "SKIP (file too large for patchelf): $file"
 done
 
 # 2. Add new RUNPATH sections with '$ORIGIN'.
 for file in "$INSTALL_DESTINATION"/*
 do
   echo "Adding RUNPATH on file: $file ..."
-  patchelf --set-rpath '$ORIGIN' "$file"
+  patchelf --set-rpath '$ORIGIN' "$file" || echo "SKIP (file too large for patchelf): $file"
 done
 
 # 3. Print new ELF headers.
