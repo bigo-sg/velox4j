@@ -32,13 +32,3 @@ apt-get install -y openjdk-11-jdk maven chrpath patchelf
 apt-get install -y python3 python3-pip
 pip3 install cmake==3.28.3
 
-# Install GCC 11 (import key manually to avoid keyserver timeout).
-apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 1E9377A2BA9EF27F
-add-apt-repository -y ppa:ubuntu-toolchain-r/test
-apt-get update
-apt-get install -y gcc-11 g++-11
-rm -f /usr/bin/gcc /usr/bin/g++
-ln -s /usr/bin/gcc-11 /usr/bin/gcc
-ln -s /usr/bin/g++-11 /usr/bin/g++
-cc --version
-c++ --version
