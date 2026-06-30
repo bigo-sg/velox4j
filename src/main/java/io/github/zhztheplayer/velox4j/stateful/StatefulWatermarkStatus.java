@@ -16,36 +16,31 @@
 */
 package io.github.zhztheplayer.velox4j.stateful;
 
-public abstract class StatefulElement {
-  private final String nodeId;
+public class StatefulWatermarkStatus extends StatefulElement {
+  // true means WatermarkStatus.IDLE; false means WatermarkStatus.ACTIVE.
+  private final boolean idle;
 
-  public StatefulElement(String nodeId) {
-    this.nodeId = nodeId;
+  public StatefulWatermarkStatus(String nodeId, boolean idle) {
+    super(nodeId);
+    this.idle = idle;
   }
 
-  public String getNodeId() {
-    return nodeId;
+  public boolean isIdle() {
+    return idle;
   }
 
-  public abstract boolean isWatermark();
-
-  public abstract boolean isRecord();
-
-  public boolean isWatermarkStatus() {
+  @Override
+  public boolean isWatermark() {
     return false;
   }
 
-  public StatefulWatermark asWatermark() {
-    return (StatefulWatermark) this;
+  @Override
+  public boolean isRecord() {
+    return false;
   }
 
-  public StatefulWatermarkStatus asWatermarkStatus() {
-    return (StatefulWatermarkStatus) this;
+  @Override
+  public boolean isWatermarkStatus() {
+    return true;
   }
-
-  public StatefulRecord asRecord() {
-    return (StatefulRecord) this;
-  }
-
-  public void close() {}
 }

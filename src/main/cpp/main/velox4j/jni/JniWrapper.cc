@@ -183,6 +183,22 @@ jobject statefulTaskGet(JNIEnv* env, jobject javaThis, jlong itrId) {
     env->DeleteLocalRef(id);
     env->DeleteLocalRef(resultClass);
     return result;
+  } else if (element->isWatermarkStatus()) {
+    auto watermarkStatus =
+        std::static_pointer_cast<stateful::WatermarkStatus>(element);
+
+    jclass resultClass = env->FindClass(
+        "io/github/zhztheplayer/velox4j/stateful/StatefulWatermarkStatus");
+    jmethodID constructor =
+        env->GetMethodID(resultClass, "<init>", "(Ljava/lang/String;Z)V");
+
+    jstring id = env->NewStringUTF(watermarkStatus->nodeId().c_str());
+    jobject result = env->NewObject(
+        resultClass, constructor, id, watermarkStatus->idle());
+
+    env->DeleteLocalRef(id);
+    env->DeleteLocalRef(resultClass);
+    return result;
   } else {
     VELOX_CHECK(element->isRecord());
     auto record = std::static_pointer_cast<stateful::StreamRecord>(element);
@@ -254,6 +270,29 @@ void notifyWatermark(
   JNI_METHOD_START
   auto itr = ObjectStore::retrieve<StatefulSerialTask>(itrId);
   itr->notifyWatermark(watermark);
+  JNI_METHOD_END()
+}
+
+void notifyIndexedWatermarkStatus(
+    JNIEnv* env,
+    jobject javaThis,
+    jlong itrId,
+    jboolean idle,
+    jint index) {
+  JNI_METHOD_START
+  auto itr = ObjectStore::retrieve<StatefulSerialTask>(itrId);
+  itr->notifyWatermarkStatus(idle, index);
+  JNI_METHOD_END()
+}
+
+void notifyWatermarkStatus(
+    JNIEnv* env,
+    jobject javaThis,
+    jlong itrId,
+    jboolean idle) {
+  JNI_METHOD_START
+  auto itr = ObjectStore::retrieve<StatefulSerialTask>(itrId);
+  itr->notifyWatermarkStatus(idle);
   JNI_METHOD_END()
 }
 
@@ -610,6 +649,21 @@ void JniWrapper::initialize(JNIEnv* env) {
       kTypeVoid,
       kTypeLong,
       kTypeLong,
+      nullptr);
+  addNativeMethod(
+      "notifyIndexedWatermarkStatus",
+      (void*)notifyIndexedWatermarkStatus,
+      kTypeVoid,
+      kTypeLong,
+      kTypeBool,
+      kTypeInt,
+      nullptr);
+  addNativeMethod(
+      "notifyWatermarkStatus",
+      (void*)notifyWatermarkStatus,
+      kTypeVoid,
+      kTypeLong,
+      kTypeBool,
       nullptr);
   addNativeMethod(
       "initializeState",

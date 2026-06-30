@@ -145,6 +145,14 @@ void StatefulSerialTask::notifyWatermark(long watermark) {
   task_->notifyWatermark(watermark);
 }
 
+void StatefulSerialTask::notifyWatermarkStatus(bool idle, int index) {
+  task_->notifyWatermarkStatus(idle, index);
+}
+
+void StatefulSerialTask::notifyWatermarkStatus(bool idle) {
+  task_->notifyWatermarkStatus(idle);
+}
+
 void StatefulSerialTask::initializeState(
     long checkpointId,
     std::string keyedStateBackendConfigString) {
