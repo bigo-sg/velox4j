@@ -25,6 +25,8 @@ streaming-tests:
   stage: test
   image: ubuntu:20.04
   interruptible: true
+  tags:
+    - velox4j
   script:
     # 1. Install build dependencies.
     - bash .github/workflows/scripts/ut-java/setup-ubuntu20.sh
