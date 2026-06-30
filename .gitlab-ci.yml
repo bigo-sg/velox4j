@@ -24,7 +24,7 @@ streaming-tests:
   tags:
     - velox4j
   stage: test
-  image: velox4j-ci:ubuntu20
+  image: listar1111/velox4j-ci:ubuntu20
   interruptible: true
   script:
     # 1. Build native + run Java streaming test (Maven calls build.sh internally).
