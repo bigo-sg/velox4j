@@ -1,4 +1,4 @@
-# GitLab CI/CD for velox4j streaming tests.
+#  GitLab CI/CD for velox4j streaming tests.
 # Mirror triggers: GitHub PRs are mirrored as merge requests, which
 # automatically trigger this pipeline.
 #
