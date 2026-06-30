@@ -32,8 +32,7 @@ concurrency:
 
 jobs:
 
-  ut-streaming-ubuntu24:
-    if: github.event_name == 'pull_request'
+  ut-ubuntu20:
     runs-on: ubuntu-latest
     env:
       HOST_CCACHE_DIR: "${{ github.workspace }}/.ccache"
@@ -46,41 +45,19 @@ jobs:
           key: ut-cpp-ubuntu20-ccache
           restore-keys: |
             ut-cpp-ubuntu20-ccache
-      - name: Run setup script / Build and run streaming test
+      - name: Run setup script / Build and run tests
+        env:
+          EVENT_NAME: ${{ github.event_name }}
         run: |
-          docker run -v ${{ github.workspace }}:/velox4j -w /velox4j ubuntu:20.04 bash -c "
+          docker run -v ${{ github.workspace }}:/velox4j -w /velox4j -e EVENT_NAME ubuntu:20.04 bash -c "
             export CCACHE_DIR=/velox4j/.ccache
             export CCACHE_MAXSIZE=3000M
             bash .github/workflows/scripts/ut-cpp/setup-ubuntu20.sh
-            bash src/main/cpp/test-streaming.sh
-          "
-      - name: Save Ccache
-        uses: actions/cache/save@v4
-        with:
-          path: '${{ env.HOST_CCACHE_DIR }}'
-          key: ut-cpp-ubuntu20-ccache
-
-  ut-ubuntu24:
-    if: github.event_name != 'pull_request'
-    runs-on: ubuntu-latest
-    env:
-      HOST_CCACHE_DIR: "${{ github.workspace }}/.ccache"
-    steps:
-      - uses: actions/checkout@v4
-      - name: Restore Ccache
-        uses: actions/cache/restore@v4
-        with:
-          path: '${{ env.HOST_CCACHE_DIR }}'
-          key: ut-cpp-ubuntu20-ccache
-          restore-keys: |
-            ut-cpp-ubuntu20-ccache
-      - name: Run setup script / Build and run UTs
-        run: |
-          docker run -v ${{ github.workspace }}:/velox4j -w /velox4j ubuntu:20.04 bash -c "
-            export CCACHE_DIR=/velox4j/.ccache
-            export CCACHE_MAXSIZE=3000M
-            bash .github/workflows/scripts/ut-cpp/setup-ubuntu20.sh
-            bash src/main/cpp/test.sh
+            if [ \"\$EVENT_NAME\" = \"pull_request\" ]; then
+              bash src/main/cpp/test-streaming.sh
+            else
+              bash src/main/cpp/test.sh
+            fi
           "
       - name: Save Ccache
         uses: actions/cache/save@v4

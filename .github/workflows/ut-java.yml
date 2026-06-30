@@ -35,8 +35,7 @@ concurrency:
 
 jobs:
 
-  ut-streaming-ubuntu24:
-    if: github.event_name == 'pull_request'
+  ut-ubuntu20:
     runs-on: ubuntu-latest
     env:
       HOST_CCACHE_DIR: "${{ github.workspace }}/.ccache"
@@ -50,44 +49,20 @@ jobs:
           key: ut-java-ubuntu20-ccache
           restore-keys: |
             ut-java-ubuntu20-ccache
-      - name: Run setup script / Build and run streaming test
+      - name: Run setup script / Build and run tests
+        env:
+          EVENT_NAME: ${{ github.event_name }}
         run: |
-          docker run -v ${{ github.workspace }}:/velox4j -w / ubuntu:20.04 bash -c "
+          docker run -v ${{ github.workspace }}:/velox4j -w / -e EVENT_NAME ubuntu:20.04 bash -c "
             export CCACHE_DIR=/velox4j/.ccache
             export CCACHE_MAXSIZE=3000M
             cd /velox4j
             bash .github/workflows/scripts/ut-java/setup-ubuntu20.sh
-            mvn clean test -Dtest=StatefulStreamingTest -DfailIfNoTests=false
-          "
-      - name: Save Ccache
-        uses: actions/cache/save@v4
-        with:
-          path: '${{ env.HOST_CCACHE_DIR }}'
-          key: ut-java-ubuntu20-ccache
-
-  ut-ubuntu24:
-    if: github.event_name != 'pull_request'
-    runs-on: ubuntu-latest
-    env:
-      HOST_CCACHE_DIR: "${{ github.workspace }}/.ccache"
-      CCACHE_MAXSIZE: 3000M
-    steps:
-      - uses: actions/checkout@v4
-      - name: Restore Ccache
-        uses: actions/cache/restore@v4
-        with:
-          path: '${{ env.HOST_CCACHE_DIR }}'
-          key: ut-java-ubuntu20-ccache
-          restore-keys: |
-            ut-java-ubuntu20-ccache
-      - name: Run setup script / Build and run UTs
-        run: |
-          docker run -v ${{ github.workspace }}:/velox4j -w / ubuntu:20.04 bash -c "
-            export CCACHE_DIR=/velox4j/.ccache
-            export CCACHE_MAXSIZE=3000M
-            cd /velox4j
-            bash .github/workflows/scripts/ut-java/setup-ubuntu20.sh
-            mvn clean test
+            if [ \"\$EVENT_NAME\" = \"pull_request\" ]; then
+              mvn clean test -Dtest=StatefulStreamingTest -DfailIfNoTests=false
+            else
+              mvn clean test
+            fi
           "
       - name: Save Ccache
         uses: actions/cache/save@v4
