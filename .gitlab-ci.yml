@@ -1,0 +1,42 @@
+# GitLab CI/CD for velox4j streaming tests.
+# Mirror triggers: GitHub PRs are mirrored as merge requests, which
+# automatically trigger this pipeline.
+
+variables:
+  CCACHE_DIR: "$CI_PROJECT_DIR/.ccache"
+  CCACHE_MAXSIZE: "3G"
+  DEBIAN_FRONTEND: "noninteractive"
+
+# Cancel outdated pipelines on the same ref.
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
+
+cache:
+  key: ut-ubuntu20-ccache
+  paths:
+    - .ccache/
+
+stages:
+  - test
+
+streaming-tests:
+  stage: test
+  image: ubuntu:20.04
+  interruptible: true
+  script:
+    # 1. Install build dependencies.
+    - bash .github/workflows/scripts/ut-java/setup-ubuntu20.sh
+
+    # 2. Build native + run Java streaming test (Maven calls build.sh internally).
+    - mvn test -Dtest=StatefulStreamingTest -DfailIfNoTests=false
+
+    # 3. C++ streaming test: reconfigure with testing ON, build only the test target.
+    - >
+      cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=/usr/local
+      -DBoost_DIR=/usr/local/lib/cmake/Boost-1.84.0
+      -DVELOX4J_ENABLE_CCACHE=ON -DVELOX4J_BUILD_TESTING=ON
+      -S src/main/cpp -B src/main/cpp/build
+    - cmake --build src/main/cpp/build --target velox4j_stateful_streaming_test -j $(nproc)
+    - src/main/cpp/build/test/velox4j_stateful_streaming_test
