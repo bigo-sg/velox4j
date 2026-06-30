@@ -32,8 +32,10 @@ apt-get install -y openjdk-11-jdk maven chrpath patchelf
 apt-get install -y python3 python3-pip
 pip3 install cmake==3.28.3
 
-# Install GCC 11.
-add-apt-repository ppa:ubuntu-toolchain-r/test
+# Install GCC 11 from Ubuntu Toolchain PPA.
+# Import key directly to avoid add-apt-repository keyserver timeout.
+wget -qO- "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x1E9377A2BA9EF27F&options=mr" | apt-key add -
+echo "deb http://ppa.launchpad.net/ubuntu-toolchain-r/test/ubuntu focal main" > /etc/apt/sources.list.d/ubuntu-toolchain-r-ppa.list
 apt-get update
 apt-get install -y gcc-11 g++-11
 rm -f /usr/bin/gcc /usr/bin/g++

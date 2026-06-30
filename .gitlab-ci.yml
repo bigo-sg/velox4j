@@ -3,7 +3,7 @@
 # automatically trigger this pipeline.
 
 variables:
-  CCACHE_DIR: "$CI_PROJECT_DIR/.ccache"
+  CCACHE_DIR: "/data/build/ccache"
   CCACHE_MAXSIZE: "3G"
   DEBIAN_FRONTEND: "noninteractive"
 
@@ -13,15 +13,12 @@ workflow:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH
 
-cache:
-  key: ut-ubuntu20-ccache
-  paths:
-    - .ccache/
-
 stages:
   - test
 
 streaming-tests:
+  tags:
+    - velox4j
   stage: test
   image: ubuntu:20.04
   interruptible: true
