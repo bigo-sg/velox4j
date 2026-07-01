@@ -49,6 +49,7 @@
 #include <velox/experimental/stateful/state/RocksDBStateBackend.h>
 #include <velox/experimental/stateful/state/StateBackend.h>
 #include <velox/experimental/stateful/udf/Register.h>
+#include <velox/functions/lib/Re2Functions.h>
 #include <velox/functions/prestosql/aggregates/RegisterAggregateFunctions.h>
 #include <velox/functions/prestosql/window/WindowFunctionsRegistration.h>
 #include <velox/functions/sparksql/aggregates/Register.h>
@@ -96,6 +97,17 @@ void initForSpark() {
   parquet::registerParquetWriterFactory();
   text::registerTextWriterFactory();
   functions::sparksql::registerFunctions();
+
+  // Override to return NULL on no match for Flink compatibility.
+  exec::registerStatefulVectorFunction(
+      "regexp_extract",
+      functions::re2ExtractSignatures(),
+      [](const std::string& name,
+         const std::vector<exec::VectorFunctionArg>& inputArgs,
+         const core::QueryConfig& config) {
+        return functions::makeRe2Extract(
+            name, inputArgs, config, /*emptyNoMatch=*/false);
+      });
   aggregate::prestosql::registerAllAggregateFunctions(
       "",
       true /*registerCompanionFunctions*/,
