@@ -1,0 +1,22 @@
+src/main/cpp/main/velox4j/jni/JniWrapper.cc
+  s_740041a40dfcba::t_27a8d7fdce0c57 588-592,595-598
+src/main/cpp/CMakeLists.txt
+  s_740041a40dfcba::t_27a8d7fdce0c57 27-29,76,88-89,96-97,99-100,102-105,107-111
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "d96abc02142eea77e5b142bbbd9cbfb7445c5854",
+  "prompts": {},
+  "logical_commit_id": "d96abc02142eea77e5b142bbbd9cbfb7445c5854",
+  "sessions": {
+    "s_740041a40dfcba": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_0e9942bd9ffeKbvUZ4oXaz8Nkc",
+        "model": "gpt-5.5"
+      },
+      "human_author": "lgbo-ustc <lgbo.ustc@gmail.com>"
+    }
+  }
+}
