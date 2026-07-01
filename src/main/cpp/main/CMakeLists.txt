@@ -55,10 +55,12 @@ install(
   CODE "
     file(GET_RUNTIME_DEPENDENCIES
             RESOLVED_DEPENDENCIES_VAR 3rd_deps
+            UNRESOLVED_DEPENDENCIES_VAR unresolved_deps
             LIBRARIES $<TARGET_FILE:velox4j_shared>
             PRE_EXCLUDE_REGEXES
             ${VELOX4J_3RD_EXCLUSIONS}
     )
+    message(WARNING \"Unresolved deps: \${unresolved_deps}\")
     message(\"Found all shared 3rd dependencies of velox4j: \${3rd_deps}\")
     foreach(dep IN LISTS 3rd_deps)
         get_filename_component(link_name \${dep} NAME)

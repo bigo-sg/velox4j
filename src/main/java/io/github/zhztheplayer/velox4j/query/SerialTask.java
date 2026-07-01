@@ -94,9 +94,16 @@ public class SerialTask implements UpIterator {
 
   public void initializeState(
       long context, KeyedStateBackendParameters keyedStateBackendParameters) {
+    initializeState(context, keyedStateBackendParameters, new String[0]);
+  }
+
+  public void initializeState(
+      long context,
+      KeyedStateBackendParameters keyedStateBackendParameters,
+      String[] checkpointRecords) {
     String keyedStateBackendJsonParameters =
         keyedStateBackendParameters != null ? Serde.toJson(keyedStateBackendParameters) : "{}";
-    jniApi.initializeState(this, context, keyedStateBackendJsonParameters);
+    jniApi.initializeState(this, context, keyedStateBackendJsonParameters, checkpointRecords);
   }
 
   public void snapshotState(long context) {

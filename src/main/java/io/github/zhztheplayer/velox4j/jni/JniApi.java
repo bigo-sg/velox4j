@@ -115,7 +115,12 @@ public final class JniApi {
   }
 
   public void initializeState(UpIterator itr, long context, String keyedStateBackendConfigString) {
-    jni.initializeState(itr.id(), context, keyedStateBackendConfigString);
+    initializeState(itr, context, keyedStateBackendConfigString, new String[0]);
+  }
+
+  public void initializeState(
+      UpIterator itr, long context, String keyedStateBackendConfigString, String[] checkpointRecords) {
+    jni.initializeState(itr.id(), context, keyedStateBackendConfigString, checkpointRecords);
   }
 
   public void snapshotState(UpIterator itr, long context) {

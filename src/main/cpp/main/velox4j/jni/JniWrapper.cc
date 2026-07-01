@@ -262,11 +262,25 @@ void initializeState(
     jobject javaThis,
     jlong itrId,
     jlong context,
-    jstring keyedStateBackendConfigString) {
+    jstring keyedStateBackendConfigString,
+    jobjectArray checkpointRecords) {
   JNI_METHOD_START
   auto itr = ObjectStore::retrieve<StatefulSerialTask>(itrId);
   spotify::jni::JavaString jTypeJson{env, keyedStateBackendConfigString};
-  itr->initializeState(context, jTypeJson.get());
+  std::vector<std::string> records;
+  if (checkpointRecords != nullptr) {
+    const jsize numRecords = env->GetArrayLength(checkpointRecords);
+    records.reserve(numRecords);
+    for (jsize i = 0; i < numRecords; ++i) {
+      auto record = static_cast<jstring>(env->GetObjectArrayElement(checkpointRecords, i));
+      if (record != nullptr) {
+        spotify::jni::JavaString jRecord{env, record};
+        records.emplace_back(jRecord.get());
+        env->DeleteLocalRef(record);
+      }
+    }
+  }
+  itr->initializeState(context, jTypeJson.get(), records);
   JNI_METHOD_END()
 }
 
@@ -618,6 +632,7 @@ void JniWrapper::initialize(JNIEnv* env) {
       kTypeLong,
       kTypeLong,
       kTypeString,
+      "[Ljava/lang/String;",
       nullptr);
   addNativeMethod(
       "snapshotState",

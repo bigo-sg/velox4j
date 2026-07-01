@@ -147,7 +147,8 @@ void StatefulSerialTask::notifyWatermark(long watermark) {
 
 void StatefulSerialTask::initializeState(
     long checkpointId,
-    std::string keyedStateBackendConfigString) {
+    std::string keyedStateBackendConfigString,
+    const std::vector<std::string>& checkpointRecords) {
   folly::dynamic obj = folly::parseJson(keyedStateBackendConfigString);
   std::shared_ptr<const stateful::KeyedStateBackendParameters> params =
       stateful::KeyedStateBackendParameters::create(obj, nullptr);
@@ -155,10 +156,10 @@ void StatefulSerialTask::initializeState(
       params->getBackendType() == stateful::StateBackendType::ROCKSDB) {
     auto rocksdbParams =
         stateful::RocksDBKeyedStateBackendParameters::create(obj, nullptr);
-    task_->initializeState(rocksdbParams);
+    task_->initializeState(rocksdbParams, checkpointRecords);
   } else {
     // params maybe null, then initialize by using default heap state backend.
-    task_->initializeState(params);
+    task_->initializeState(params, checkpointRecords);
   }
 }
 

@@ -53,7 +53,8 @@ class StatefulSerialTask : public UpIterator {
 
   void initializeState(
       long checkpointId,
-      std::string keyedStateBackendConfigString);
+      std::string keyedStateBackendConfigString,
+      const std::vector<std::string>& checkpointRecords = {});
 
   void snapshotState(long checkpointId);
 
