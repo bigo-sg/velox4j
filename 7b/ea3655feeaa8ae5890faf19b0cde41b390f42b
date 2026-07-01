@@ -1,0 +1,32 @@
+src/main/java/io/github/zhztheplayer/velox4j/jni/JniWrapper.java
+  s_6e0a20853d90af::t_0f6e3e0ca0085d 68-69
+src/main/cpp/main/velox4j/query/StatefulQueryExecutor.h
+  s_6e0a20853d90af::t_0f6e3e0ca0085d 56-57
+src/main/cpp/main/velox4j/query/StatefulQueryExecutor.cc
+  s_6e0a20853d90af::t_0f6e3e0ca0085d 150-151,159,162
+src/main/java/io/github/zhztheplayer/velox4j/jni/JniApi.java
+  s_6e0a20853d90af::t_0f6e3e0ca0085d 118-123
+src/main/cpp/main/velox4j/jni/JniWrapper.cc
+  s_6e0a20853d90af::t_0f6e3e0ca0085d 265-266,270-283,635
+src/main/java/io/github/zhztheplayer/velox4j/query/SerialTask.java
+  s_6e0a20853d90af::t_0f6e3e0ca0085d 97-103,106
+src/main/cpp/main/CMakeLists.txt
+  s_6e0a20853d90af::t_4df01312a1acb7 58,63
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "7bea3655feeaa8ae5890faf19b0cde41b390f42b",
+  "prompts": {},
+  "logical_commit_id": "7bea3655feeaa8ae5890faf19b0cde41b390f42b",
+  "sessions": {
+    "s_6e0a20853d90af": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_0e35573f3ffeQi2KAAMbPz3QDo",
+        "model": "gpt-5.5"
+      },
+      "human_author": "lgbo-ustc <lgbo.ustc@gmail.com>"
+    }
+  }
+}
