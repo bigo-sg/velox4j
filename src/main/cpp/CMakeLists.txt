@@ -24,7 +24,9 @@ option(VELOX4J_BUILD_TESTING "Build Velox4J tests." ON)
 # Velox4J non-bool option definitions.
 set(VELOX4J_VELOX_SOURCE_DIR
     ""
-    CACHE STRING "Optional local Velox source directory used instead of fetching Velox.")
+    CACHE
+      STRING
+      "Optional local Velox source directory used instead of fetching Velox.")
 set(VELOX4J_INSTALL_DESTINATION
     "lib"
     CACHE
@@ -71,11 +73,7 @@ set(VELOX_REPO bigo-sg/velox)
 file(STRINGS ${VELOX_REF_FILE} VELOX_REF)
 file(STRINGS ${VELOX_REF_HASH_FILE} VELOX_SOURCE_URL_MD5)
 if(VELOX4J_VELOX_SOURCE_DIR)
-  cpmaddpackage(
-    NAME
-    velox
-    SOURCE_DIR
-    ${VELOX4J_VELOX_SOURCE_DIR})
+  cpmaddpackage(NAME velox SOURCE_DIR ${VELOX4J_VELOX_SOURCE_DIR})
 else()
   set(VELOX_SOURCE_URL "https://github.com/bigo-sg/velox.git")
   cpmaddpackage(
@@ -87,30 +85,34 @@ else()
     9d779d87829161fa336a1342356d209853d07112)
 endif()
 if(TARGET gflags::gflags_shared)
-  get_target_property(GFLAGS_SHARED_LIBRARY gflags::gflags_shared IMPORTED_LOCATION_RELEASE)
+  get_target_property(GFLAGS_SHARED_LIBRARY gflags::gflags_shared
+                      IMPORTED_LOCATION_RELEASE)
 endif()
 if(NOT GFLAGS_SHARED_LIBRARY)
   find_library(GFLAGS_SHARED_LIBRARY gflags REQUIRED)
 endif()
 set(GFLAGS_LINK_COMPAT_DIR ${CMAKE_CURRENT_BINARY_DIR}/gflags-link-compat)
 file(MAKE_DIRECTORY ${GFLAGS_LINK_COMPAT_DIR})
-file(CREATE_LINK
-     ${GFLAGS_SHARED_LIBRARY}
-     ${GFLAGS_LINK_COMPAT_DIR}/libgflags_shared.so
-     SYMBOLIC)
+file(CREATE_LINK ${GFLAGS_SHARED_LIBRARY}
+     ${GFLAGS_LINK_COMPAT_DIR}/libgflags_shared.so SYMBOLIC)
 link_directories(${GFLAGS_LINK_COMPAT_DIR})
-foreach(ROCKSDB_TARGET rocksdb rocksdb-shared RocksDB::rocksdb RocksDB::rocksdb-shared)
+foreach(ROCKSDB_TARGET rocksdb rocksdb-shared RocksDB::rocksdb
+                       RocksDB::rocksdb-shared)
   if(TARGET ${ROCKSDB_TARGET})
-    foreach(ROCKSDB_LINK_PROPERTY INTERFACE_LINK_LIBRARIES IMPORTED_LINK_DEPENDENT_LIBRARIES_RELEASE)
-      get_target_property(ROCKSDB_LINK_LIBRARIES ${ROCKSDB_TARGET} ${ROCKSDB_LINK_PROPERTY})
+    foreach(ROCKSDB_LINK_PROPERTY INTERFACE_LINK_LIBRARIES
+                                  IMPORTED_LINK_DEPENDENT_LIBRARIES_RELEASE)
+      get_target_property(ROCKSDB_LINK_LIBRARIES ${ROCKSDB_TARGET}
+                          ${ROCKSDB_LINK_PROPERTY})
       if(ROCKSDB_LINK_LIBRARIES)
-        string(REPLACE "gflags_shared" "${GFLAGS_SHARED_LIBRARY}" ROCKSDB_LINK_LIBRARIES "${ROCKSDB_LINK_LIBRARIES}")
-        set_target_properties(${ROCKSDB_TARGET} PROPERTIES ${ROCKSDB_LINK_PROPERTY} "${ROCKSDB_LINK_LIBRARIES}")
+        string(REPLACE "gflags_shared" "${GFLAGS_SHARED_LIBRARY}"
+                       ROCKSDB_LINK_LIBRARIES "${ROCKSDB_LINK_LIBRARIES}")
+        set_target_properties(
+          ${ROCKSDB_TARGET} PROPERTIES ${ROCKSDB_LINK_PROPERTY}
+                                       "${ROCKSDB_LINK_LIBRARIES}")
       endif()
     endforeach()
   endif()
 endforeach()
-
 
 # Import JniHelpers.
 set(JNI_HELPERS_REPO zhztheplayer/JniHelpersCpp)
