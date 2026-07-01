@@ -193,8 +193,8 @@ jobject statefulTaskGet(JNIEnv* env, jobject javaThis, jlong itrId) {
         env->GetMethodID(resultClass, "<init>", "(Ljava/lang/String;Z)V");
 
     jstring id = env->NewStringUTF(watermarkStatus->nodeId().c_str());
-    jobject result = env->NewObject(
-        resultClass, constructor, id, watermarkStatus->idle());
+    jobject result =
+        env->NewObject(resultClass, constructor, id, watermarkStatus->idle());
 
     env->DeleteLocalRef(id);
     env->DeleteLocalRef(resultClass);
