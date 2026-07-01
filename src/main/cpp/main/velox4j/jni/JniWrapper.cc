@@ -40,40 +40,6 @@ using namespace facebook::velox;
 namespace {
 const char* kClassName = "io/github/zhztheplayer/velox4j/jni/JniWrapper";
 const bool stateful = true;
-const char* kStatefulWatermarkClassName =
-    "io/github/zhztheplayer/velox4j/stateful/StatefulWatermark";
-const char* kStatefulWatermarkStatusClassName =
-    "io/github/zhztheplayer/velox4j/stateful/StatefulWatermarkStatus";
-const char* kStatefulRecordClassName =
-    "io/github/zhztheplayer/velox4j/stateful/StatefulRecord";
-
-jclass statefulWatermarkClass = nullptr;
-jmethodID statefulWatermarkConstructor = nullptr;
-jclass statefulWatermarkStatusClass = nullptr;
-jmethodID statefulWatermarkStatusConstructor = nullptr;
-jclass statefulRecordClass = nullptr;
-jmethodID statefulRecordConstructor = nullptr;
-
-void cacheStatefulElementClasses(JNIEnv* env) {
-  if (statefulRecordClass != nullptr) {
-    return;
-  }
-
-  statefulWatermarkClass =
-      createGlobalClassReferenceOrError(env, kStatefulWatermarkClassName);
-  statefulWatermarkConstructor = getMethodIdOrError(
-      env, statefulWatermarkClass, "<init>", "(Ljava/lang/String;J)V");
-
-  statefulWatermarkStatusClass =
-      createGlobalClassReferenceOrError(env, kStatefulWatermarkStatusClassName);
-  statefulWatermarkStatusConstructor = getMethodIdOrError(
-      env, statefulWatermarkStatusClass, "<init>", "(Ljava/lang/String;Z)V");
-
-  statefulRecordClass =
-      createGlobalClassReferenceOrError(env, kStatefulRecordClassName);
-  statefulRecordConstructor = getMethodIdOrError(
-      env, statefulRecordClass, "<init>", "(Ljava/lang/String;JJZI)V");
-}
 
 class JniNativeCallbackBridge : public stateful::NativeCallbackBridge {
  public:
@@ -205,27 +171,33 @@ jobject statefulTaskGet(JNIEnv* env, jobject javaThis, jlong itrId) {
   if (element->isWatermark()) {
     auto watermark = std::static_pointer_cast<stateful::Watermark>(element);
 
+    jclass resultClass = env->FindClass(
+        "io/github/zhztheplayer/velox4j/stateful/StatefulWatermark");
+    jmethodID constructor =
+        env->GetMethodID(resultClass, "<init>", "(Ljava/lang/String;J)V");
+
     jstring id = env->NewStringUTF(watermark->nodeId().c_str());
-    jobject result = env->NewObject(
-        statefulWatermarkClass,
-        statefulWatermarkConstructor,
-        id,
-        watermark->timestamp());
+    jobject result =
+        env->NewObject(resultClass, constructor, id, watermark->timestamp());
 
     env->DeleteLocalRef(id);
+    env->DeleteLocalRef(resultClass);
     return result;
   } else if (element->isWatermarkStatus()) {
     auto watermarkStatus =
         std::static_pointer_cast<stateful::WatermarkStatus>(element);
 
+    jclass resultClass = env->FindClass(
+        "io/github/zhztheplayer/velox4j/stateful/StatefulWatermarkStatus");
+    jmethodID constructor =
+        env->GetMethodID(resultClass, "<init>", "(Ljava/lang/String;Z)V");
+
     jstring id = env->NewStringUTF(watermarkStatus->nodeId().c_str());
-    jobject result = env->NewObject(
-        statefulWatermarkStatusClass,
-        statefulWatermarkStatusConstructor,
-        id,
-        watermarkStatus->idle());
+    jobject result =
+        env->NewObject(resultClass, constructor, id, watermarkStatus->idle());
 
     env->DeleteLocalRef(id);
+    env->DeleteLocalRef(resultClass);
     return result;
   } else {
     VELOX_CHECK(element->isRecord());
@@ -233,10 +205,15 @@ jobject statefulTaskGet(JNIEnv* env, jobject javaThis, jlong itrId) {
     jlong rvId =
         sessionOf(env, javaThis)->objectStore()->save(record->record());
 
+    jclass resultClass = env->FindClass(
+        "io/github/zhztheplayer/velox4j/stateful/StatefulRecord");
+    jmethodID constructor =
+        env->GetMethodID(resultClass, "<init>", "(Ljava/lang/String;JJZI)V");
+
     jstring id = env->NewStringUTF(record->nodeId().c_str());
     jobject result = env->NewObject(
-        statefulRecordClass,
-        statefulRecordConstructor,
+        resultClass,
+        constructor,
         id,
         rvId,
         record->timestamp(),
@@ -244,6 +221,7 @@ jobject statefulTaskGet(JNIEnv* env, jobject javaThis, jlong itrId) {
         record->key());
 
     env->DeleteLocalRef(id);
+    env->DeleteLocalRef(resultClass);
     return result;
   }
   JNI_METHOD_END(nullptr)
@@ -608,7 +586,6 @@ const char* JniWrapper::getCanonicalName() const {
 
 void JniWrapper::initialize(JNIEnv* env) {
   JavaClass::setClass(env);
-  cacheStatefulElementClasses(env);
 
   cacheMethod(env, "sessionId", kTypeLong, nullptr);
   addNativeMethod(
