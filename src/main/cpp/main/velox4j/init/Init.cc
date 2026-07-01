@@ -34,11 +34,6 @@
 #include <velox/connectors/nexmark/NexmarkConnectorSplit.h>
 #include <velox/connectors/print/PrintConnector.h>
 #include <velox/connectors/print/PrintTableHandle.h>
-#include <velox/connectors/from_elements/FromElementsConnector.h>
-#include <velox/connectors/from_elements/FromElementsConnectorSplit.h>
-#include <velox/connectors/from_elements/FromElementsTableHandle.h>
-#include <velox/connectors/filesystem/FileSystemConnector.h>
-#include <velox/connectors/filesystem/FileSystemInsertTableHandle.h>
 #include <velox/connectors/pulsar/PulsarConnector.h>
 #include <velox/connectors/pulsar/PulsarConnectorSplit.h>
 #include <velox/connectors/pulsar/PulsarTableHandle.h>
