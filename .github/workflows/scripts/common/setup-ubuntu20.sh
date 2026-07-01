@@ -42,3 +42,61 @@ git checkout ${VELOX_REF}
 export CC=/usr/bin/gcc-11
 export CXX=/usr/bin/g++-11
 PROMPT_ALWAYS_RESPOND=n INSTALL_PREREQUISITES=N bash scripts/setup-ubuntu.sh
+
+# ---------------------------------------------------------------
+# Install absl, gRPC, and RocksDB as SYSTEM libraries so that
+# Velox's AUTO dependency resolution picks them up via find_package
+# instead of building BUNDLED (which causes a "tools" target conflict
+# between RocksDB and gRPC FetchContent builds).
+# ---------------------------------------------------------------
+INSTALL_PREFIX=${INSTALL_PREFIX:-/usr/local}
+NPROC=$(getconf _NPROCESSORS_ONLN)
+BUILD_DIR=/tmp/velox-deps
+mkdir -p ${BUILD_DIR}
+
+# --- absl 20240116.2 ---
+cd ${BUILD_DIR}
+wget -q https://github.com/abseil/abseil-cpp/archive/refs/tags/20240116.2.tar.gz -O absl.tar.gz
+tar xzf absl.tar.gz
+cd abseil-cpp-20240116.2
+cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX} \
+  -DABSL_BUILD_TESTING=OFF -DABSL_PROPAGATE_CXX_STD=ON -DABSL_ENABLE_INSTALL=ON
+cmake --build build -j ${NPROC}
+cmake --install build
+
+# --- gRPC 1.48.1 ---
+cd ${BUILD_DIR}
+wget -q https://github.com/grpc/grpc/archive/refs/tags/v1.48.1.tar.gz -O grpc.tar.gz
+tar xzf grpc.tar.gz
+cd grpc-1.48.1
+# gRPC needs c-ares, re2, zlib, protobuf, openssl, absl — all already installed.
+cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX} \
+  -DgRPC_ABSL_PROVIDER=package \
+  -DgRPC_ZLIB_PROVIDER=package \
+  -DgRPC_CARES_PROVIDER=package \
+  -DgRPC_RE2_PROVIDER=package \
+  -DgRPC_SSL_PROVIDER=package \
+  -DgRPC_PROTOBUF_PROVIDER=package \
+  -DgRPC_BUILD_TESTS=OFF \
+  -DgRPC_INSTALL=ON
+cmake --build build -j ${NPROC}
+cmake --install build
+
+# --- RocksDB (FRocksDB-6.20.3) ---
+cd ${BUILD_DIR}
+wget -q https://github.com/ververica/frocksdb/archive/refs/heads/FRocksDB-6.20.3.zip -O frocksdb.zip
+unzip -q frocksdb.zip
+cd frocksdb-FRocksDB-6.20.3
+cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX} \
+  -DROCKSDB_BUILD_SHARED=ON \
+  -DWITH_TESTS=OFF \
+  -DWITH_BENCHMARK_TOOLS=OFF \
+  -DWITH_TOOLS=OFF \
+  -DWITH_GFLAGS=OFF
+cmake --build build -j ${NPROC}
+cmake --install build
+ldconfig
+
+# Clean up all build artifacts and downloaded sources.
+cd /
+rm -rf ${BUILD_DIR} /tmp/velox-setup
