@@ -1,0 +1,23 @@
+src/main/cpp/main/velox4j/query/StatefulQueryExecutor.h
+  s_c5014b558cca9b::t_3fb8d64028a917 51,55
+  s_c5014b558cca9b::t_1a10720c201855 22
+src/main/cpp/main/velox4j/query/StatefulQueryExecutor.cc
+  s_c5014b558cca9b::t_3fb8d64028a917 140,148
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "e8700f61a2a440447aa574084f095362f19bddff",
+  "prompts": {},
+  "logical_commit_id": "e8700f61a2a440447aa574084f095362f19bddff",
+  "sessions": {
+    "s_c5014b558cca9b": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_0dd5fcf6fffeXVyABRIVSBfQMk",
+        "model": "gpt-5.5"
+      },
+      "human_author": "lgbo-ustc <lgbo.ustc@gmail.com>"
+    }
+  }
+}
