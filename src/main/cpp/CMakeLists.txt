@@ -75,14 +75,14 @@ file(STRINGS ${VELOX_REF_HASH_FILE} VELOX_SOURCE_URL_MD5)
 if(VELOX4J_VELOX_SOURCE_DIR)
   cpmaddpackage(NAME velox SOURCE_DIR ${VELOX4J_VELOX_SOURCE_DIR})
 else()
-  set(VELOX_SOURCE_URL "https://github.com/bigo-sg/velox.git")
+  set(VELOX_SOURCE_URL "https://github.com/ggjh-159/velox.git")
   cpmaddpackage(
     NAME
     velox
     GIT_REPOSITORY
     ${VELOX_SOURCE_URL}
     GIT_TAG
-    9d779d87829161fa336a1342356d209853d07112)
+    feat/stateful-stream-record-timestamp-inserter)
 endif()
 if(TARGET gflags::gflags_shared)
   get_target_property(GFLAGS_SHARED_LIBRARY gflags::gflags_shared
