@@ -1,15 +1,15 @@
-#  GitLab CI/CD for velox4j streaming tests.
-# Mirror triggers: GitHub PRs are mirrored as merge requests, which
-# automatically trigger this pipeline.
+# GitLab CI/CD for bigo-sg/velox4j.
+# Uses the same velox-deps Docker image as bigo-sg/velox CI, which has all
+# C++ dependencies pre-installed as SYSTEM libraries in /usr/local.
 #
-# Prerequisite: build the CI image on the runner host:
-#   docker build -t velox4j-ci:ubuntu20 \
-#     -f .github/workflows/scripts/Dockerfile.ubuntu20 \
-#     .github/workflows/scripts/
+# Prerequisite: the velox-deps image must be built and pushed:
+#   docker build -t listar1111/velox-deps:ubuntu20 \
+#     -f scripts/Dockerfile.ubuntu20 .   (in bigo-sg/velox repo)
+#   docker push listar1111/velox-deps:ubuntu20
 
 variables:
   CCACHE_DIR: "/data/build/ccache"
-  CCACHE_MAXSIZE: "3G"
+  CCACHE_MAXSIZE: "5G"
   DEBIAN_FRONTEND: "noninteractive"
 
 workflow:
@@ -22,13 +22,15 @@ stages:
 
 streaming-tests:
   tags:
-    - velox4j
-  stage: test
-  image: listar1111/velox4j-ci:ubuntu20
+    - velox
+  image: listar1111/velox-deps:ubuntu20
   interruptible: true
+  before_script:
+    - export CC=/usr/bin/gcc-11
+    - export CXX=/usr/bin/g++-11
   script:
     # 1. Build native + run Java streaming test (Maven calls build.sh internally).
-    - mvn test -Dtest=StatefulStreamingTest -DfailIfNoTests=false
+    - mvn test -Dtest=StatefulStreamingTest -DfailIfNoTests=false -Dgpg.skip -Dspotless.skip=true
 
     # 2. C++ streaming test: reconfigure with testing ON, build only the test target.
     - >
