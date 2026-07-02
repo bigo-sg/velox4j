@@ -65,6 +65,9 @@ if(NOT VELOX4J_ENABLE_CCACHE)
   set(VELOX_ENABLE_CCACHE OFF)
 endif()
 
+# Needed when using SYSTEM simdjson: enables iterate_allow_incomplete_json API.
+add_compile_definitions(SIMDJSON_EXPERIMENTAL_ALLOW_INCOMPLETE_JSON)
+
 # Import Velox.
 set(VELOX_PATCH_DIR ${CMAKE_CURRENT_LIST_DIR}/cmake/patches/velox)
 list(PREPEND CMAKE_MODULE_PATH
@@ -174,9 +177,6 @@ if(COMMAND_STATUS EQUAL "1")
 endif()
 message("Setting CMAKE_CXX_FLAGS=${SCRIPT_CXX_FLAGS}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SCRIPT_CXX_FLAGS}")
-
-# Needed when using SYSTEM simdjson: enables iterate_allow_incomplete_json API.
-add_compile_definitions(SIMDJSON_EXPERIMENTAL_ALLOW_INCOMPLETE_JSON)
 
 # Continue to build.
 add_subdirectory(main)
