@@ -1,0 +1,20 @@
+src/main/cpp/velox-ref.txt
+  s_f7a7322ed23655::t_02df47cc9d1880 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "0928c8bc17cd7e9a86fa6dd2002e8692a9c3e6e1",
+  "prompts": {},
+  "logical_commit_id": "0928c8bc17cd7e9a86fa6dd2002e8692a9c3e6e1",
+  "sessions": {
+    "s_f7a7322ed23655": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_0de89e0d9ffejJuamxqtHGXw8b",
+        "model": "gpt-5.5"
+      },
+      "human_author": "lgbo-ustc <lgbo.ustc@gmail.com>"
+    }
+  }
+}
