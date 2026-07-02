@@ -22,7 +22,7 @@ stages:
 
 streaming-tests:
   tags:
-    - velox
+    - velox4j
   image: listar1111/velox-deps:ubuntu20
   interruptible: true
   before_script:
