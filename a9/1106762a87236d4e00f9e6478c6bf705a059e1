@@ -1,0 +1,44 @@
+src/main/cpp/main/velox4j/jni/JniWrapper.cc
+  s_740041a40dfcba::t_d8c5fc3190189d 186-201,273-295
+  s_740041a40dfcba::t_14f2588cd98431 651-664,666
+  s_740041a40dfcba::t_9cd1e2c26740c5 183-185
+  s_740041a40dfcba::t_71b165aa27d386 296-298
+  s_740041a40dfcba::t_2e28a21cb28315 665
+  s_740041a40dfcba::t_2c92d7ddb622d5 667
+src/main/cpp/main/velox4j/query/StatefulQueryExecutor.cc
+  s_740041a40dfcba::t_764cb1fbbc2a37 148-155
+src/main/java/io/github/zhztheplayer/velox4j/stateful/StatefulElement.java
+  s_740041a40dfcba::t_0fe7b7fa83aef9 34-37,40-43
+  s_740041a40dfcba::t_8e15e47fe3448b 44-45
+src/main/java/io/github/zhztheplayer/velox4j/stateful/StatefulWatermarkStatus.java
+  s_740041a40dfcba::t_fde0084d6545e1 20
+  s_740041a40dfcba::t_0fe7b7fa83aef9 1-19,21-46
+src/main/java/io/github/zhztheplayer/velox4j/jni/JniApi.java
+  s_740041a40dfcba::t_6a34f9f95cede4 117-124
+src/main/java/io/github/zhztheplayer/velox4j/jni/JniWrapper.java
+  s_740041a40dfcba::t_6a34f9f95cede4 68-73
+src/main/cpp/CMakeLists.txt
+  s_740041a40dfcba::t_b1428c74c5e0c9 85
+src/main/cpp/main/velox4j/query/StatefulQueryExecutor.h
+  s_740041a40dfcba::t_2df385dc5ba210 54-57
+src/main/java/io/github/zhztheplayer/velox4j/query/SerialTask.java
+  s_740041a40dfcba::t_fde0084d6545e1 78,83
+  s_740041a40dfcba::t_6a34f9f95cede4 79-82,84-87
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "a91106762a87236d4e00f9e6478c6bf705a059e1",
+  "prompts": {},
+  "logical_commit_id": "a181edd4d1c5db415f83d08e71f8a733b3714153",
+  "sessions": {
+    "s_740041a40dfcba": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_0e9942bd9ffeKbvUZ4oXaz8Nkc",
+        "model": "gpt-5.5"
+      },
+      "human_author": "lgbo-ustc <lgbo.ustc@gmail.com>"
+    }
+  }
+}
