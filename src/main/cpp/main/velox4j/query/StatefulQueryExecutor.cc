@@ -137,12 +137,20 @@ void StatefulSerialTask::setNativeCallbackBridge(
   task_->setNativeCallbackBridge(std::move(callbackBridge));
 }
 
-void StatefulSerialTask::notifyWatermark(long watermark, int index) {
+void StatefulSerialTask::notifyWatermark(long watermark, int32_t index) {
   task_->notifyWatermark(watermark, index);
 }
 
 void StatefulSerialTask::notifyWatermark(long watermark) {
   task_->notifyWatermark(watermark);
+}
+
+void StatefulSerialTask::notifyWatermarkStatus(bool idle, int32_t index) {
+  task_->notifyWatermarkStatus(idle, index);
+}
+
+void StatefulSerialTask::notifyWatermarkStatus(bool idle) {
+  task_->notifyWatermarkStatus(idle);
 }
 
 void StatefulSerialTask::initializeState(

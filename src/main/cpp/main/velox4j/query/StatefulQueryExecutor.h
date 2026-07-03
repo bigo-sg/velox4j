@@ -19,6 +19,7 @@
 
 #include <velox/experimental/stateful/StatefulTask.h>
 #include <velox/experimental/stateful/StreamElement.h>
+#include <cstdint>
 #include <string>
 #include "Query.h"
 #include "velox4j/iterator/UpIterator.h"
@@ -47,9 +48,13 @@ class StatefulSerialTask : public UpIterator {
       std::shared_ptr<facebook::velox::stateful::NativeCallbackBridge>
           callbackBridge);
 
-  void notifyWatermark(long watermark, int index);
+  void notifyWatermark(long watermark, int32_t index);
 
   void notifyWatermark(long watermark);
+
+  void notifyWatermarkStatus(bool idle, int32_t index);
+
+  void notifyWatermarkStatus(bool idle);
 
   void initializeState(
       long checkpointId,

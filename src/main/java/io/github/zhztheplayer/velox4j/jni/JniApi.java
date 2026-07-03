@@ -114,6 +114,14 @@ public final class JniApi {
     jni.notifyWatermark(itr.id(), watermark);
   }
 
+  public void notifyWatermarkStatus(UpIterator itr, boolean idle, int index) {
+    jni.notifyIndexedWatermarkStatus(itr.id(), idle, index);
+  }
+
+  public void notifyWatermarkStatus(UpIterator itr, boolean idle) {
+    jni.notifyWatermarkStatus(itr.id(), idle);
+  }
+
   public void initializeState(UpIterator itr, long context, String keyedStateBackendConfigString) {
     jni.initializeState(itr.id(), context, keyedStateBackendConfigString);
   }

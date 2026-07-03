@@ -82,7 +82,7 @@ else()
     GIT_REPOSITORY
     ${VELOX_SOURCE_URL}
     GIT_TAG
-    c9efdf308a94ea1cb846e2440aeb975572497d87)
+    ${VELOX_REF})
 endif()
 if(TARGET gflags::gflags_shared)
   get_target_property(GFLAGS_SHARED_LIBRARY gflags::gflags_shared
