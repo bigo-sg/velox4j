@@ -75,6 +75,16 @@ public class SerialTask implements UpIterator {
     jniApi.notifyWatermark(this, watermark);
   }
 
+  // This method is for Flink. idle == true means IDLE; false means ACTIVE.
+  public void notifyWatermarkStatus(boolean idle, int index) {
+    jniApi.notifyWatermarkStatus(this, idle, index);
+  }
+
+  // This method is for Flink. idle == true means IDLE; false means ACTIVE.
+  public void notifyWatermarkStatus(boolean idle) {
+    jniApi.notifyWatermarkStatus(this, idle);
+  }
+
   @Override
   public long id() {
     return id;

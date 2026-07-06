@@ -45,8 +45,7 @@ include(UseJava)
 
 # Set Velox options.
 set(VELOX_DEPENDENCY_SOURCE AUTO)
-set(folly_SOURCE BUNDLED) # Use velox-bundled folly because we have a custom
-                          # patch for folly setup.
+set(folly_SOURCE AUTO) # Use system folly from velox-deps image.
 set(VELOX_ENABLE_CCACHE ON)
 set(VELOX_MONO_LIBRARY ON)
 set(VELOX_BUILD_SHARED ON)
@@ -55,6 +54,7 @@ set(VELOX_ENABLE_ARROW ON)
 set(VELOX_ENABLE_KAFKA_CONNECTOR ON)
 set(CPPKAFKA_DISABLE_TESTS ON)
 set(CPPKAFKA_DISABLE_EXAMPLES ON)
+set(VELOX_ENABLE_HDFS ON)
 include_directories("${CMAKE_CURRENT_BINARY_DIR}/_deps/rocksdb-src/include")
 if(NOT VELOX4J_BUILD_TESTING)
   set(VELOX_BUILD_TESTING OFF)

@@ -65,6 +65,12 @@ final class JniWrapper {
   // For Flink.
   native void notifyWatermark(long id, long watermark);
 
+  // For Flink.
+  native void notifyIndexedWatermarkStatus(long id, boolean idle, int index);
+
+  // For Flink.
+  native void notifyWatermarkStatus(long id, boolean idle);
+
   native void initializeState(long id, long context, String keyedStateBackendConfigString);
 
   native void snapshotState(long id, long context);
