@@ -59,7 +59,7 @@ public class RegexpExtractTest {
 
   @BeforeClass
   public static void beforeClass() throws Exception {
-    Velox4jTests.ensureInitialized();
+    Velox4jTests.ensureInitializedForFlink();
     memoryManager = MemoryManager.create(AllocationListener.NOOP);
   }
 

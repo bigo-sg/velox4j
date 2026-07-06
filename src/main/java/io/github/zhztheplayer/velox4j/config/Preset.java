@@ -14,28 +14,12 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-package io.github.zhztheplayer.velox4j.test;
+package io.github.zhztheplayer.velox4j.config;
 
-import java.util.concurrent.atomic.AtomicBoolean;
+public final class Preset {
+  public static final String KEY = "velox4j.init.preset";
+  public static final String SPARK = "SPARK";
+  public static final String FLINK = "FLINK";
 
-import io.github.zhztheplayer.velox4j.Velox4j;
-import io.github.zhztheplayer.velox4j.config.Preset;
-
-public class Velox4jTests {
-  private static final AtomicBoolean initialized = new AtomicBoolean(false);
-
-  public static void ensureInitialized() {
-    if (!initialized.compareAndSet(false, true)) {
-      return;
-    }
-    Velox4j.initialize();
-  }
-
-  public static void ensureInitializedForFlink() {
-    if (!initialized.compareAndSet(false, true)) {
-      return;
-    }
-    Velox4j.configure(Preset.KEY, Preset.FLINK);
-    Velox4j.initialize();
-  }
+  private Preset() {}
 }
