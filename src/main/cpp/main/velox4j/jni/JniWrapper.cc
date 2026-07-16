@@ -202,8 +202,8 @@ jobject statefulTaskGet(JNIEnv* env, jobject javaThis, jlong itrId) {
   } else {
     VELOX_CHECK(element->isRecord());
     auto record = std::static_pointer_cast<stateful::StreamRecord>(element);
-    jlong rvId =
-        sessionOf(env, javaThis)->objectStore()->save(record->record());
+    auto merged = record->toMergedRowVector();
+    jlong rvId = sessionOf(env, javaThis)->objectStore()->save(merged);
 
     jclass resultClass = env->FindClass(
         "io/github/zhztheplayer/velox4j/stateful/StatefulRecord");
