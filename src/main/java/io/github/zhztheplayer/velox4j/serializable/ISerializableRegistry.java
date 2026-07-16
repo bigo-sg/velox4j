@@ -50,6 +50,7 @@ import io.github.zhztheplayer.velox4j.plan.StatefulPlanNode;
 import io.github.zhztheplayer.velox4j.plan.StreamJoinNode;
 import io.github.zhztheplayer.velox4j.plan.StreamPartitionNode;
 import io.github.zhztheplayer.velox4j.plan.StreamRankNode;
+import io.github.zhztheplayer.velox4j.plan.StreamRecordTimestampInserterNode;
 import io.github.zhztheplayer.velox4j.plan.StreamTopNNode;
 import io.github.zhztheplayer.velox4j.plan.StreamWindowAggregationNode;
 import io.github.zhztheplayer.velox4j.plan.StreamWindowJoinNode;
@@ -199,6 +200,8 @@ public final class ISerializableRegistry {
     NAME_REGISTRY.registerClass("LimitNode", LimitNode.class);
     NAME_REGISTRY.registerClass("TableWriteNode", TableWriteNode.class);
     NAME_REGISTRY.registerClass("WatermarkAssignerNode", WatermarkAssignerNode.class);
+    NAME_REGISTRY.registerClass(
+        "StreamRecordTimestampInserterNode", StreamRecordTimestampInserterNode.class);
     NAME_REGISTRY.registerClass("WatermarkPushDownSpec", WatermarkPushDownSpec.class);
     NAME_REGISTRY.registerClass("StatefulPlanNode", StatefulPlanNode.class);
     NAME_REGISTRY.registerClass("EmptyNode", EmptyNode.class);
