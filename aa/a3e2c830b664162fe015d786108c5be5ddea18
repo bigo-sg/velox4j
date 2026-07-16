@@ -1,0 +1,24 @@
+src/main/cpp/velox-ref-hash.txt
+  s_c6f131a590bd51::t_e1f5d121d5d205 1
+src/main/cpp/velox-ref.txt
+  s_c6f131a590bd51::t_7a1b7f3547334f 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.12",
+  "base_commit_sha": "aaa3e2c830b664162fe015d786108c5be5ddea18",
+  "prompts": {},
+  "logical_commit_id": "aaa3e2c830b664162fe015d786108c5be5ddea18",
+  "sessions": {
+    "s_c6f131a590bd51": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_0a6d06d4cffeYJBeS1oC4YZoA9",
+        "model": "glm-5.2"
+      },
+      "human_author": "lgbo-ustc <lgbo.ustc@gmail.com>",
+      "total_additions": 2,
+      "total_deletions": 2
+    }
+  }
+}
