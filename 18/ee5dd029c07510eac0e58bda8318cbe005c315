@@ -1,0 +1,22 @@
+.github/workflows/scripts/bot-dep/bump-velox.sh
+  s_c6f131a590bd51::t_698d03b365928f 8-9
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.12",
+  "base_commit_sha": "18ee5dd029c07510eac0e58bda8318cbe005c315",
+  "prompts": {},
+  "logical_commit_id": "18ee5dd029c07510eac0e58bda8318cbe005c315",
+  "sessions": {
+    "s_c6f131a590bd51": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_0a6d06d4cffeYJBeS1oC4YZoA9",
+        "model": "glm-5.2"
+      },
+      "human_author": "lgbo-ustc <lgbo.ustc@gmail.com>",
+      "total_additions": 10,
+      "total_deletions": 10
+    }
+  }
+}
