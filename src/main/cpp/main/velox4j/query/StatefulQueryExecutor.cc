@@ -19,6 +19,7 @@
 #include <folly/json.h>
 #include <folly/json/dynamic.h>
 #include <folly/json/json.h>
+#include <glog/logging.h>
 #include <velox/experimental/stateful/state/RocksDBStateBackend.h>
 #include <velox/experimental/stateful/state/StateBackend.h>
 #include <exception>
@@ -81,17 +82,23 @@ StatefulSerialTask::StatefulSerialTask(
 }
 
 StatefulSerialTask::~StatefulSerialTask() {
-  if (task_ != nullptr && task_->isRunning()) {
-    // TODO: add a method to finish the task and set state.
-    task_->finish();
-    // FIXME: Calling .wait() may take no effect in single thread execution
-    //  mode.
-    task_->requestCancel().wait();
+  try {
+    if (task_ != nullptr && task_->isRunning()) {
+      // TODO: add a method to finish the task and set state.
+      task_->finish(false);
+      // FIXME: Calling .wait() may take no effect in single thread execution
+      //  mode.
+      task_->requestCancel().wait();
+    }
+    if (task_ != nullptr) {
+      task_->setNativeCallbackBridge(nullptr);
+    }
+    task_.reset();
+  } catch (const std::exception& e) {
+    LOG(ERROR) << "Error while destroying StatefulSerialTask: " << e.what();
+  } catch (...) {
+    LOG(ERROR) << "Unknown error while destroying StatefulSerialTask";
   }
-  if (task_ != nullptr) {
-    task_->setNativeCallbackBridge(nullptr);
-  }
-  task_.reset();
 }
 
 UpIterator::State StatefulSerialTask::advance() {

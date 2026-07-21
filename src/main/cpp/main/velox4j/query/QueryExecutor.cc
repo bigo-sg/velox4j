@@ -17,6 +17,7 @@
 
 #include "QueryExecutor.h"
 
+#include <glog/logging.h>
 #include <velox/exec/Operator.h>
 #include <velox/exec/PlanNodeStats.h>
 #include <velox/exec/Task.h>
@@ -76,10 +77,16 @@ SerialTask::SerialTask(
 }
 
 SerialTask::~SerialTask() {
-  if (task_ != nullptr && task_->isRunning()) {
-    // FIXME: Calling .wait() may take no effect in single thread execution
-    //  mode.
-    task_->requestCancel().wait();
+  try {
+    if (task_ != nullptr && task_->isRunning()) {
+      // FIXME: Calling .wait() may take no effect in single thread execution
+      //  mode.
+      task_->requestCancel().wait();
+    }
+  } catch (const std::exception& e) {
+    LOG(ERROR) << "Error while destroying SerialTask: " << e.what();
+  } catch (...) {
+    LOG(ERROR) << "Unknown error while destroying SerialTask";
   }
 }
 

@@ -34,6 +34,8 @@ import io.github.zhztheplayer.velox4j.session.Session;
 import io.github.zhztheplayer.velox4j.variant.VariantRegistry;
 
 public class Velox4j {
+  public static final String MEMORY_MANAGER_FAIL_ON_LEAK = "velox4j.memory-manager.fail-on-leak";
+
   private static final AtomicBoolean initialized = new AtomicBoolean(false);
   private static final Map<String, String> globalConfMap = new LinkedHashMap<>();
 
