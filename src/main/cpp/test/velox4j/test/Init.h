@@ -24,7 +24,7 @@ inline void testingEnsureInitializedForSpark() {
   static std::once_flag flag;
   auto conf = std::make_shared<ConfigArray>(
       std::vector<std::pair<std::string, std::string>>{
-          {VELOX4J_INIT_PRESET.key, folly::to<std::string>(Preset::SPARK)}});
+          {VELOX4J_INIT_PRESET.key, "SPARK"}});
   std::call_once(flag, [&]() { initialize(conf); });
 }
 
@@ -32,7 +32,7 @@ inline void testingEnsureInitializedForFlink() {
   static std::once_flag flag;
   auto conf = std::make_shared<ConfigArray>(
       std::vector<std::pair<std::string, std::string>>{
-          {VELOX4J_INIT_PRESET.key, folly::to<std::string>(Preset::FLINK)}});
+          {VELOX4J_INIT_PRESET.key, "FLINK"}});
   std::call_once(flag, [&]() { initialize(conf); });
 }
 } // namespace velox4j

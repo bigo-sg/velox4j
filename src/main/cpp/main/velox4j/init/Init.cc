@@ -49,13 +49,13 @@
 #include <velox/experimental/stateful/state/RocksDBStateBackend.h>
 #include <velox/experimental/stateful/state/StateBackend.h>
 #include <velox/experimental/stateful/udf/Register.h>
+#include <velox/functions/flinksql/Register.h>
 #include <velox/functions/lib/Re2Functions.h>
 #include <velox/functions/prestosql/aggregates/RegisterAggregateFunctions.h>
 #include <velox/functions/prestosql/window/WindowFunctionsRegistration.h>
 #include <velox/functions/sparksql/aggregates/Register.h>
 #include <velox/functions/sparksql/registration/Register.h>
 #include <velox/functions/sparksql/window/WindowFunctionsRegistration.h>
-#include <velox/functions/flinksql/Register.h>
 #include <velox/connectors/fuzzer/DiscardDataSink.cpp>
 #include <velox/connectors/fuzzer/FuzzerConnector.cpp>
 #include <velox/vector/fuzzer/ConstrainedVectorGenerator.cpp>
