@@ -38,6 +38,7 @@ import io.github.zhztheplayer.velox4j.plan.LimitNode;
 import io.github.zhztheplayer.velox4j.plan.OrderByNode;
 import io.github.zhztheplayer.velox4j.plan.PlanNode;
 import io.github.zhztheplayer.velox4j.plan.ProjectNode;
+import io.github.zhztheplayer.velox4j.plan.StreamRecordTimestampInserterNode;
 import io.github.zhztheplayer.velox4j.plan.TableScanWithWatermarkNode;
 import io.github.zhztheplayer.velox4j.plan.TableWriteNode;
 import io.github.zhztheplayer.velox4j.plan.ValuesNode;
@@ -129,6 +130,21 @@ public class PlanNodeSerdeTest {
             List.of("foo"),
             List.of(FieldAccessTypedExpr.create(new IntegerType(), "foo")));
     SerdeTests.testISerializableRoundTrip(projectNode);
+  }
+
+  @Test
+  public void testStreamRecordTimestampInserterNode() {
+    final RowType outputType = SerdeTests.newSampleOutputType();
+    final PlanNode scan = SerdeTests.newSampleTableScanNode("id-1", outputType);
+    final ProjectNode project =
+        new ProjectNode(
+            "id-2",
+            List.of(scan),
+            List.of("foo"),
+            List.of(FieldAccessTypedExpr.create(new IntegerType(), "foo")));
+    final StreamRecordTimestampInserterNode inserter =
+        new StreamRecordTimestampInserterNode("id-3", null, project, 0);
+    SerdeTests.testISerializableRoundTrip(inserter);
   }
 
   @Test
