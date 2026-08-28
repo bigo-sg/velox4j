@@ -17,15 +17,40 @@
 package io.github.zhztheplayer.velox4j.test;
 
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import io.github.zhztheplayer.velox4j.Velox4j;
+import io.github.zhztheplayer.velox4j.config.Preset;
 
 public class Velox4jTests {
   private static final AtomicBoolean initialized = new AtomicBoolean(false);
+  private static final AtomicReference<String> initializedPreset = new AtomicReference<>(null);
 
   public static void ensureInitialized() {
+    initializeWith("SPARK");
+  }
+
+  public static void ensureInitializedForFlink() {
+    initializeWith("FLINK");
+  }
+
+  private static void initializeWith(String preset) {
     if (!initialized.compareAndSet(false, true)) {
+      String existing = initializedPreset.get();
+      if (!preset.equals(existing)) {
+        throw new IllegalStateException(
+            "Velox4j already initialized under preset "
+                + existing
+                + ", cannot switch to "
+                + preset
+                + " in the same JVM. Keep FLINK-preset tests in a separate surefire"
+                + " execution so they run in an isolated fork.");
+      }
       return;
+    }
+    initializedPreset.set(preset);
+    if (!preset.equals("SPARK")) {
+      Velox4j.configure(Preset.KEY, preset);
     }
     Velox4j.initialize();
   }

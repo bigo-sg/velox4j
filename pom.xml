@@ -205,9 +205,35 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <version>2.12.4</version>
-        <configuration>
-          <argLine>${surefire.add-opens.argLine}</argLine>
-        </configuration>
+        <executions>
+          <execution>
+            <id>default-test</id>
+            <goals>
+              <goal>test</goal>
+            </goals>
+            <configuration>
+              <forkMode>once</forkMode>
+              <argLine>${surefire.add-opens.argLine}</argLine>
+              <excludes>
+                <exclude>**/RegexpExtractFlinkTest.java</exclude>
+              </excludes>
+            </configuration>
+          </execution>
+          <execution>
+            <id>flink-preset-tests</id>
+            <goals>
+              <goal>test</goal>
+            </goals>
+            <phase>test</phase>
+            <configuration>
+              <forkMode>once</forkMode>
+              <argLine>${surefire.add-opens.argLine}</argLine>
+              <includes>
+                <include>**/RegexpExtractFlinkTest.java</include>
+              </includes>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>

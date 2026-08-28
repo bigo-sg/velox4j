@@ -49,6 +49,7 @@
 #include <velox/experimental/stateful/state/RocksDBStateBackend.h>
 #include <velox/experimental/stateful/state/StateBackend.h>
 #include <velox/experimental/stateful/udf/Register.h>
+#include <velox/functions/flinksql/Register.h>
 #include <velox/functions/lib/Re2Functions.h>
 #include <velox/functions/prestosql/aggregates/RegisterAggregateFunctions.h>
 #include <velox/functions/prestosql/window/WindowFunctionsRegistration.h>
@@ -81,6 +82,94 @@ void init(const std::function<void()>& f) {
   f();
 }
 
+void registerConnectors() {
+  // fuzzer
+  connector::fuzzer::DiscardDataTableHandle::registerSerDe();
+  connector::fuzzer::FuzzerTableHandle::registerSerDe();
+  connector::fuzzer::FuzzerConnectorSplit::registerSerDe();
+  connector::registerConnector(
+      std::make_shared<connector::fuzzer::FuzzerConnector>(
+          "connector-fuzzer",
+          std::make_shared<facebook::velox::config::ConfigBase>(
+              std::unordered_map<std::string, std::string>()),
+          nullptr));
+  // hive
+  connector::hive::HiveTableHandle::registerSerDe();
+  connector::hive::LocationHandle::registerSerDe();
+  connector::hive::HiveColumnHandle::registerSerDe();
+  connector::hive::HiveConnectorSplit::registerSerDe();
+  connector::hive::registerHivePartitionFunctionSerDe();
+  connector::hive::HiveInsertTableHandle::registerSerDe();
+  connector::hive::LocationHandle::registerSerDe();
+  connector::hive::HiveSortingColumn::registerSerDe();
+  connector::hive::HiveBucketProperty::registerSerDe();
+  connector::hive::HiveInsertFileNameGenerator::registerSerDe();
+  connector::registerConnector(std::make_shared<connector::hive::HiveConnector>(
+      "connector-hive",
+      std::make_shared<facebook::velox::config::ConfigBase>(
+          std::unordered_map<std::string, std::string>()),
+      nullptr));
+  // kafka
+  connector::kafka::KafkaTableHandle::registerSerDe();
+  connector::kafka::KafkaConnectorSplit::registerSerDe();
+  connector::registerConnector(
+      std::make_shared<connector::kafka::KafkaConnector>(
+          "connector-kafka",
+          std::make_shared<facebook::velox::config::ConfigBase>(
+              std::unordered_map<std::string, std::string>()),
+          nullptr));
+  // pulsar
+  connector::pulsar::PulsarTableHandle::registerSerDe();
+  connector::pulsar::PulsarConnectorSplit::registerSerDe();
+  connector::registerConnector(
+      std::make_shared<connector::pulsar::PulsarConnector>(
+          "connector-pulsar",
+          std::make_shared<facebook::velox::config::ConfigBase>(
+              std::unordered_map<std::string, std::string>()),
+          nullptr));
+  // filesystem
+  connector::filesystem::FileSystemInsertTableHandle::registerSerDe();
+  connector::registerConnector(
+      std::make_shared<connector::filesystem::FileSystemConnector>(
+          "connector-filesystem",
+          std::make_shared<facebook::velox::config::ConfigBase>(
+              std::unordered_map<std::string, std::string>()),
+          nullptr));
+  // external-stream
+  ExternalStreamConnectorSplit::registerSerDe();
+  ExternalStreamTableHandle::registerSerDe();
+  connector::registerConnector(std::make_shared<ExternalStreamConnector>(
+      "connector-external-stream",
+      std::make_shared<facebook::velox::config::ConfigBase>(
+          std::unordered_map<std::string, std::string>())));
+  // nexmark
+  connector::nexmark::NexmarkTableHandle::registerSerDe();
+  connector::nexmark::NexmarkConnectorSplit::registerSerDe();
+  connector::registerConnector(
+      std::make_shared<connector::nexmark::NexmarkConnector>(
+          "connector-nexmark",
+          std::make_shared<facebook::velox::config::ConfigBase>(
+              std::unordered_map<std::string, std::string>()),
+          nullptr));
+  // print
+  connector::print::PrintTableHandle::registerSerDe();
+  connector::registerConnector(
+      std::make_shared<connector::print::PrintConnector>(
+          "connector-print",
+          std::make_shared<facebook::velox::config::ConfigBase>(
+              std::unordered_map<std::string, std::string>()),
+          nullptr));
+  // from-elements
+  connector::from_elements::FromElementsTableHandle::registerSerDe();
+  connector::from_elements::FromElementsConnectorSplit::registerSerDe();
+  connector::registerConnector(
+      std::make_shared<connector::from_elements::FromElementsConnector>(
+          "connector-from-elements",
+          std::make_shared<facebook::velox::config::ConfigBase>(
+              std::unordered_map<std::string, std::string>()),
+          nullptr));
+}
+
 void initForSpark() {
   FLAGS_velox_memory_leak_check_enabled = true;
   FLAGS_velox_memory_pool_capacity_transfer_across_tasks = true;
@@ -98,16 +187,6 @@ void initForSpark() {
   text::registerTextWriterFactory();
   functions::sparksql::registerFunctions();
 
-  // Override to return NULL on no match for Flink compatibility.
-  exec::registerStatefulVectorFunction(
-      "regexp_extract",
-      functions::re2ExtractSignatures(),
-      [](const std::string& name,
-         const std::vector<exec::VectorFunctionArg>& inputArgs,
-         const core::QueryConfig& config) {
-        return functions::makeRe2Extract(
-            name, inputArgs, config, /*emptyNoMatch=*/false);
-      });
   aggregate::prestosql::registerAllAggregateFunctions(
       "",
       true /*registerCompanionFunctions*/,
@@ -125,82 +204,9 @@ void initForSpark() {
   Query::registerSerDe();
   Type::registerSerDe();
   common::Filter::registerSerDe();
-  connector::fuzzer::DiscardDataTableHandle::registerSerDe();
-  connector::fuzzer::FuzzerTableHandle::registerSerDe();
-  connector::fuzzer::FuzzerConnectorSplit::registerSerDe();
-  connector::hive::HiveTableHandle::registerSerDe();
-  connector::hive::LocationHandle::registerSerDe();
-  connector::hive::HiveColumnHandle::registerSerDe();
-  connector::hive::HiveConnectorSplit::registerSerDe();
-  connector::hive::registerHivePartitionFunctionSerDe();
-  connector::hive::HiveInsertTableHandle::registerSerDe();
-  connector::hive::LocationHandle::registerSerDe();
-  connector::hive::HiveSortingColumn::registerSerDe();
-  connector::hive::HiveBucketProperty::registerSerDe();
-  connector::hive::HiveInsertFileNameGenerator::registerSerDe();
-  connector::registerConnector(std::make_shared<connector::hive::HiveConnector>(
-      "connector-hive",
-      std::make_shared<facebook::velox::config::ConfigBase>(
-          std::unordered_map<std::string, std::string>()),
-      nullptr));
-  connector::kafka::KafkaTableHandle::registerSerDe();
-  connector::kafka::KafkaConnectorSplit::registerSerDe();
-  connector::registerConnector(
-      std::make_shared<connector::kafka::KafkaConnector>(
-          "connector-kafka",
-          std::make_shared<facebook::velox::config::ConfigBase>(
-              std::unordered_map<std::string, std::string>()),
-          nullptr));
-  connector::pulsar::PulsarTableHandle::registerSerDe();
-  connector::pulsar::PulsarConnectorSplit::registerSerDe();
-  connector::registerConnector(
-      std::make_shared<connector::pulsar::PulsarConnector>(
-          "connector-pulsar",
-          std::make_shared<facebook::velox::config::ConfigBase>(
-              std::unordered_map<std::string, std::string>()),
-          nullptr));
-  connector::filesystem::FileSystemInsertTableHandle::registerSerDe();
-  connector::registerConnector(
-      std::make_shared<connector::filesystem::FileSystemConnector>(
-          "connector-filesystem",
-          std::make_shared<facebook::velox::config::ConfigBase>(
-              std::unordered_map<std::string, std::string>()),
-          nullptr));
-  ExternalStreamConnectorSplit::registerSerDe();
-  ExternalStreamTableHandle::registerSerDe();
-  connector::registerConnector(std::make_shared<ExternalStreamConnector>(
-      "connector-external-stream",
-      std::make_shared<facebook::velox::config::ConfigBase>(
-          std::unordered_map<std::string, std::string>())));
-  connector::registerConnector(
-      std::make_shared<connector::fuzzer::FuzzerConnector>(
-          "connector-fuzzer",
-          std::make_shared<facebook::velox::config::ConfigBase>(
-              std::unordered_map<std::string, std::string>()),
-          nullptr));
-  connector::nexmark::NexmarkTableHandle::registerSerDe();
-  connector::nexmark::NexmarkConnectorSplit::registerSerDe();
-  connector::registerConnector(
-      std::make_shared<connector::nexmark::NexmarkConnector>(
-          "connector-nexmark",
-          std::make_shared<facebook::velox::config::ConfigBase>(
-              std::unordered_map<std::string, std::string>()),
-          nullptr));
-  connector::print::PrintTableHandle::registerSerDe();
-  connector::registerConnector(
-      std::make_shared<connector::print::PrintConnector>(
-          "connector-print",
-          std::make_shared<facebook::velox::config::ConfigBase>(
-              std::unordered_map<std::string, std::string>()),
-          nullptr));
-  connector::from_elements::FromElementsTableHandle::registerSerDe();
-  connector::from_elements::FromElementsConnectorSplit::registerSerDe();
-  connector::registerConnector(
-      std::make_shared<connector::from_elements::FromElementsConnector>(
-          "connector-from-elements",
-          std::make_shared<facebook::velox::config::ConfigBase>(
-              std::unordered_map<std::string, std::string>()),
-          nullptr));
+
+  registerConnectors();
+
   core::PlanNode::registerSerDe();
   stateful::StatefulPlanNode::registerSerDe();
   stateful::KeyedStateBackendParameters::registerSerDe();
@@ -208,6 +214,18 @@ void initForSpark() {
   stateful::StatefulOperator::setJniCaller(std::make_shared<FlinkJniCaller>());
   core::ITypedExpr::registerSerDe();
   exec::registerPartitionFunctionSerDe();
+}
+
+void initForFlink() {
+  // FLINK preset reuses initForSpark() because velox/functions/flinksql/ does
+  // not yet provide a complete scalar/aggregate/window function set, so Flink
+  // still relies on sparksql's registration as the baseline. The flinksql
+  // overrides below layer on top to fix dialect-specific semantics (e.g.
+  // REGEXP_EXTRACT returns NULL on no match instead of empty string).
+  // TODO: complete velox/functions/flinksql/ registration so Flink no longer
+  // depends on sparksql.
+  initForSpark();
+  functions::flinksql::registerFunctions();
 }
 } // namespace
 
@@ -221,6 +239,9 @@ void initialize(const std::shared_ptr<ConfigArray>& configArray) {
     switch (preset) {
       case SPARK:
         initForSpark();
+        break;
+      case FLINK:
+        initForFlink();
         break;
       default:
         VELOX_FAIL("Unknown preset: {}", folly::to<std::string>(preset));

@@ -19,7 +19,35 @@
 
 namespace velox4j {
 using namespace facebook::velox;
+
+namespace {
+std::string presetToStr(Preset p) {
+  switch (p) {
+    case Preset::SPARK:
+      return "SPARK";
+    case Preset::FLINK:
+      return "FLINK";
+  }
+  VELOX_FAIL("Unknown Preset value: {}", static_cast<int>(p));
+}
+
+Preset presetFromString(const std::string& key, const std::string& value) {
+  if (value == "SPARK") {
+    return Preset::SPARK;
+  }
+  if (value == "FLINK") {
+    return Preset::FLINK;
+  }
+  VELOX_FAIL(
+      "Invalid configuration for key '{}'. Value '{}' cannot be converted to type velox4j::Preset (expected SPARK or FLINK).",
+      key,
+      value);
+}
+} // namespace
+
 config::ConfigBase::Entry<Preset> VELOX4J_INIT_PRESET(
     "velox4j.init.preset",
-    Preset::SPARK);
+    Preset::SPARK,
+    presetToStr,
+    presetFromString);
 } // namespace velox4j
