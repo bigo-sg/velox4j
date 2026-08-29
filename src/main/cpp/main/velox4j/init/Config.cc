@@ -17,6 +17,8 @@
 
 #include "Config.h"
 
+#include <atomic>
+
 namespace velox4j {
 using namespace facebook::velox;
 
@@ -50,4 +52,19 @@ config::ConfigBase::Entry<Preset> VELOX4J_INIT_PRESET(
     Preset::SPARK,
     presetToStr,
     presetFromString);
+config::ConfigBase::Entry<bool> VELOX4J_MEMORY_MANAGER_FAIL_ON_LEAK(
+    "velox4j.memory-manager.fail-on-leak",
+    true);
+
+namespace {
+std::atomic<bool> memoryManagerFailOnLeak_{false};
+}
+
+void setMemoryManagerFailOnLeak(bool failOnLeak) {
+  memoryManagerFailOnLeak_.store(failOnLeak);
+}
+
+bool memoryManagerFailOnLeak() {
+  return memoryManagerFailOnLeak_.load();
+}
 } // namespace velox4j

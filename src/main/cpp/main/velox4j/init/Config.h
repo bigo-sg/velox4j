@@ -23,4 +23,9 @@ namespace velox4j {
 enum Preset { SPARK = 0, FLINK = 1 };
 
 extern facebook::velox::config::ConfigBase::Entry<Preset> VELOX4J_INIT_PRESET;
+extern facebook::velox::config::ConfigBase::Entry<bool>
+    VELOX4J_MEMORY_MANAGER_FAIL_ON_LEAK;
+
+void setMemoryManagerFailOnLeak(bool failOnLeak);
+bool memoryManagerFailOnLeak();
 } // namespace velox4j

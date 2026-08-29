@@ -35,6 +35,12 @@
     env->ThrowNew(                                                     \
         velox4j::getJniErrorState()->veloxExceptionClass(), e.what()); \
     return fallback_expr;                                              \
+  }                                                                    \
+  catch (...) {                                                        \
+    env->ThrowNew(                                                     \
+        velox4j::getJniErrorState()->veloxExceptionClass(),            \
+        "Unknown native exception");                                   \
+    return fallback_expr;                                              \
   }
 // macro ended
 #endif

@@ -17,6 +17,7 @@
 
 #include "MemoryManager.h"
 #include "ArrowMemoryPool.h"
+#include "velox4j/init/Config.h"
 
 namespace velox4j {
 using namespace facebook;
@@ -353,12 +354,20 @@ MemoryManager::~MemoryManager() {
   } catch (const std::exception& ex) {
     LOG(ERROR) << "[Velox4J MemoryManager DTOR] "
                << " Error occurred: " << ex.what();
+  } catch (...) {
+    LOG(ERROR) << "[Velox4J MemoryManager DTOR] Unknown error occurred";
   }
   if (!succeeded) {
+    if (memoryManagerFailOnLeak()) {
+      LOG(ERROR) << "[Velox4J MemoryManager DTOR] "
+                 << "Fatal: Memory leak found, aborting the destruction of "
+                    "MemoryManager. This could cause the process to crash.";
+      VELOX_FAIL("Memory leak found during destruction of MemoryManager");
+    }
     LOG(ERROR) << "[Velox4J MemoryManager DTOR] "
-               << "Fatal: Memory leak found, aborting the destruction of "
-                  "MemoryManager. This could cause the process to crash.";
-    VELOX_FAIL("Memory leak found during destruction of MemoryManager");
+               << "Memory leak found during destruction of MemoryManager. "
+                  "Continuing because velox4j.memory-manager.fail-on-leak "
+                  "is false.";
   }
 }
 

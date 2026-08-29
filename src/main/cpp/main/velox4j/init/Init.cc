@@ -235,6 +235,8 @@ void initialize(const std::shared_ptr<ConfigArray>& configArray) {
     google::InitGoogleLogging("velox");
     auto vConfig = std::make_shared<facebook::velox::config::ConfigBase>(
         configArray->toMap());
+    setMemoryManagerFailOnLeak(
+        vConfig->get(VELOX4J_MEMORY_MANAGER_FAIL_ON_LEAK));
     auto preset = vConfig->get(VELOX4J_INIT_PRESET);
     switch (preset) {
       case SPARK:
