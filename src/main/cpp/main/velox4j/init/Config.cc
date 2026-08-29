@@ -54,7 +54,7 @@ config::ConfigBase::Entry<Preset> VELOX4J_INIT_PRESET(
     presetFromString);
 config::ConfigBase::Entry<bool> VELOX4J_MEMORY_MANAGER_FAIL_ON_LEAK(
     "velox4j.memory-manager.fail-on-leak",
-    false);
+    true);
 
 namespace {
 std::atomic<bool> memoryManagerFailOnLeak_{false};
