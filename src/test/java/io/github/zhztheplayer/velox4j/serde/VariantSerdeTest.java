@@ -107,6 +107,7 @@ public class VariantSerdeTest {
   @Test
   public void testVarCharValue() {
     SerdeTests.testVariantRoundTrip(new VarCharValue("foo"));
+    SerdeTests.testVariantRoundTrip(new VarCharValue(null));
   }
 
   @Test
