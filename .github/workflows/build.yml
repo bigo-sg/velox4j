@@ -1,0 +1,73 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: Build
+
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [ opened, reopened, synchronize ]
+    branches:
+      - 'gluten-0530'
+    paths:
+      - '**/*'
+  push:
+    branches:
+      - 'gluten-0530'
+    paths:
+      - '**/*'
+
+concurrency:
+  group: ${{ github.repository }}-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    container: ghcr.io/lgbo-ustc/velox4j:latest
+    defaults:
+      run:
+        shell: bash
+    env:
+      CCACHE_DIR: "${{ github.workspace }}/.ccache"
+      CCACHE_MAXSIZE: 1G
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fix git permissions
+        run: git config --global --add safe.directory ${GITHUB_WORKSPACE}
+      - name: Ensure ccache directory exists
+        run: mkdir -p "${CCACHE_DIR}"
+      - name: Restore Ccache
+        uses: actions/cache/restore@v4
+        with:
+          path: '${{ env.CCACHE_DIR }}'
+          key: build-${{ runner.os }}-${{ runner.arch }}-${{ github.ref_name }}-${{ github.sha }}
+          restore-keys: |
+            build-${{ runner.os }}-${{ runner.arch }}-${{ github.ref_name }}-
+            build-${{ runner.os }}-${{ runner.arch }}-
+      - name: Zero Ccache Statistics
+        run: ccache -sz
+      - name: Build velox4j
+        run: |
+          mvn clean package -Dgpg.skip -Dspotless.skip=true
+      - name: Ccache Statistics
+        run: ccache -s
+      - name: Save Ccache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: '${{ env.CCACHE_DIR }}'
+          key: build-${{ runner.os }}-${{ runner.arch }}-${{ github.ref_name }}-${{ github.sha }}
