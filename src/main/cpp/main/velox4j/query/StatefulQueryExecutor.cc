@@ -85,7 +85,7 @@ StatefulSerialTask::~StatefulSerialTask() {
   try {
     if (task_ != nullptr && task_->isRunning()) {
       // TODO: add a method to finish the task and set state.
-      task_->finish(false);
+      task_->finish();
       // FIXME: Calling .wait() may take no effect in single thread execution
       //  mode.
       task_->requestCancel().wait();
