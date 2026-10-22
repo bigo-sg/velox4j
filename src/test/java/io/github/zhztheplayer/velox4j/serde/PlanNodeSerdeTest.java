@@ -34,6 +34,7 @@ import io.github.zhztheplayer.velox4j.memory.MemoryManager;
 import io.github.zhztheplayer.velox4j.plan.AggregationNode;
 import io.github.zhztheplayer.velox4j.plan.FilterNode;
 import io.github.zhztheplayer.velox4j.plan.HashJoinNode;
+import io.github.zhztheplayer.velox4j.plan.KeyGroupPartitionFunctionSpec;
 import io.github.zhztheplayer.velox4j.plan.LimitNode;
 import io.github.zhztheplayer.velox4j.plan.OrderByNode;
 import io.github.zhztheplayer.velox4j.plan.PlanNode;
@@ -150,6 +151,13 @@ public class PlanNodeSerdeTest {
   @Test
   public void testWatermarkPushDownSpec() {
     final WatermarkPushDownSpec spec = newSampleWatermarkPushDownSpec();
+    SerdeTests.testISerializableRoundTrip(spec);
+  }
+
+  @Test
+  public void testKeyGroupPartitionFunctionSpec() {
+    final KeyGroupPartitionFunctionSpec spec =
+        new KeyGroupPartitionFunctionSpec(SerdeTests.newSampleOutputType(), List.of(0), 128);
     SerdeTests.testISerializableRoundTrip(spec);
   }
 
