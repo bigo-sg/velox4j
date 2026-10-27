@@ -40,6 +40,7 @@ import io.github.zhztheplayer.velox4j.plan.GroupWindowAggregationNode;
 import io.github.zhztheplayer.velox4j.plan.GroupWindowAggsHandlerNode;
 import io.github.zhztheplayer.velox4j.plan.HashJoinNode;
 import io.github.zhztheplayer.velox4j.plan.HashPartitionFunctionSpec;
+import io.github.zhztheplayer.velox4j.plan.KeyGroupPartitionFunctionSpec;
 import io.github.zhztheplayer.velox4j.plan.LimitNode;
 import io.github.zhztheplayer.velox4j.plan.LocalPartitionNode;
 import io.github.zhztheplayer.velox4j.plan.NestedLoopJoinNode;
@@ -209,6 +210,8 @@ public final class ISerializableRegistry {
     NAME_REGISTRY.registerClass("StreamPartitionNode", StreamPartitionNode.class);
     NAME_REGISTRY.registerClass("LocalPartitionNode", LocalPartitionNode.class);
     NAME_REGISTRY.registerClass("HashPartitionFunctionSpec", HashPartitionFunctionSpec.class);
+    NAME_REGISTRY.registerClass(
+        "KeyGroupPartitionFunctionSpec", KeyGroupPartitionFunctionSpec.class);
     NAME_REGISTRY.registerClass("NestedLoopJoinNode", NestedLoopJoinNode.class);
     NAME_REGISTRY.registerClass("WindowNode", WindowNode.class);
     NAME_REGISTRY.registerClass("RowNumberNode", RowNumberNode.class);
