@@ -216,6 +216,7 @@
               <argLine>${surefire.add-opens.argLine}</argLine>
               <excludes>
                 <exclude>**/RegexpExtractFlinkTest.java</exclude>
+                <exclude>**/Sha2FlinkTest.java</exclude>
               </excludes>
             </configuration>
           </execution>
@@ -230,6 +231,7 @@
               <argLine>${surefire.add-opens.argLine}</argLine>
               <includes>
                 <include>**/RegexpExtractFlinkTest.java</include>
+                <include>**/Sha2FlinkTest.java</include>
               </includes>
             </configuration>
           </execution>
