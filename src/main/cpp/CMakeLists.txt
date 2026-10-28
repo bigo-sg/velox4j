@@ -69,13 +69,13 @@ list(PREPEND CMAKE_MODULE_PATH
      ${CMAKE_CURRENT_LIST_DIR}/cmake/resolve_dependency_modules)
 set(VELOX_REF_FILE ${CMAKE_CURRENT_LIST_DIR}/velox-ref.txt)
 set(VELOX_REF_HASH_FILE ${CMAKE_CURRENT_LIST_DIR}/velox-ref-hash.txt)
-set(VELOX_REPO bigo-sg/velox)
+set(VELOX_REPO AnissaLiu/velox)
 file(STRINGS ${VELOX_REF_FILE} VELOX_REF)
 file(STRINGS ${VELOX_REF_HASH_FILE} VELOX_SOURCE_URL_MD5)
 if(VELOX4J_VELOX_SOURCE_DIR)
   cpmaddpackage(NAME velox SOURCE_DIR ${VELOX4J_VELOX_SOURCE_DIR})
 else()
-  set(VELOX_SOURCE_URL "https://github.com/bigo-sg/velox.git")
+  set(VELOX_SOURCE_URL "https://github.com/AnissaLiu/velox.git")
   cpmaddpackage(
     NAME
     velox

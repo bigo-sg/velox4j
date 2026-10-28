@@ -216,6 +216,9 @@
               <argLine>${surefire.add-opens.argLine}</argLine>
               <excludes>
                 <exclude>**/RegexpExtractFlinkTest.java</exclude>
+                <exclude>**/FromUnixtimeFlinkTest.java</exclude>
+                <exclude>**/UnixTimestampFlinkTest.java</exclude>
+                <exclude>**/IntervalArithmeticFlinkTest.java</exclude>
               </excludes>
             </configuration>
           </execution>
@@ -230,6 +233,9 @@
               <argLine>${surefire.add-opens.argLine}</argLine>
               <includes>
                 <include>**/RegexpExtractFlinkTest.java</include>
+                <include>**/FromUnixtimeFlinkTest.java</include>
+                <include>**/UnixTimestampFlinkTest.java</include>
+                <include>**/IntervalArithmeticFlinkTest.java</include>
               </includes>
             </configuration>
           </execution>

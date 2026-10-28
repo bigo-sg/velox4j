@@ -5,8 +5,8 @@ set -o pipefail
 set -u
 
 BASE_DIR=$(dirname "$0")
-VELOX_UPSTREAM_REPO=bigo-sg/velox
-VELOX_UPSTREAM_BRANCH=gluten-20260829
+VELOX_UPSTREAM_REPO=AnissaLiu/velox
+VELOX_UPSTREAM_BRANCH=feat/temporal-expressions
 VELOX_CPP_ROOT="$BASE_DIR/../../../../src/main/cpp"
 VELOX_REF_FILE="$VELOX_CPP_ROOT/velox-ref.txt"
 VELOX_REF_HASH_FILE="$VELOX_CPP_ROOT/velox-ref-hash.txt"
