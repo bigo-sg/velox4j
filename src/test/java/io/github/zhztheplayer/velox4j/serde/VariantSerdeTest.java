@@ -152,4 +152,17 @@ public class VariantSerdeTest {
     SerdeTests.testVariantRoundTrip(
         new RowValue(List.of(new IntegerValue(500), new BooleanValue(false))));
   }
+
+  @Test
+  public void testNullValueIsAlwaysSerialized() {
+    // A typed-null carrier must serialize with an explicit "value": null:
+    // the null is meaningful (it carries the variant type) and the
+    // velox-side variant::create handles an explicit null directly. The
+    // class-level @JsonInclude(ALWAYS) on Variant overrides the mapper-wide
+    // NON_NULL inclusion, so the member must survive even with a null value.
+    final String json = Serde.toPrettyJson(new VarCharValue(null));
+    Assert.assertTrue(
+        "expected an explicit \"value\": null member, got: " + json,
+        json.replaceAll("\\s", "").contains("\"value\":null"));
+  }
 }
