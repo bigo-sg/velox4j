@@ -258,11 +258,23 @@ public class Sha2FlinkTest {
   }
 
   @Test
-  public void testSha2ZeroSelects256() {
-    try (RowVector input =
-            makeRowVector(new String[] {EMPTY, TEST, UTF8}, new Integer[] {0, 0, 0});
-        BaseVector result = evalExpr(input, sha2(varcharColumn(0), intColumn(1)))) {
-      assertVarcharValues(result, SHA256_EMPTY, SHA256_TEST, SHA256_UTF8);
+  public void testSha2ZeroLengthThrowsUserError() {
+    // Flink 1.19.2 rejects hash length 0 outright (no Hive-style 0-means-256);
+    // the offloaded path must fail the same way to keep both stacks consistent.
+    try (RowVector input = makeRowVector(new String[] {TEST}, new Integer[] {0})) {
+      final VeloxException error =
+          Assert.assertThrows(
+              VeloxException.class, () -> evalExpr(input, sha2(varcharColumn(0), intColumn(1))));
+      Assert.assertTrue(
+          error.getMessage(), error.getMessage().contains("Unsupported SHA-2 hash length: 0"));
+    }
+    try (RowVector input = makeRowVector(new String[] {TEST})) {
+      final VeloxException constError =
+          Assert.assertThrows(
+              VeloxException.class, () -> evalExpr(input, sha2(varcharColumn(0), intConstant(0))));
+      Assert.assertTrue(
+          constError.getMessage(),
+          constError.getMessage().contains("Unsupported SHA-2 hash length: 0"));
     }
   }
 
