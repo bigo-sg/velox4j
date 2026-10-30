@@ -21,6 +21,7 @@ import java.util.List;
 import org.apache.arrow.memory.BufferAllocator;
 import org.apache.arrow.memory.RootAllocator;
 import org.apache.arrow.vector.BigIntVector;
+import org.apache.arrow.vector.FieldVector;
 import org.apache.arrow.vector.Float8Vector;
 import org.apache.arrow.vector.VectorSchemaRoot;
 import org.junit.After;
@@ -34,21 +35,21 @@ import io.github.zhztheplayer.velox4j.Velox4j;
 import io.github.zhztheplayer.velox4j.arrow.Arrow;
 import io.github.zhztheplayer.velox4j.config.Config;
 import io.github.zhztheplayer.velox4j.config.ConnectorConfig;
-import io.github.zhztheplayer.velox4j.connector.ExternalStreamConnectorSplit;
 import io.github.zhztheplayer.velox4j.connector.ExternalStreamTableHandle;
-import io.github.zhztheplayer.velox4j.connector.ExternalStreams;
+import io.github.zhztheplayer.velox4j.data.BaseVector;
 import io.github.zhztheplayer.velox4j.data.RowVector;
+import io.github.zhztheplayer.velox4j.data.SelectivityVector;
+import io.github.zhztheplayer.velox4j.eval.Evaluation;
+import io.github.zhztheplayer.velox4j.eval.Evaluator;
 import io.github.zhztheplayer.velox4j.expression.CallTypedExpr;
 import io.github.zhztheplayer.velox4j.expression.ConstantTypedExpr;
 import io.github.zhztheplayer.velox4j.expression.FieldAccessTypedExpr;
 import io.github.zhztheplayer.velox4j.expression.TypedExpr;
-import io.github.zhztheplayer.velox4j.iterator.UpIterator;
 import io.github.zhztheplayer.velox4j.memory.AllocationListener;
 import io.github.zhztheplayer.velox4j.memory.MemoryManager;
 import io.github.zhztheplayer.velox4j.plan.ProjectNode;
 import io.github.zhztheplayer.velox4j.plan.TableScanNode;
 import io.github.zhztheplayer.velox4j.query.Query;
-import io.github.zhztheplayer.velox4j.query.SerialTask;
 import io.github.zhztheplayer.velox4j.serde.Serde;
 import io.github.zhztheplayer.velox4j.session.Session;
 import io.github.zhztheplayer.velox4j.test.Velox4jTests;
@@ -125,10 +126,13 @@ public class ArithmeticFunctionsFlinkTest {
     return rv;
   }
 
-  /** Runs the projection through a JSON round trip of the plan and returns the first output. */
-  private RowVector evalThroughPlanJson(TypedExpr projection, RowVector input)
-      throws InterruptedException {
-    final ExternalStreams.BlockingQueue queue = session.externalStreamOps().newBlockingQueue();
+  /**
+   * Runs the projection through a JSON round trip of the TableScan->Project plan and returns the
+   * result vector. The plan serde is locked by the round trip; the deserialized projection is
+   * evaluated through the expression evaluator, as this fork's query executor is stateful-only and
+   * rejects a plain projection plan.
+   */
+  private BaseVector evalThroughPlanJson(TypedExpr projection, RowVector input) {
     final TableScanNode scanNode =
         new TableScanNode(
             "scan-1",
@@ -141,22 +145,13 @@ public class ArithmeticFunctionsFlinkTest {
     // Plan-JSON path: serialize and deserialize the query before execution.
     final String queryJson = Serde.toJson(query);
     query = Serde.fromJson(queryJson, Query.class);
-    final SerialTask task = session.queryOps().execute(query);
-    task.addSplit(
-        scanNode.getId(),
-        new ExternalStreamConnectorSplit("connector-external-stream", queue.id()));
-    task.noMoreSplits(scanNode.getId());
-    queue.put(input);
-    for (int i = 0; i < 100; i++) {
-      final UpIterator.State state = task.advance();
-      if (state == UpIterator.State.AVAILABLE) {
-        return (RowVector) task.get();
-      }
-      if (state == UpIterator.State.FINISHED) {
-        throw new IllegalStateException("task finished without producing output");
-      }
-    }
-    throw new IllegalStateException("task never became available after input was pushed");
+    final TypedExpr deserializedProjection =
+        ((ProjectNode) query.getPlan()).getProjections().get(0);
+    final SelectivityVector sv = session.selectivityVectorOps().create(input.getSize());
+    final Evaluation eval =
+        new Evaluation(deserializedProjection, Config.empty(), ConnectorConfig.empty());
+    final Evaluator evaluator = session.evaluationOps().createEvaluator(eval);
+    return evaluator.eval(sv, input);
   }
 
   private TypedExpr c0(Type type) {
@@ -166,12 +161,12 @@ public class ArithmeticFunctionsFlinkTest {
   @Test
   public void testAbsBigint() throws Exception {
     try (RowVector input = makeBigIntRowVector(-5L, 7L, null, 0L)) {
-      RowVector result =
+      BaseVector result =
           evalThroughPlanJson(
               new CallTypedExpr(new BigIntType(), List.of(c0(new BigIntType())), "abs"), input);
       try (BufferAllocator alloc = new RootAllocator();
-          org.apache.arrow.vector.table.Table t = Arrow.toArrowTable(alloc, result)) {
-        BigIntVector v = (BigIntVector) t.getVectorCopy(0);
+          FieldVector fv = Arrow.toArrowVector(alloc, result)) {
+        BigIntVector v = (BigIntVector) fv;
         Assert.assertEquals(4, v.getValueCount());
         Assert.assertEquals(5L, v.get(0));
         Assert.assertEquals(7L, v.get(1));
@@ -184,12 +179,12 @@ public class ArithmeticFunctionsFlinkTest {
   @Test
   public void testNegateBigint() throws Exception {
     try (RowVector input = makeBigIntRowVector(-7L, 9L)) {
-      RowVector result =
+      BaseVector result =
           evalThroughPlanJson(
               new CallTypedExpr(new BigIntType(), List.of(c0(new BigIntType())), "negate"), input);
       try (BufferAllocator alloc = new RootAllocator();
-          org.apache.arrow.vector.table.Table t = Arrow.toArrowTable(alloc, result)) {
-        BigIntVector v = (BigIntVector) t.getVectorCopy(0);
+          FieldVector fv = Arrow.toArrowVector(alloc, result)) {
+        BigIntVector v = (BigIntVector) fv;
         Assert.assertEquals(2, v.getValueCount());
         Assert.assertEquals(7L, v.get(0));
         Assert.assertEquals(-9L, v.get(1));
@@ -200,23 +195,23 @@ public class ArithmeticFunctionsFlinkTest {
   @Test
   public void testFloorCeilDouble() throws Exception {
     try (RowVector input = makeDoubleRowVector(2.5, -2.5, null)) {
-      RowVector floor =
+      BaseVector floor =
           evalThroughPlanJson(
               new CallTypedExpr(new DoubleType(), List.of(c0(new DoubleType())), "floor"), input);
       try (BufferAllocator alloc = new RootAllocator();
-          org.apache.arrow.vector.table.Table t = Arrow.toArrowTable(alloc, floor)) {
-        Float8Vector v = (Float8Vector) t.getVectorCopy(0);
+          FieldVector fv = Arrow.toArrowVector(alloc, floor)) {
+        Float8Vector v = (Float8Vector) fv;
         Assert.assertEquals(3, v.getValueCount());
         Assert.assertEquals(2.0, v.get(0), 0.0);
         Assert.assertEquals(-3.0, v.get(1), 0.0);
         Assert.assertTrue(v.isNull(2));
       }
-      RowVector ceil =
+      BaseVector ceil =
           evalThroughPlanJson(
               new CallTypedExpr(new DoubleType(), List.of(c0(new DoubleType())), "ceil"), input);
       try (BufferAllocator alloc = new RootAllocator();
-          org.apache.arrow.vector.table.Table t = Arrow.toArrowTable(alloc, ceil)) {
-        Float8Vector v = (Float8Vector) t.getVectorCopy(0);
+          FieldVector fv = Arrow.toArrowVector(alloc, ceil)) {
+        Float8Vector v = (Float8Vector) fv;
         Assert.assertEquals(3, v.getValueCount());
         Assert.assertEquals(3.0, v.get(0), 0.0);
         Assert.assertEquals(-2.0, v.get(1), 0.0);
@@ -227,10 +222,12 @@ public class ArithmeticFunctionsFlinkTest {
 
   @Test
   public void testRoundHalfUpInDecimalDomain() throws Exception {
-    // 2.675 -> 2.68 and 647568.815 -> 647568.82: HALF_UP decided in the
-    // decimal domain (Flink's BigDecimal semantics), which binary-domain
-    // or scale-multiply rounding would get wrong.
-    try (RowVector input = makeDoubleRowVector(2.675, 647568.815, -2.5)) {
+    // 2.675 -> 2.68 and 647568.815 -> 647568.82 at scale 2, 0.15 -> 0.2 at
+    // scale 1: HALF_UP decided in the decimal domain (Flink's BigDecimal
+    // semantics), which binary-domain or scale-multiply rounding would get
+    // wrong. -2.5 stays -2.5 (no tie at the requested scale). Values follow
+    // the dual-run verified e2e cases.
+    try (RowVector input2 = makeDoubleRowVector(2.675, 647568.815)) {
       TypedExpr roundTo2 =
           new CallTypedExpr(
               new DoubleType(),
@@ -238,14 +235,30 @@ public class ArithmeticFunctionsFlinkTest {
                   c0(new DoubleType()),
                   new ConstantTypedExpr(new IntegerType(), new IntegerValue(2), null)),
               "round");
-      RowVector result = evalThroughPlanJson(roundTo2, input);
+      BaseVector result = evalThroughPlanJson(roundTo2, input2);
       try (BufferAllocator alloc = new RootAllocator();
-          org.apache.arrow.vector.table.Table t = Arrow.toArrowTable(alloc, result)) {
-        Float8Vector v = (Float8Vector) t.getVectorCopy(0);
-        Assert.assertEquals(3, v.getValueCount());
+          FieldVector fv = Arrow.toArrowVector(alloc, result)) {
+        Float8Vector v = (Float8Vector) fv;
+        Assert.assertEquals(2, v.getValueCount());
         Assert.assertEquals(2.68, v.get(0), 0.0);
         Assert.assertEquals(647568.82, v.get(1), 0.0);
-        Assert.assertEquals(-3.0, v.get(2), 0.0);
+      }
+    }
+    try (RowVector input1 = makeDoubleRowVector(0.15, -2.5)) {
+      TypedExpr roundTo1 =
+          new CallTypedExpr(
+              new DoubleType(),
+              List.of(
+                  c0(new DoubleType()),
+                  new ConstantTypedExpr(new IntegerType(), new IntegerValue(1), null)),
+              "round");
+      BaseVector result = evalThroughPlanJson(roundTo1, input1);
+      try (BufferAllocator alloc = new RootAllocator();
+          FieldVector fv = Arrow.toArrowVector(alloc, result)) {
+        Float8Vector v = (Float8Vector) fv;
+        Assert.assertEquals(2, v.getValueCount());
+        Assert.assertEquals(0.2, v.get(0), 0.0);
+        Assert.assertEquals(-2.5, v.get(1), 0.0);
       }
     }
   }
