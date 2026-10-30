@@ -24,8 +24,8 @@ import java.util.Map;
 
 import org.apache.arrow.memory.BufferAllocator;
 import org.apache.arrow.memory.RootAllocator;
+import org.apache.arrow.vector.DateDayVector;
 import org.apache.arrow.vector.FieldVector;
-import org.apache.arrow.vector.IntVector;
 import org.apache.arrow.vector.VarCharVector;
 import org.apache.arrow.vector.VectorSchemaRoot;
 import org.junit.After;
@@ -81,6 +81,15 @@ public class CurrentDateFlinkTest {
     session.close();
   }
 
+  /**
+   * Mirrors gluten-flink's VeloxQueryConfig: the session timezone only takes effect when
+   * adjust_timestamp_to_session_timezone is enabled (velox's getTimeZoneFromConfig reads both).
+   */
+  private static Config createFlinkTimezoneConfig() {
+    return Config.create(
+        Map.of("session_timezone", ZONE.getId(), "adjust_timestamp_to_session_timezone", "true"));
+  }
+
   private RowVector makeRowVector(int rows) {
     BufferAllocator alloc = new RootAllocator();
     VarCharVector vec = new VarCharVector("c0", alloc);
@@ -98,9 +107,7 @@ public class CurrentDateFlinkTest {
   private BaseVector evalCurrentDate(RowVector input) {
     SelectivityVector sv = session.selectivityVectorOps().create(input.getSize());
     CallTypedExpr expr = new CallTypedExpr(new DateType(), List.of(), "current_date");
-    Evaluation eval =
-        new Evaluation(
-            expr, Config.create(Map.of("session_timezone", ZONE.getId())), ConnectorConfig.empty());
+    Evaluation eval = new Evaluation(expr, createFlinkTimezoneConfig(), ConnectorConfig.empty());
     Evaluator evaluator = session.evaluationOps().createEvaluator(eval);
     return evaluator.eval(sv, input);
   }
@@ -112,14 +119,15 @@ public class CurrentDateFlinkTest {
       try (BufferAllocator alloc = new RootAllocator();
           FieldVector fv = Arrow.toArrowVector(alloc, result)) {
         Assert.assertEquals(2, fv.getValueCount());
-        IntVector iv = (IntVector) fv;
+        // current_date returns DATE (epoch days); read it as the arrow DateDayVector it maps to.
+        DateDayVector dv = (DateDayVector) fv;
         int expected = (int) LocalDate.now(ZONE).toEpochDay();
         // CURRENT_DATE reads the clock per row; both rows fall on the same
         // day unless the test straddles midnight, so compare against the
         // day computed at assertion time and accept the previous/next day
         // only at the boundary.
-        int v0 = iv.get(0);
-        int v1 = iv.get(1);
+        int v0 = dv.get(0);
+        int v1 = dv.get(1);
         Assert.assertEquals("per-row current_date should be consistent", v0, v1);
         Assert.assertTrue(
             "current_date should be the epoch day under " + ZONE + ", got " + v0,

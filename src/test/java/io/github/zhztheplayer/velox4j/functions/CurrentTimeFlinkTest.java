@@ -95,12 +95,19 @@ public class CurrentTimeFlinkTest {
     return rv;
   }
 
+  /**
+   * Mirrors gluten-flink's VeloxQueryConfig: the session timezone only takes effect when
+   * adjust_timestamp_to_session_timezone is enabled (velox's getTimeZoneFromConfig reads both).
+   */
+  private static Config createFlinkTimezoneConfig() {
+    return Config.create(
+        Map.of("session_timezone", ZONE.getId(), "adjust_timestamp_to_session_timezone", "true"));
+  }
+
   private BaseVector evalCurrentTime(RowVector input) {
     SelectivityVector sv = session.selectivityVectorOps().create(input.getSize());
     CallTypedExpr expr = new CallTypedExpr(new IntegerType(), List.of(), "current_time");
-    Evaluation eval =
-        new Evaluation(
-            expr, Config.create(Map.of("session_timezone", ZONE.getId())), ConnectorConfig.empty());
+    Evaluation eval = new Evaluation(expr, createFlinkTimezoneConfig(), ConnectorConfig.empty());
     Evaluator evaluator = session.evaluationOps().createEvaluator(eval);
     return evaluator.eval(sv, input);
   }
