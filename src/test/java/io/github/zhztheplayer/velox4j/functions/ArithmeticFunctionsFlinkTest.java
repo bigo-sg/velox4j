@@ -37,7 +37,6 @@ import io.github.zhztheplayer.velox4j.config.ConnectorConfig;
 import io.github.zhztheplayer.velox4j.connector.ExternalStreamConnectorSplit;
 import io.github.zhztheplayer.velox4j.connector.ExternalStreamTableHandle;
 import io.github.zhztheplayer.velox4j.connector.ExternalStreams;
-import io.github.zhztheplayer.velox4j.data.BaseVector;
 import io.github.zhztheplayer.velox4j.data.RowVector;
 import io.github.zhztheplayer.velox4j.expression.CallTypedExpr;
 import io.github.zhztheplayer.velox4j.expression.ConstantTypedExpr;
@@ -172,7 +171,7 @@ public class ArithmeticFunctionsFlinkTest {
               new CallTypedExpr(new BigIntType(), List.of(c0(new BigIntType())), "abs"), input);
       try (BufferAllocator alloc = new RootAllocator();
           org.apache.arrow.vector.table.Table t = Arrow.toArrowTable(alloc, result)) {
-        BigIntVector v = (BigIntVector) t.getVector(0);
+        BigIntVector v = (BigIntVector) t.getVectorCopy(0);
         Assert.assertEquals(4, v.getValueCount());
         Assert.assertEquals(5L, v.get(0));
         Assert.assertEquals(7L, v.get(1));
@@ -190,7 +189,7 @@ public class ArithmeticFunctionsFlinkTest {
               new CallTypedExpr(new BigIntType(), List.of(c0(new BigIntType())), "negate"), input);
       try (BufferAllocator alloc = new RootAllocator();
           org.apache.arrow.vector.table.Table t = Arrow.toArrowTable(alloc, result)) {
-        BigIntVector v = (BigIntVector) t.getVector(0);
+        BigIntVector v = (BigIntVector) t.getVectorCopy(0);
         Assert.assertEquals(2, v.getValueCount());
         Assert.assertEquals(7L, v.get(0));
         Assert.assertEquals(-9L, v.get(1));
@@ -206,7 +205,7 @@ public class ArithmeticFunctionsFlinkTest {
               new CallTypedExpr(new DoubleType(), List.of(c0(new DoubleType())), "floor"), input);
       try (BufferAllocator alloc = new RootAllocator();
           org.apache.arrow.vector.table.Table t = Arrow.toArrowTable(alloc, floor)) {
-        Float8Vector v = (Float8Vector) t.getVector(0);
+        Float8Vector v = (Float8Vector) t.getVectorCopy(0);
         Assert.assertEquals(3, v.getValueCount());
         Assert.assertEquals(2.0, v.get(0), 0.0);
         Assert.assertEquals(-3.0, v.get(1), 0.0);
@@ -217,7 +216,7 @@ public class ArithmeticFunctionsFlinkTest {
               new CallTypedExpr(new DoubleType(), List.of(c0(new DoubleType())), "ceil"), input);
       try (BufferAllocator alloc = new RootAllocator();
           org.apache.arrow.vector.table.Table t = Arrow.toArrowTable(alloc, ceil)) {
-        Float8Vector v = (Float8Vector) t.getVector(0);
+        Float8Vector v = (Float8Vector) t.getVectorCopy(0);
         Assert.assertEquals(3, v.getValueCount());
         Assert.assertEquals(3.0, v.get(0), 0.0);
         Assert.assertEquals(-2.0, v.get(1), 0.0);
@@ -239,10 +238,10 @@ public class ArithmeticFunctionsFlinkTest {
                   c0(new DoubleType()),
                   new ConstantTypedExpr(new IntegerType(), new IntegerValue(2), null)),
               "round");
-      BaseVector result = evalThroughPlanJson(roundTo2, new DoubleType(), input);
+      RowVector result = evalThroughPlanJson(roundTo2, input);
       try (BufferAllocator alloc = new RootAllocator();
           org.apache.arrow.vector.table.Table t = Arrow.toArrowTable(alloc, result)) {
-        Float8Vector v = (Float8Vector) t.getVector(0);
+        Float8Vector v = (Float8Vector) t.getVectorCopy(0);
         Assert.assertEquals(3, v.getValueCount());
         Assert.assertEquals(2.68, v.get(0), 0.0);
         Assert.assertEquals(647568.82, v.get(1), 0.0);
