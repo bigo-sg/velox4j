@@ -215,7 +215,7 @@
               <forkMode>once</forkMode>
               <argLine>${surefire.add-opens.argLine}</argLine>
               <excludes>
-                <exclude>**/RegexpExtractFlinkTest.java</exclude>
+                <exclude>**/*FlinkTest.java</exclude>
               </excludes>
             </configuration>
           </execution>
@@ -229,7 +229,7 @@
               <forkMode>once</forkMode>
               <argLine>${surefire.add-opens.argLine}</argLine>
               <includes>
-                <include>**/RegexpExtractFlinkTest.java</include>
+                <include>**/*FlinkTest.java</include>
               </includes>
             </configuration>
           </execution>
