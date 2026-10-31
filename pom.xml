@@ -218,6 +218,7 @@
                 <exclude>**/RegexpExtractFlinkTest.java</exclude>
                 <exclude>**/CurrentDateFlinkTest.java</exclude>
                 <exclude>**/CurrentTimeFlinkTest.java</exclude>
+                <exclude>**/IfNullFlinkTest.java</exclude>
               </excludes>
             </configuration>
           </execution>
@@ -234,6 +235,7 @@
                 <include>**/RegexpExtractFlinkTest.java</include>
                 <include>**/CurrentDateFlinkTest.java</include>
                 <include>**/CurrentTimeFlinkTest.java</include>
+                <include>**/IfNullFlinkTest.java</include>
               </includes>
             </configuration>
           </execution>
