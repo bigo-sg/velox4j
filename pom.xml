@@ -217,6 +217,10 @@
               <excludes>
                 <exclude>**/RegexpExtractFlinkTest.java</exclude>
                 <exclude>**/ArithmeticFunctionsFlinkTest.java</exclude>
+                <exclude>**/StringFunctionsFlinkTest.java</exclude>
+                <exclude>**/CurrentDateFlinkTest.java</exclude>
+                <exclude>**/CurrentTimeFlinkTest.java</exclude>
+                <exclude>**/IfNullFlinkTest.java</exclude>
               </excludes>
             </configuration>
           </execution>
@@ -232,6 +236,10 @@
               <includes>
                 <include>**/RegexpExtractFlinkTest.java</include>
                 <include>**/ArithmeticFunctionsFlinkTest.java</include>
+                <include>**/StringFunctionsFlinkTest.java</include>
+                <include>**/CurrentDateFlinkTest.java</include>
+                <include>**/CurrentTimeFlinkTest.java</include>
+                <include>**/IfNullFlinkTest.java</include>
               </includes>
             </configuration>
           </execution>
