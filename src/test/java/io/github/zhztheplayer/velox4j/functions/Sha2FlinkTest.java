@@ -101,6 +101,10 @@ public class Sha2FlinkTest {
   private static final String SHA512_LONG =
       "95cadc34aa46b9fdef432f62fe5bad8d9f475bfbecf797d5802bb5f2937a85d93ce48"
           + "57a6262b03834c01c610d74cd1215f9a466dc6ad3dd15078e3309a03a6d";
+  private static final String SHA1_EMPTY = "da39a3ee5e6b4b0d3255bfef95601890afd80709";
+  private static final String SHA1_TEST = "a94a8fe5ccb19ba61c4c0873d391e987982fbbd3";
+  private static final String SHA1_UTF8 = "dabaa5fe7c47fb21be902480a13013f16a1ab6eb";
+  private static final String SHA1_LONG = "a26704c04fc5f10db5aab58468035531cc542485";
   private static final String EMPTY = "";
   private static final String TEST = "test";
   private static final String UTF8 = "你好世界";
@@ -254,6 +258,23 @@ public class Sha2FlinkTest {
                 new String[] {EMPTY, TEST, UTF8, LONG}, new Integer[] {224, 256, 384, 512});
         BaseVector result = evalExpr(input, sha2(varcharColumn(0), intColumn(1)))) {
       assertVarcharValues(result, SHA224_EMPTY, SHA256_TEST, SHA384_UTF8, SHA512_LONG);
+    }
+  }
+
+  @Test
+  public void testSha2ColumnLengthOneSelectsSha1() {
+    // Flink's column path builds "SHA-" + length and "SHA-1" is a valid
+    // algorithm name there, so a column length of 1 yields the 20-byte SHA-1
+    // digest; the literal form of 1 is rejected earlier at the gluten
+    // conversion layer (Flink's init-time literal gate).
+    try (RowVector input =
+            makeRowVector(new String[] {EMPTY, TEST, UTF8, LONG}, new Integer[] {1, 1, 1, 1});
+        BaseVector result = evalExpr(input, sha2(varcharColumn(0), intColumn(1)))) {
+      assertVarcharValues(result, SHA1_EMPTY, SHA1_TEST, SHA1_UTF8, SHA1_LONG);
+    }
+    try (RowVector input = makeRowVector(new String[] {TEST});
+        BaseVector result = evalExpr(input, sha2(varcharColumn(0), bigintConstant(1L)))) {
+      assertVarcharValues(result, SHA1_TEST);
     }
   }
 
