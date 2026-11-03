@@ -219,6 +219,7 @@
                 <exclude>**/ToDateFlinkTest.java</exclude>
                 <exclude>**/ToTimestampFlinkTest.java</exclude>
                 <exclude>**/ArithmeticFunctionsFlinkTest.java</exclude>
+                <exclude>**/Sha2FlinkTest.java</exclude>
                 <exclude>**/StringFunctionsFlinkTest.java</exclude>
                 <exclude>**/CurrentDateFlinkTest.java</exclude>
                 <exclude>**/CurrentTimeFlinkTest.java</exclude>
@@ -240,6 +241,7 @@
                 <include>**/ToDateFlinkTest.java</include>
                 <include>**/ToTimestampFlinkTest.java</include>
                 <include>**/ArithmeticFunctionsFlinkTest.java</include>
+                <include>**/Sha2FlinkTest.java</include>
                 <include>**/StringFunctionsFlinkTest.java</include>
                 <include>**/CurrentDateFlinkTest.java</include>
                 <include>**/CurrentTimeFlinkTest.java</include>
