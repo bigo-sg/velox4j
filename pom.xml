@@ -215,13 +215,7 @@
               <forkMode>once</forkMode>
               <argLine>${surefire.add-opens.argLine}</argLine>
               <excludes>
-                <exclude>**/RegexpExtractFlinkTest.java</exclude>
-                <exclude>**/ArithmeticFunctionsFlinkTest.java</exclude>
-                <exclude>**/Sha2FlinkTest.java</exclude>
-                <exclude>**/StringFunctionsFlinkTest.java</exclude>
-                <exclude>**/CurrentDateFlinkTest.java</exclude>
-                <exclude>**/CurrentTimeFlinkTest.java</exclude>
-                <exclude>**/IfNullFlinkTest.java</exclude>
+                <exclude>**/*FlinkTest.java</exclude>
               </excludes>
             </configuration>
           </execution>
@@ -235,13 +229,7 @@
               <forkMode>once</forkMode>
               <argLine>${surefire.add-opens.argLine}</argLine>
               <includes>
-                <include>**/RegexpExtractFlinkTest.java</include>
-                <include>**/ArithmeticFunctionsFlinkTest.java</include>
-                <include>**/Sha2FlinkTest.java</include>
-                <include>**/StringFunctionsFlinkTest.java</include>
-                <include>**/CurrentDateFlinkTest.java</include>
-                <include>**/CurrentTimeFlinkTest.java</include>
-                <include>**/IfNullFlinkTest.java</include>
+                <include>**/*FlinkTest.java</include>
               </includes>
             </configuration>
           </execution>
