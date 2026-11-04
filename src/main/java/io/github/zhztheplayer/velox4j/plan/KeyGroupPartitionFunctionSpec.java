@@ -40,6 +40,13 @@ public class KeyGroupPartitionFunctionSpec extends PartitionFunctionSpec {
       @JsonProperty("keyChannels") List<Integer> keyChannels,
       @JsonProperty("maxParallelism") Integer maxParallelism) {
     super();
+    // The C++ deserializer casts the JSON value through uint32_t, so a negative
+    // maxParallelism would silently become a huge positive value and route rows
+    // to wrong key-group owners. Reject invalid values at the Java boundary.
+    if (maxParallelism == null || maxParallelism <= 0) {
+      throw new IllegalArgumentException(
+          "maxParallelism must be a positive integer, got: " + maxParallelism);
+    }
     this.inputType = inputType;
     this.keyChannels = keyChannels;
     this.maxParallelism = maxParallelism;

@@ -162,6 +162,17 @@ public class PlanNodeSerdeTest {
   }
 
   @Test
+  public void testKeyGroupPartitionFunctionSpecRejectsInvalidMaxParallelism() {
+    for (Integer maxParallelism : new Integer[] {null, 0, -1}) {
+      Assert.assertThrows(
+          IllegalArgumentException.class,
+          () ->
+              new KeyGroupPartitionFunctionSpec(
+                  SerdeTests.newSampleOutputType(), List.of(0), maxParallelism));
+    }
+  }
+
+  @Test
   public void testTableScanWithWatermarkNode() {
     final RowType outputType = SerdeTests.newSampleOutputType();
     final TableScanWithWatermarkNode scan =
