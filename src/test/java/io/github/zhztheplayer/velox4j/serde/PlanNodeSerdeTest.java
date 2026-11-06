@@ -33,7 +33,10 @@ import io.github.zhztheplayer.velox4j.memory.AllocationListener;
 import io.github.zhztheplayer.velox4j.memory.MemoryManager;
 import io.github.zhztheplayer.velox4j.plan.AggregationNode;
 import io.github.zhztheplayer.velox4j.plan.FilterNode;
+import io.github.zhztheplayer.velox4j.plan.GroupAggregationNode;
+import io.github.zhztheplayer.velox4j.plan.GroupAggsHandlerNode;
 import io.github.zhztheplayer.velox4j.plan.HashJoinNode;
+import io.github.zhztheplayer.velox4j.plan.HashPartitionFunctionSpec;
 import io.github.zhztheplayer.velox4j.plan.KeyGroupPartitionFunctionSpec;
 import io.github.zhztheplayer.velox4j.plan.LimitNode;
 import io.github.zhztheplayer.velox4j.plan.OrderByNode;
@@ -46,6 +49,7 @@ import io.github.zhztheplayer.velox4j.plan.ValuesNode;
 import io.github.zhztheplayer.velox4j.plan.WatermarkPushDownSpec;
 import io.github.zhztheplayer.velox4j.session.Session;
 import io.github.zhztheplayer.velox4j.sort.SortOrder;
+import io.github.zhztheplayer.velox4j.stateful.KeyedStateSpec;
 import io.github.zhztheplayer.velox4j.test.Velox4jTests;
 import io.github.zhztheplayer.velox4j.type.IntegerType;
 import io.github.zhztheplayer.velox4j.type.RowType;
@@ -118,6 +122,23 @@ public class PlanNodeSerdeTest {
   public void testAggregationNode() {
     final AggregationNode aggregationNode = SerdeTests.newSampleAggregationNode("id-2", "id-1");
     SerdeTests.testISerializableRoundTrip(aggregationNode);
+  }
+
+  @Test
+  public void testGroupAggregationNode() {
+    final RowType inputType = SerdeTests.newSampleOutputType();
+    final RowType outputType = SerdeTests.newSampleOutputType();
+    final PlanNode aggsHandlerNode =
+        new GroupAggsHandlerNode(
+            "id-1", inputType, outputType, List.of(SerdeTests.newSampleAggregate()), true, false);
+    final PlanNode aggregation =
+        new GroupAggregationNode(
+            "id-2",
+            aggsHandlerNode,
+            new HashPartitionFunctionSpec(inputType, List.of(0)),
+            new KeyedStateSpec(List.of(0), List.of(new IntegerType())),
+            outputType);
+    SerdeTests.testISerializableRoundTrip(aggregation);
   }
 
   @Test

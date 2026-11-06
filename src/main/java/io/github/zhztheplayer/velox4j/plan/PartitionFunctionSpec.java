@@ -16,11 +16,12 @@
 */
 package io.github.zhztheplayer.velox4j.plan;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-
 import io.github.zhztheplayer.velox4j.serializable.ISerializable;
 
-public class PartitionFunctionSpec extends ISerializable {
-  @JsonCreator
+/**
+ * Base class of partition function specs. Kept abstract so that fields declared with this type are
+ * deserialized polymorphically through the registry, like other {@code ISerializable} bases.
+ */
+public abstract class PartitionFunctionSpec extends ISerializable {
   public PartitionFunctionSpec() {}
 }

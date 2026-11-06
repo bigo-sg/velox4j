@@ -22,28 +22,45 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import io.github.zhztheplayer.velox4j.aggregate.Aggregate;
 import io.github.zhztheplayer.velox4j.type.RowType;
 
 public class GroupAggsHandlerNode extends PlanNode {
+  private final RowType inputType;
   private final RowType outputType;
+  private final List<Aggregate> aggregates;
   private final boolean generateUpdateBefore;
   private final boolean needRetraction;
 
   @JsonCreator
   public GroupAggsHandlerNode(
       @JsonProperty("id") String id,
+      @JsonProperty("inputType") RowType inputType,
       @JsonProperty("outputType") RowType outputType,
+      @JsonProperty("aggregates") List<Aggregate> aggregates,
       @JsonProperty("generateUpdateBefore") boolean generateUpdateBefore,
       @JsonProperty("needRetraction") boolean needRetraction) {
     super(id);
+    this.inputType = inputType;
     this.outputType = outputType;
+    this.aggregates = aggregates;
     this.generateUpdateBefore = generateUpdateBefore;
     this.needRetraction = needRetraction;
+  }
+
+  @JsonGetter("inputType")
+  public RowType getInputType() {
+    return inputType;
   }
 
   @JsonGetter("outputType")
   public RowType getOutputType() {
     return outputType;
+  }
+
+  @JsonGetter("aggregates")
+  public List<Aggregate> getAggregates() {
+    return aggregates;
   }
 
   @JsonGetter("generateUpdateBefore")

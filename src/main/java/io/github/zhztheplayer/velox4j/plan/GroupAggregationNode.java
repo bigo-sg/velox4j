@@ -22,11 +22,13 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import io.github.zhztheplayer.velox4j.stateful.KeyedStateSpec;
 import io.github.zhztheplayer.velox4j.type.RowType;
 
 public class GroupAggregationNode extends PlanNode {
   private final PlanNode aggregation;
   private final PartitionFunctionSpec keySelectorSpec;
+  private final KeyedStateSpec keyedStateSpec;
   private final RowType outputType;
 
   @JsonCreator
@@ -34,16 +36,23 @@ public class GroupAggregationNode extends PlanNode {
       @JsonProperty("id") String id,
       @JsonProperty("aggregation") PlanNode aggregation,
       @JsonProperty("keySelectorSpec") PartitionFunctionSpec keySelectorSpec,
+      @JsonProperty("keyedStateSpec") KeyedStateSpec keyedStateSpec,
       @JsonProperty("outputType") RowType outputType) {
     super(id);
     this.aggregation = aggregation;
     this.keySelectorSpec = keySelectorSpec;
+    this.keyedStateSpec = keyedStateSpec;
     this.outputType = outputType;
   }
 
   @JsonGetter("keySelectorSpec")
   public PartitionFunctionSpec getKeySelectorSpec() {
     return keySelectorSpec;
+  }
+
+  @JsonGetter("keyedStateSpec")
+  public KeyedStateSpec getKeyedStateSpec() {
+    return keyedStateSpec;
   }
 
   @JsonGetter("aggregation")

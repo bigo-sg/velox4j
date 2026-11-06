@@ -22,20 +22,27 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import io.github.zhztheplayer.velox4j.expression.TypedExpr;
+import io.github.zhztheplayer.velox4j.expression.ConstantTypedExpr;
 import io.github.zhztheplayer.velox4j.type.RowType;
 
 public class HashPartitionFunctionSpec extends PartitionFunctionSpec {
   private final RowType inputType;
   private final List<Integer> keyChannels;
+  private final List<ConstantTypedExpr> constants;
 
   @JsonCreator
   public HashPartitionFunctionSpec(
       @JsonProperty("inputType") RowType inputType,
-      @JsonProperty("keyChannels") List<Integer> keyChannels) {
+      @JsonProperty("keyChannels") List<Integer> keyChannels,
+      @JsonProperty("constants") List<ConstantTypedExpr> constants) {
     super();
     this.inputType = inputType;
     this.keyChannels = keyChannels;
+    this.constants = constants;
+  }
+
+  public HashPartitionFunctionSpec(RowType inputType, List<Integer> keyChannels) {
+    this(inputType, keyChannels, List.of());
   }
 
   @JsonGetter("inputType")
@@ -49,7 +56,7 @@ public class HashPartitionFunctionSpec extends PartitionFunctionSpec {
   }
 
   @JsonGetter("constants")
-  public List<TypedExpr> getConstants() {
-    return List.of();
+  public List<ConstantTypedExpr> getConstants() {
+    return constants;
   }
 }
