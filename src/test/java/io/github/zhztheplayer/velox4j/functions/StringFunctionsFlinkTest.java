@@ -21,6 +21,7 @@ import java.util.List;
 
 import org.apache.arrow.memory.BufferAllocator;
 import org.apache.arrow.memory.RootAllocator;
+import org.apache.arrow.vector.BitVector;
 import org.apache.arrow.vector.FieldVector;
 import org.apache.arrow.vector.VarCharVector;
 import org.apache.arrow.vector.VectorSchemaRoot;
@@ -48,16 +49,21 @@ import io.github.zhztheplayer.velox4j.memory.AllocationListener;
 import io.github.zhztheplayer.velox4j.memory.MemoryManager;
 import io.github.zhztheplayer.velox4j.session.Session;
 import io.github.zhztheplayer.velox4j.test.Velox4jTests;
+import io.github.zhztheplayer.velox4j.type.BooleanType;
 import io.github.zhztheplayer.velox4j.type.IntegerType;
 import io.github.zhztheplayer.velox4j.type.VarCharType;
 import io.github.zhztheplayer.velox4j.variant.IntegerValue;
 import io.github.zhztheplayer.velox4j.variant.VarCharValue;
 
 /**
- * Asserts the FLINK preset resolves trim/ltrim/rtrim/lpad/rpad to the flinksql registrations (not
- * the sparksql baseline): the one-argument trim removes only the 0x20 space, the two-argument forms
+ * Asserts the FLINK preset resolves the string functions to the flinksql registrations (not the
+ * sparksql baseline): the one-argument trim removes only the 0x20 space, the two-argument forms
  * keep the Flink (str, seek) argument order, the *_runtime names resolve with the isSpaceString
- * degradation, and lpad/rpad return NULL for a negative length instead of raising.
+ * degradation, lpad/rpad return NULL for a negative length instead of raising, an empty REPLACE
+ * `from` inserts at UTF-8 code-point boundaries (prestosql's byte-level `replace` would insert
+ * between bytes and the spark variant ignores an empty search), RIGHT counts code points, and an
+ * empty LIKE pattern vacuously matches every input per the Flink 1.19.2 runtime (unlike the
+ * SQL-standard reading that matches only the empty string).
  */
 public class StringFunctionsFlinkTest {
   private static MemoryManager memoryManager;
@@ -100,6 +106,20 @@ public class StringFunctionsFlinkTest {
     return rv;
   }
 
+  private RowVector makeNullableVarcharRowVector(String value) {
+    BufferAllocator alloc = new RootAllocator();
+    VarCharVector vec = new VarCharVector("c0", alloc);
+    vec.allocateNew();
+    if (value != null) {
+      vec.set(0, value.getBytes(StandardCharsets.UTF_8));
+    } else {
+      vec.setNull(0);
+    }
+    vec.setValueCount(1);
+    VectorSchemaRoot root = VectorSchemaRoot.of(vec);
+    return session.arrowOps().fromArrowTable(alloc, new org.apache.arrow.vector.table.Table(root));
+  }
+
   private BaseVector eval(RowVector input, TypedExpr expr) {
     SelectivityVector sv = session.selectivityVectorOps().create(input.getSize());
     Evaluation eval = new Evaluation(expr, Config.empty(), ConnectorConfig.empty());
@@ -140,6 +160,52 @@ public class StringFunctionsFlinkTest {
         name);
   }
 
+  private TypedExpr varcharConstant(String value) {
+    return new ConstantTypedExpr(new VarCharType(), new VarCharValue(value), null);
+  }
+
+  private TypedExpr replaceExpr(String from, String to) {
+    return new CallTypedExpr(
+        new VarCharType(),
+        List.of(
+            FieldAccessTypedExpr.create(new VarCharType(), "c0"),
+            varcharConstant(from),
+            varcharConstant(to)),
+        "replace");
+  }
+
+  private TypedExpr rightExpr(int len) {
+    return new CallTypedExpr(
+        new VarCharType(),
+        List.of(
+            FieldAccessTypedExpr.create(new VarCharType(), "c0"),
+            new ConstantTypedExpr(new IntegerType(), new IntegerValue(len), null)),
+        "right");
+  }
+
+  private TypedExpr fromBase64Expr() {
+    return new CallTypedExpr(
+        new VarCharType(),
+        List.of(FieldAccessTypedExpr.create(new VarCharType(), "c0")),
+        "from_base64");
+  }
+
+  private TypedExpr likeExpr(String pattern, String escape) {
+    if (escape == null) {
+      return new CallTypedExpr(
+          new BooleanType(),
+          List.of(FieldAccessTypedExpr.create(new VarCharType(), "c0"), varcharConstant(pattern)),
+          "like");
+    }
+    return new CallTypedExpr(
+        new BooleanType(),
+        List.of(
+            FieldAccessTypedExpr.create(new VarCharType(), "c0"),
+            varcharConstant(pattern),
+            varcharConstant(escape)),
+        "like");
+  }
+
   private String getString(BaseVector result) {
     try (BufferAllocator alloc = new RootAllocator();
         FieldVector fv = Arrow.toArrowVector(alloc, result)) {
@@ -148,6 +214,17 @@ public class StringFunctionsFlinkTest {
         return null;
       }
       return new String(((VarCharVector) fv).get(0), StandardCharsets.UTF_8);
+    }
+  }
+
+  private Boolean getBoolean(BaseVector result) {
+    try (BufferAllocator alloc = new RootAllocator();
+        FieldVector fv = Arrow.toArrowVector(alloc, result)) {
+      Assert.assertEquals(1, fv.getValueCount());
+      if (fv.isNull(0)) {
+        return null;
+      }
+      return ((BitVector) fv).get(0) == 1;
     }
   }
 
@@ -211,6 +288,80 @@ public class StringFunctionsFlinkTest {
       Assert.assertEquals("xyxtext", getString(eval(input, pad("lpad", 7, "xy"))));
       Assert.assertEquals("textxyx", getString(eval(input, pad("rpad", 7, "xy"))));
       Assert.assertEquals("tex", getString(eval(input, pad("lpad", 3, "xy"))));
+    }
+  }
+
+  @Test
+  public void testReplaceEmptyFromUtf8Boundaries() {
+    // Empty `from` inserts `to` at UTF-8 code-point boundaries, matching Flink's
+    // String.replace — the flinksql vector registration overrides prestosql's
+    // byte-level `replace` (which would split multibyte characters), and the
+    // spark variant ignores an empty search, so this asserts the flinksql
+    // registration.
+    try (RowVector input = makeNullableVarcharRowVector("abc")) {
+      Assert.assertEquals("xaxbxcx", getString(eval(input, replaceExpr("", "x"))));
+    }
+    try (RowVector input = makeNullableVarcharRowVector("你好")) {
+      Assert.assertEquals("x你x好x", getString(eval(input, replaceExpr("", "x"))));
+    }
+  }
+
+  @Test
+  public void testRight() {
+    // RIGHT counts UTF-8 code points: n <= 0 yields the empty string, n beyond
+    // the length the whole string, and a multibyte input stays intact.
+    try (RowVector input = makeNullableVarcharRowVector("abc")) {
+      Assert.assertEquals("bc", getString(eval(input, rightExpr(2))));
+      Assert.assertEquals("", getString(eval(input, rightExpr(0))));
+      Assert.assertEquals("abc", getString(eval(input, rightExpr(5))));
+    }
+    try (RowVector input = makeNullableVarcharRowVector("你好")) {
+      Assert.assertEquals("好", getString(eval(input, rightExpr(1))));
+    }
+  }
+
+  @Test
+  public void testFromBase64() {
+    // Unpadded and empty inputs both decode correctly; the flinksql
+    // registration returns VARCHAR where prestosql's returns VARBINARY.
+    try (RowVector input = makeNullableVarcharRowVector("dGVzdA")) {
+      Assert.assertEquals("test", getString(eval(input, fromBase64Expr())));
+    }
+    try (RowVector input = makeNullableVarcharRowVector("")) {
+      Assert.assertEquals("", getString(eval(input, fromBase64Expr())));
+    }
+  }
+
+  @Test
+  public void testLikeVacuousEmptyPattern() {
+    // An empty pattern vacuously matches every input, per the Flink 1.19.2
+    // runtime (verified by an end-to-end native-vs-offloaded dual-run); the
+    // SQL-standard reading (and the baseline LIKE) would match only the empty
+    // string, so this asserts the flinksql registration.
+    try (RowVector input = makeNullableVarcharRowVector("abc")) {
+      Assert.assertEquals(Boolean.TRUE, getBoolean(eval(input, likeExpr("", null))));
+    }
+    try (RowVector input = makeNullableVarcharRowVector("")) {
+      Assert.assertEquals(Boolean.TRUE, getBoolean(eval(input, likeExpr("", null))));
+    }
+  }
+
+  @Test
+  public void testLikeEscape() {
+    // '#' escapes the '%' into a literal percent.
+    try (RowVector input = makeNullableVarcharRowVector("a%b")) {
+      Assert.assertEquals(Boolean.TRUE, getBoolean(eval(input, likeExpr("a#%b", "#"))));
+    }
+    try (RowVector input = makeNullableVarcharRowVector("axb")) {
+      Assert.assertEquals(Boolean.FALSE, getBoolean(eval(input, likeExpr("a#%b", "#"))));
+    }
+    // A non-ASCII escape (one Java char, multi-byte UTF-8) is accepted too,
+    // per Flink's SqlLikeUtils — a byte-counted check would reject it.
+    try (RowVector input = makeNullableVarcharRowVector("a%b")) {
+      Assert.assertEquals(Boolean.TRUE, getBoolean(eval(input, likeExpr("aé%b", "é"))));
+    }
+    try (RowVector input = makeNullableVarcharRowVector("axb")) {
+      Assert.assertEquals(Boolean.FALSE, getBoolean(eval(input, likeExpr("aé%b", "é"))));
     }
   }
 }
