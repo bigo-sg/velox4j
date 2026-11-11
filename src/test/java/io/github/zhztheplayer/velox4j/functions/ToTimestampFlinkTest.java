@@ -274,6 +274,19 @@ public class ToTimestampFlinkTest {
   }
 
   @Test
+  public void testTwoArgDefaultedYear() {
+    // 1970 default year; Feb 29 throws in java.time's strict recomposition
+    // and the row comes back NULL, matching Flink.
+    try (RowVector input =
+            makeVarcharRowVector(
+                new String[] {"09-11", "02-29", "12:30:00"},
+                new String[] {"MM-dd", "MM-dd", "HH:mm:ss"});
+        BaseVector result = evalExpr(input, toTimestamp(varcharColumn(0), varcharColumn(1)))) {
+      assertTimestamps(result, new long[] {21859200L, 0L}, null, new long[] {45000L, 0L});
+    }
+  }
+
+  @Test
   public void testNullPropagationBothArities() {
     try (RowVector input = makeVarcharRowVector(new String[] {null, "2026-09-11"});
         BaseVector result = evalExpr(input, toTimestamp(varcharColumn(0)))) {

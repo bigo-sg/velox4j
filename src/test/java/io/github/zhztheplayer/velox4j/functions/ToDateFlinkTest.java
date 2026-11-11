@@ -173,6 +173,19 @@ public class ToDateFlinkTest {
   }
 
   @Test
+  public void testTwoArgDefaultedYear() {
+    // Flink defaults a missing year to 1970 (the engine lazily sets 2000);
+    // Feb 29 leniently rolls to Mar 1, as SimpleDateFormat.
+    try (RowVector input =
+            makeVarcharRowVector(
+                new String[] {"09-11", "02-29", "25", "12:30:00"},
+                new String[] {"MM-dd", "MM-dd", "dd", "HH:mm:ss"});
+        BaseVector result = evalExpr(input, toDate(varcharColumn(0), varcharColumn(1)))) {
+      assertDateDays(result, 253, 59, 24, 0);
+    }
+  }
+
+  @Test
   public void testNullPropagationBothArities() {
     try (RowVector input = makeVarcharRowVector(new String[] {null, "2026-09-11"});
         BaseVector result = evalExpr(input, toDate(varcharColumn(0)))) {
