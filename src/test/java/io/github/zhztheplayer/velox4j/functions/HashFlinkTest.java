@@ -22,6 +22,7 @@ import java.util.List;
 import org.apache.arrow.memory.BufferAllocator;
 import org.apache.arrow.memory.RootAllocator;
 import org.apache.arrow.vector.FieldVector;
+import org.apache.arrow.vector.VarBinaryVector;
 import org.apache.arrow.vector.VarCharVector;
 import org.apache.arrow.vector.VectorSchemaRoot;
 import org.junit.After;
@@ -46,7 +47,9 @@ import io.github.zhztheplayer.velox4j.memory.AllocationListener;
 import io.github.zhztheplayer.velox4j.memory.MemoryManager;
 import io.github.zhztheplayer.velox4j.session.Session;
 import io.github.zhztheplayer.velox4j.test.Velox4jTests;
+import io.github.zhztheplayer.velox4j.type.Type;
 import io.github.zhztheplayer.velox4j.type.VarCharType;
+import io.github.zhztheplayer.velox4j.type.VarbinaryType;
 
 public class HashFlinkTest {
   private static MemoryManager memoryManager;
@@ -89,12 +92,34 @@ public class HashFlinkTest {
     return session.arrowOps().fromArrowTable(alloc, new org.apache.arrow.vector.table.Table(root));
   }
 
+  private RowVector makeVarbinaryRowVector(byte[]... values) {
+    BufferAllocator alloc = new RootAllocator();
+    VarBinaryVector vec = new VarBinaryVector("c0", alloc);
+    vec.allocateNew();
+    for (int i = 0; i < values.length; i++) {
+      if (values[i] != null) {
+        vec.set(i, values[i]);
+      } else {
+        vec.setNull(i);
+      }
+    }
+    vec.setValueCount(values.length);
+    VectorSchemaRoot root = VectorSchemaRoot.of(vec);
+    return session.arrowOps().fromArrowTable(alloc, new org.apache.arrow.vector.table.Table(root));
+  }
+
   private BaseVector evalHash(RowVector input, String functionName) {
+    return evalHashTyped(input, functionName, new VarCharType());
+  }
+
+  private BaseVector evalHashBinary(RowVector input, String functionName) {
+    return evalHashTyped(input, functionName, new VarbinaryType());
+  }
+
+  private BaseVector evalHashTyped(RowVector input, String functionName, Type inputType) {
     CallTypedExpr hashExpr =
         new CallTypedExpr(
-            new VarCharType(),
-            List.of(FieldAccessTypedExpr.create(new VarCharType(), "c0")),
-            functionName);
+            new VarCharType(), List.of(FieldAccessTypedExpr.create(inputType, "c0")), functionName);
     Evaluation eval = new Evaluation(hashExpr, Config.empty(), ConnectorConfig.empty());
     try (SelectivityVector sv = session.selectivityVectorOps().create(input.getSize());
         Evaluator evaluator = session.evaluationOps().createEvaluator(eval)) {
@@ -129,6 +154,48 @@ public class HashFlinkTest {
         VarCharVector vc = (VarCharVector) fv;
         Assert.assertEquals(
             "a94a8fe5ccb19ba61c4c0873d391e987982fbbd3",
+            new String(vc.get(0), StandardCharsets.UTF_8));
+        Assert.assertEquals(
+            "440ee0853ad1e99f962b63e459ef992d7c211722",
+            new String(vc.get(1), StandardCharsets.UTF_8));
+        Assert.assertTrue("null input should yield null", fv.isNull(2));
+      }
+    }
+  }
+
+  // Flink's MD5 also accepts BINARY and digests the raw bytes; digests probed
+  // independently.
+  @Test
+  public void testMd5Binary() {
+    final byte[] raw = {0x00, (byte) 0xFF, 0x10};
+    final byte[] utf8Bytes = "你好".getBytes(StandardCharsets.UTF_8);
+    try (RowVector input = makeVarbinaryRowVector(raw, utf8Bytes, null);
+        BaseVector result = evalHashBinary(input, "md5")) {
+      try (BufferAllocator alloc = new RootAllocator();
+          FieldVector fv = Arrow.toArrowVector(alloc, result)) {
+        Assert.assertEquals(3, fv.getValueCount());
+        VarCharVector vc = (VarCharVector) fv;
+        Assert.assertEquals(
+            "481e4551ec039aada760901cf52b1917", new String(vc.get(0), StandardCharsets.UTF_8));
+        Assert.assertEquals(
+            "7eca689f0d3389d9dea66ae112e5cfd7", new String(vc.get(1), StandardCharsets.UTF_8));
+        Assert.assertTrue("null input should yield null", fv.isNull(2));
+      }
+    }
+  }
+
+  @Test
+  public void testSha1Binary() {
+    final byte[] raw = {0x00, (byte) 0xFF, 0x10};
+    final byte[] utf8Bytes = "你好".getBytes(StandardCharsets.UTF_8);
+    try (RowVector input = makeVarbinaryRowVector(raw, utf8Bytes, null);
+        BaseVector result = evalHashBinary(input, "sha1")) {
+      try (BufferAllocator alloc = new RootAllocator();
+          FieldVector fv = Arrow.toArrowVector(alloc, result)) {
+        Assert.assertEquals(3, fv.getValueCount());
+        VarCharVector vc = (VarCharVector) fv;
+        Assert.assertEquals(
+            "a14c2fba17201c1ead45b6c4af4409fbfc16ba8a",
             new String(vc.get(0), StandardCharsets.UTF_8));
         Assert.assertEquals(
             "440ee0853ad1e99f962b63e459ef992d7c211722",
