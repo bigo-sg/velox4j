@@ -62,7 +62,7 @@ public class StaticJniWrapper {
   // For BaseVector / RowVector / SelectivityVector.
   native void baseVectorToArrow(long rvid, long cSchema, long cArray);
 
-  native String baseVectorSerialize(long[] id);
+  native byte[] baseVectorSerialize(long[] id);
 
   native String baseVectorGetType(long id);
 
