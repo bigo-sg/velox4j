@@ -163,7 +163,7 @@ public final class JniApi {
     return baseVectorWrap(jni.arrowToBaseVector(schema.memoryAddress(), array.memoryAddress()));
   }
 
-  public List<BaseVector> baseVectorDeserialize(String serialized) {
+  public List<BaseVector> baseVectorDeserialize(byte[] serialized) {
     return Arrays.stream(jni.baseVectorDeserialize(serialized))
         .mapToObj(this::baseVectorWrap)
         .collect(Collectors.toList());
