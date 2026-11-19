@@ -1,11 +1,10 @@
 /*
-* Licensed to the Apache Software Foundation (ASF) under one
-* or more contributor license agreements.  See the NOTICE file
-* distributed with this work for additional information regarding
-* copyright ownership.  The ASF licenses this file to You under the
-* Apache License, Version 2.0 (the "License"); you may not use this file
-* except in compliance with the License.  You may obtain a copy of the
-* License at
+* Licensed to the Apache Software Foundation (ASF) under one or more
+* contributor license agreements.  See the NOTICE file distributed with
+* this work for additional information regarding copyright ownership.
+* The ASF licenses this file to You under the Apache License, Version 2.0
+* (the "License"); you may not use this file except in compliance with
+* the License.  You may obtain a copy of the License at
 *
 *    http://www.apache.org/licenses/LICENSE-2.0
 *
@@ -29,16 +28,15 @@ import io.github.zhztheplayer.velox4j.plan.HashPartitionFunctionSpec;
 import io.github.zhztheplayer.velox4j.plan.StreamWindowAggregationNode;
 import io.github.zhztheplayer.velox4j.plan.StreamWindowPartitionFunctionSpec;
 import io.github.zhztheplayer.velox4j.stateful.KeyedStateSpec;
+import io.github.zhztheplayer.velox4j.test.Velox4jTests;
 import io.github.zhztheplayer.velox4j.type.BigIntType;
 import io.github.zhztheplayer.velox4j.type.RowType;
-import io.github.zhztheplayer.velox4j.test.Velox4jTests;
 
 /**
- * Round trips the TVF window aggregation plan node and its satellite
- * serializables through both the Java JSON serde and the native C++
- * deserializer: windowType/size/step/offset ride the node for all four
- * window types (HOP=0, TUMBLE=1, SESSION=2, CUMULATIVE=3), and the
- * KeyedStateSpec must survive as a registered ISerializable.
+ * Round trips the TVF window aggregation plan node and its satellite serializables through both the
+ * Java JSON serde and the native C++ deserializer: windowType/size/step/offset ride the node for
+ * all four window types (HOP=0, TUMBLE=1, SESSION=2, CUMULATIVE=3), and the KeyedStateSpec must
+ * survive as a registered ISerializable.
  */
 public class WindowPlanNodeSerdeTest {
   @BeforeClass
@@ -54,8 +52,7 @@ public class WindowPlanNodeSerdeTest {
           List.of(new BigIntType(), new BigIntType(), new BigIntType()));
 
   private static StreamWindowAggregationNode newNode(int windowType) {
-    final FieldAccessTypedExpr key =
-        FieldAccessTypedExpr.create(new BigIntType(), "bidder");
+    final FieldAccessTypedExpr key = FieldAccessTypedExpr.create(new BigIntType(), "bidder");
     final AggregationNode aggregation =
         new AggregationNode(
             "agg-id",
