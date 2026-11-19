@@ -136,11 +136,11 @@ public class JniApiTest {
   public void testVectorSerdeEmpty() {
     final LocalSession session = createLocalSession(memoryManager);
     final JniApi jniApi = getJniApi(session);
-    final String serialized = StaticJniApi.get().baseVectorSerialize(Collections.emptyList());
+    final byte[] serialized = StaticJniApi.get().baseVectorSerialize(Collections.emptyList());
     final List<BaseVector> deserialized = jniApi.baseVectorDeserialize(serialized);
     Assert.assertTrue(deserialized.isEmpty());
-    final String serializedSecond = StaticJniApi.get().baseVectorSerialize(deserialized);
-    Assert.assertEquals(serialized, serializedSecond);
+    final byte[] serializedSecond = StaticJniApi.get().baseVectorSerialize(deserialized);
+    Assert.assertArrayEquals(serialized, serializedSecond);
     session.close();
     ;
   }
@@ -154,7 +154,7 @@ public class JniApiTest {
     final UpIterator itr = queryExecutor.execute();
     final RowVector vector = UpIteratorTests.collectSingleVector(itr);
     final List<RowVector> vectors = List.of(vector);
-    final String serialized = StaticJniApi.get().baseVectorSerialize(vectors);
+    final byte[] serialized = StaticJniApi.get().baseVectorSerialize(vectors);
     final List<BaseVector> deserialized = jniApi.baseVectorDeserialize(serialized);
     BaseVectorTests.assertEquals(vectors, deserialized);
     session.close();
@@ -170,7 +170,7 @@ public class JniApiTest {
     final UpIterator itr = queryExecutor.execute();
     final RowVector vector = UpIteratorTests.collectSingleVector(itr);
     final List<RowVector> vectors = List.of(vector, vector);
-    final String serialized = StaticJniApi.get().baseVectorSerialize(vectors);
+    final byte[] serialized = StaticJniApi.get().baseVectorSerialize(vectors);
     final List<BaseVector> deserialized = jniApi.baseVectorDeserialize(serialized);
     BaseVectorTests.assertEquals(vectors, deserialized);
     session.close();
