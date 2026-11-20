@@ -20,7 +20,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 
 import io.github.zhztheplayer.velox4j.serializable.ISerializable;
 
-public class PartitionFunctionSpec extends ISerializable {
+public abstract class PartitionFunctionSpec extends ISerializable {
   @JsonCreator
   public PartitionFunctionSpec() {}
 }
