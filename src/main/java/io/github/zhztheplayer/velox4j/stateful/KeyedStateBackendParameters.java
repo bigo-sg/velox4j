@@ -22,20 +22,45 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import io.github.zhztheplayer.velox4j.serializable.ISerializable;
 
+/**
+ * Java mirror of the velox KeyedStateBackendParameters. The three key-group fields align with the
+ * C++ serialize keys one for one (StateBackend.h): maxParallelism is the size of the key-group
+ * space, startKeyGroup the inclusive start of this backend's sub-range and numKeyGroups its length
+ * - the values the keyed state backend derives key-group ownership from.
+ */
 public class KeyedStateBackendParameters extends ISerializable {
+
+  /** Lower bound of Flink's default max parallelism (mirrors the C++ kDefaultMaxParallelism). */
+  public static final int DEFAULT_MAX_PARALLELISM = 128;
 
   private String jobId;
   private String operatorId;
   private int stateBackendType;
+  private int maxParallelism;
+  private int startKeyGroup;
+  private int numKeyGroups;
+
+  public KeyedStateBackendParameters(String jobId, String operatorId, int stateBackendType) {
+    this(jobId, operatorId, stateBackendType, DEFAULT_MAX_PARALLELISM, 0, DEFAULT_MAX_PARALLELISM);
+  }
 
   @JsonCreator
   public KeyedStateBackendParameters(
       @JsonProperty("jobId") String jobId,
       @JsonProperty("operatorId") String operatorId,
-      @JsonProperty("stateBackendType") int stateBackendType) {
+      @JsonProperty("stateBackendType") int stateBackendType,
+      @JsonProperty("maxParallelism") Integer maxParallelism,
+      @JsonProperty("startKeyGroup") Integer startKeyGroup,
+      @JsonProperty("numKeyGroups") Integer numKeyGroups) {
     this.jobId = jobId;
     this.operatorId = operatorId;
     this.stateBackendType = stateBackendType;
+    // Tolerant defaults aligned with the C++ create (StateBackend.h): a
+    // JSON written before the key-group fields existed deserializes as the
+    // full default key-group space.
+    this.maxParallelism = maxParallelism == null ? DEFAULT_MAX_PARALLELISM : maxParallelism;
+    this.startKeyGroup = startKeyGroup == null ? 0 : startKeyGroup;
+    this.numKeyGroups = numKeyGroups == null ? DEFAULT_MAX_PARALLELISM : numKeyGroups;
   }
 
   @JsonGetter("jobId")
@@ -51,5 +76,20 @@ public class KeyedStateBackendParameters extends ISerializable {
   @JsonGetter("stateBackendType")
   public int getBackendType() {
     return stateBackendType;
+  }
+
+  @JsonGetter("maxParallelism")
+  public int getMaxParallelism() {
+    return maxParallelism;
+  }
+
+  @JsonGetter("startKeyGroup")
+  public int getStartKeyGroup() {
+    return startKeyGroup;
+  }
+
+  @JsonGetter("numKeyGroups")
+  public int getNumKeyGroups() {
+    return numKeyGroups;
   }
 }

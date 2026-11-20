@@ -54,7 +54,10 @@ public class ConstantTypedExpr extends TypedExpr {
     } else {
       constVector = vector.wrapInConstant(1, 0);
     }
-    final String serialized = BaseVectors.serializeOne(constVector);
+    // The "valueVector" field is embedded in plan JSON, so the binary frame is
+    // base64-encoded into text here; the JNI serde contract itself is byte[].
+    final String serialized =
+        java.util.Base64.getEncoder().encodeToString(BaseVectors.serializeOne(constVector));
     final Type type = vector.getType();
     return new ConstantTypedExpr(type, null, serialized);
   }
