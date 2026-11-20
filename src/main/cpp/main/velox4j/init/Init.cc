@@ -67,6 +67,7 @@
 #include "velox4j/init/Config.h"
 #include "velox4j/jni/FlinkJniCaller.h"
 #include "velox4j/query/Query.h"
+#include "velox4j/serde/PrestoFrame.h"
 
 namespace velox4j {
 
@@ -214,6 +215,10 @@ void initForSpark() {
   stateful::StatefulOperator::setJniCaller(std::make_shared<FlinkJniCaller>());
   core::ITypedExpr::registerSerDe();
   exec::registerPartitionFunctionSerDe();
+  // Must come after the core serde registrations above so that the overrides
+  // win: vector payloads embedded in plan JSON ("data"/"valueVector") are
+  // read in the same presto frame format the JNI serializer writes.
+  serde::registerPlanVectorSerdeOverrides();
 }
 
 void initForFlink() {

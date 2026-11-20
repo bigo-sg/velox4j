@@ -16,12 +16,11 @@
  */
 
 #include "JniWrapper.h"
-#include <velox/common/encode/Base64.h>
+#include <folly/json/json.h>
 #include <velox/common/memory/Memory.h>
 #include <velox/core/PlanNode.h>
 #include <velox/exec/TableWriter.h>
 #include <velox/experimental/stateful/StreamElement.h>
-#include <velox/vector/VectorSaver.h>
 
 #include "JniCommon.h"
 #include "JniError.h"
@@ -33,6 +32,7 @@
 #include "velox4j/lifecycle/Session.h"
 #include "velox4j/query/QueryExecutor.h"
 #include "velox4j/query/StatefulQueryExecutor.h"
+#include "velox4j/serde/PrestoFrame.h"
 
 namespace velox4j {
 using namespace facebook::velox;
@@ -85,6 +85,80 @@ Session* sessionOf(JNIEnv* env, jobject javaThis) {
   const jlong sessionId = env->CallLongMethod(javaThis, methodId);
   checkException(env);
   return ObjectStore::retrieve<Session>(sessionId).get();
+}
+
+// Checkpoint records are raw bytes (the keyed-state checkpoint stream), not
+// text: a JNI string is modified UTF-8 and cannot carry them losslessly - a
+// 0x00 byte ends the string and stray bytes are dropped by the decoder,
+// which corrupted every savepoint restore through the old jstring channel.
+// The records therefore cross as one flat byte array: int32 record count,
+// then per record int32 length + payload, little-endian like the checkpoint
+// stream itself.
+void appendLeInt32(std::string& out, int32_t value) {
+  const auto bits = static_cast<uint32_t>(value);
+  for (int i = 0; i < 4; ++i) {
+    out.push_back(static_cast<char>((bits >> (8 * i)) & 0xFF));
+  }
+}
+
+jbyteArray toFramedByteArray(
+    JNIEnv* env,
+    const std::vector<std::string>& records) {
+  std::string framed;
+  appendLeInt32(framed, static_cast<int32_t>(records.size()));
+  for (const auto& record : records) {
+    appendLeInt32(framed, static_cast<int32_t>(record.size()));
+    framed.append(record.data(), record.size());
+  }
+  jbyteArray array = env->NewByteArray(static_cast<jsize>(framed.size()));
+  VELOX_CHECK_NOT_NULL(array, "Failed to allocate the checkpoint-record array");
+  env->SetByteArrayRegion(
+      array,
+      0,
+      static_cast<jsize>(framed.size()),
+      reinterpret_cast<const jbyte*>(framed.data()));
+  return array;
+}
+
+std::vector<std::string> fromFramedByteArray(JNIEnv* env, jbyteArray framed) {
+  std::vector<std::string> records;
+  if (framed == nullptr) {
+    return records;
+  }
+  const auto safe = getByteArrayElementsSafe(env, framed);
+  const auto* data = reinterpret_cast<const char*>(safe.elems());
+  const auto size = static_cast<size_t>(safe.length());
+  size_t offset = 0;
+  const auto readLeInt32 = [&]() {
+    VELOX_CHECK_LE(
+        offset + sizeof(int32_t),
+        size,
+        "Corrupt checkpoint-record framing: truncated length field");
+    uint32_t value = 0;
+    for (size_t i = 0; i < sizeof(int32_t); ++i) {
+      value |=
+          static_cast<uint32_t>(static_cast<unsigned char>(data[offset + i]))
+          << (8 * i);
+    }
+    offset += sizeof(int32_t);
+    return value;
+  };
+  const auto count = readLeInt32();
+  records.reserve(count);
+  for (uint32_t i = 0; i < count; ++i) {
+    const auto length = readLeInt32();
+    VELOX_CHECK_LE(
+        offset + length,
+        size,
+        "Corrupt checkpoint-record framing: record exceeds the array");
+    records.emplace_back(data + offset, length);
+    offset += length;
+  }
+  VELOX_CHECK_EQ(
+      offset,
+      size,
+      "Corrupt checkpoint-record framing: trailing bytes after the last record");
+  return records;
 }
 
 jlong createEvaluator(JNIEnv* env, jobject javaThis, jstring evalJson) {
@@ -302,58 +376,30 @@ void initializeState(
     jlong itrId,
     jlong context,
     jstring keyedStateBackendConfigString,
-    jobjectArray checkpointRecords) {
+    jbyteArray checkpointRecords) {
   JNI_METHOD_START
   auto itr = ObjectStore::retrieve<StatefulSerialTask>(itrId);
   spotify::jni::JavaString jTypeJson{env, keyedStateBackendConfigString};
-  std::vector<std::string> records;
-  if (checkpointRecords != nullptr) {
-    const auto numRecords = env->GetArrayLength(checkpointRecords);
-    records.reserve(numRecords);
-    for (jsize i = 0; i < numRecords; ++i) {
-      auto record = static_cast<jstring>(
-          env->GetObjectArrayElement(checkpointRecords, i));
-      spotify::jni::JavaString jRecord{env, record};
-      records.push_back(jRecord.get());
-      env->DeleteLocalRef(record);
-    }
-  }
+  std::vector<std::string> records =
+      fromFramedByteArray(env, checkpointRecords);
   itr->initializeState(context, jTypeJson.get(), std::move(records));
   JNI_METHOD_END()
 }
 
-jobject
+jbyteArray
 snapshotState(JNIEnv* env, jobject javaThis, jlong itrId, jlong context) {
   JNI_METHOD_START
   auto itr = ObjectStore::retrieve<StatefulSerialTask>(itrId);
   std::vector<std::string> snapshots = itr->snapshotState(context);
-  jclass stringClass = env->FindClass("java/lang/String");
-  jobjectArray result =
-      env->NewObjectArray(snapshots.size(), stringClass, nullptr);
-  for (size_t i = 0; i < snapshots.size(); ++i) {
-    jstring str = env->NewStringUTF(snapshots[i].c_str());
-    env->SetObjectArrayElement(result, i, str);
-    env->DeleteLocalRef(str);
-  }
-  env->DeleteLocalRef(stringClass);
-  return result;
+  return toFramedByteArray(env, snapshots);
   JNI_METHOD_END(nullptr)
 }
 
-jobject snapshotSourceState(JNIEnv* env, jobject javaThis, jlong itrId) {
+jbyteArray snapshotSourceState(JNIEnv* env, jobject javaThis, jlong itrId) {
   JNI_METHOD_START
   auto itr = ObjectStore::retrieve<StatefulSerialTask>(itrId);
   std::vector<std::string> states = itr->snapshotSourceState();
-  jclass stringClass = env->FindClass("java/lang/String");
-  jobjectArray result =
-      env->NewObjectArray(states.size(), stringClass, nullptr);
-  for (size_t i = 0; i < states.size(); ++i) {
-    jstring str = env->NewStringUTF(states[i].c_str());
-    env->SetObjectArrayElement(result, i, str);
-    env->DeleteLocalRef(str);
-  }
-  env->DeleteLocalRef(stringClass);
-  return result;
+  return toFramedByteArray(env, states);
   JNI_METHOD_END(nullptr)
 }
 
@@ -442,23 +488,25 @@ jlong arrowToBaseVector(
 }
 
 jlongArray
-baseVectorDeserialize(JNIEnv* env, jobject javaThis, jstring serialized) {
+baseVectorDeserialize(JNIEnv* env, jobject javaThis, jbyteArray serialized) {
   JNI_METHOD_START
   auto session = sessionOf(env, javaThis);
-  spotify::jni::JavaString jSerialized{env, serialized};
-  auto decoded = encoding::Base64::decode(jSerialized.get());
-  std::istringstream dataStream(decoded);
+  const jsize len = env->GetArrayLength(serialized);
+  std::string binary(static_cast<size_t>(len), '\0');
+  env->GetByteArrayRegion(
+      serialized, 0, len, reinterpret_cast<jbyte*>(binary.data()));
   auto pool = session->memoryManager()->getVeloxPool(
       "Decoding Memory Pool", memory::MemoryPool::Kind::kLeaf);
   std::vector<ObjectHandle> vids{};
-  while (dataStream.tellg() < decoded.size()) {
-    const VectorPtr& vector = restoreVector(dataStream, pool);
+  // Presto columnar replacement for the former VectorSaver-based decoding;
+  // reads the frames written by serde::writePrestoFrame.
+  for (const auto& vector : serde::decodePrestoFrames(binary, pool)) {
     const ObjectHandle vid = session->objectStore()->save(vector);
     vids.push_back(vid);
   }
-  const jsize& len = static_cast<jsize>(vids.size());
-  const jlongArray& out = env->NewLongArray(len);
-  env->SetLongArrayRegion(out, 0, len, vids.data());
+  const jsize nVectors = static_cast<jsize>(vids.size());
+  const jlongArray& out = env->NewLongArray(nVectors);
+  env->SetLongArrayRegion(out, 0, nVectors, vids.data());
   return out;
   JNI_METHOD_END(nullptr)
 }
@@ -696,19 +744,19 @@ void JniWrapper::initialize(JNIEnv* env) {
       kTypeLong,
       kTypeLong,
       kTypeString,
-      "[Ljava/lang/String;",
+      kTypeArray(kTypeByte),
       nullptr);
   addNativeMethod(
       "snapshotState",
       (void*)snapshotState,
-      "[Ljava/lang/String;",
+      kTypeArray(kTypeByte),
       kTypeLong,
       kTypeLong,
       nullptr);
   addNativeMethod(
       "snapshotSourceState",
       (void*)snapshotSourceState,
-      "[Ljava/lang/String;",
+      kTypeArray(kTypeByte),
       kTypeLong,
       nullptr);
   addNativeMethod(
@@ -750,7 +798,7 @@ void JniWrapper::initialize(JNIEnv* env) {
       "baseVectorDeserialize",
       (void*)baseVectorDeserialize,
       kTypeArray(kTypeLong),
-      kTypeString,
+      kTypeArray(kTypeByte),
       nullptr);
   addNativeMethod(
       "baseVectorWrapInConstant",

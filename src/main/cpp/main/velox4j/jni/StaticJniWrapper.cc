@@ -17,9 +17,7 @@
 
 #include "StaticJniWrapper.h"
 #include <folly/json/json.h>
-#include <velox/common/encode/Base64.h>
 #include <velox/exec/TableWriter.h>
-#include <velox/vector/VectorSaver.h>
 
 #include "JniCommon.h"
 #include "JniError.h"
@@ -32,6 +30,7 @@
 #include "velox4j/memory/JavaAllocationListener.h"
 #include "velox4j/query/QueryExecutor.h"
 #include "velox4j/query/StatefulQueryExecutor.h"
+#include "velox4j/serde/PrestoFrame.h"
 
 namespace velox4j {
 using namespace facebook::velox;
@@ -197,19 +196,25 @@ void baseVectorToArrow(
   JNI_METHOD_END()
 }
 
-jstring baseVectorSerialize(JNIEnv* env, jobject javaThis, jlongArray vids) {
+jbyteArray baseVectorSerialize(JNIEnv* env, jobject javaThis, jlongArray vids) {
   JNI_METHOD_START
   std::ostringstream out;
   auto safeArray = getLongArrayElementsSafe(env, vids);
   for (int i = 0; i < safeArray.length(); ++i) {
     const jlong& vid = safeArray.elems()[i];
     auto vector = ObjectStore::retrieve<BaseVector>(vid);
-    saveVector(*vector, out);
+    // Presto columnar replacement for the former VectorSaver-based encoding (a
+    // verbose debug-oriented format that serialized the full recursive type
+    // descriptor and encoding info of every vector).
+    serde::writePrestoFrame(vector, out);
   }
-  auto serializedData = out.str();
-  auto encoded =
-      encoding::Base64::encode(serializedData.data(), serializedData.size());
-  return env->NewStringUTF(encoded.data());
+  const std::string data = out.str();
+  const jsize len = static_cast<jsize>(data.size());
+  const jbyteArray& bytes = env->NewByteArray(len);
+  VELOX_CHECK_NOT_NULL(bytes, "NewByteArray failed in baseVectorSerialize");
+  env->SetByteArrayRegion(
+      bytes, 0, len, reinterpret_cast<const jbyte*>(data.data()));
+  return bytes;
   JNI_METHOD_END(nullptr)
 }
 
@@ -382,7 +387,7 @@ void StaticJniWrapper::initialize(JNIEnv* env) {
   addNativeMethod(
       "baseVectorSerialize",
       (void*)baseVectorSerialize,
-      kTypeString,
+      kTypeArray(kTypeByte),
       kTypeArray(kTypeLong),
       nullptr);
   addNativeMethod(
