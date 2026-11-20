@@ -109,7 +109,7 @@ public class StaticJniApi {
     jni.baseVectorToArrow(vector.id(), schema.memoryAddress(), array.memoryAddress());
   }
 
-  public String baseVectorSerialize(List<? extends BaseVector> vector) {
+  public byte[] baseVectorSerialize(List<? extends BaseVector> vector) {
     return jni.baseVectorSerialize(vector.stream().mapToLong(BaseVector::id).toArray());
   }
 

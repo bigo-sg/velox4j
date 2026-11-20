@@ -18,6 +18,11 @@ package io.github.zhztheplayer.velox4j.data;
 
 import java.util.List;
 
+import org.apache.arrow.memory.BufferAllocator;
+import org.apache.arrow.memory.RootAllocator;
+import org.apache.arrow.vector.TimeStampNanoTZVector;
+import org.apache.arrow.vector.types.pojo.ArrowType;
+import org.apache.arrow.vector.types.pojo.FieldType;
 import org.junit.*;
 
 import io.github.zhztheplayer.velox4j.Velox4j;
@@ -109,5 +114,26 @@ public class BaseVectorTest {
     Assert.assertEquals(9, input2.getSize());
     Assert.assertEquals(
         ResourceTests.readResourceAsString("vector-output/append-2.txt"), input2.toString());
+  }
+
+  @Test
+  public void testSerializeTimestampNanosPrecision() {
+    final BufferAllocator alloc = new RootAllocator(Long.MAX_VALUE);
+    final TimeStampNanoTZVector arrowVector =
+        new TimeStampNanoTZVector(
+            "foo",
+            FieldType.nullable(
+                new ArrowType.Timestamp(org.apache.arrow.vector.types.TimeUnit.NANOSECOND, "UTC")),
+            alloc);
+    arrowVector.setValueCount(2);
+    // Sub-millisecond nanoseconds: a millis-truncating serde would lose the
+    // .456789 part of the fractional seconds.
+    arrowVector.set(0, 123456789L);
+    arrowVector.setNull(1);
+    final BaseVector input = session.arrowOps().fromArrowVector(alloc, arrowVector);
+    arrowVector.close();
+    final BaseVector output =
+        session.baseVectorOps().deserializeOne(BaseVectors.serializeOne(input));
+    BaseVectorTests.assertEquals(input, output);
   }
 }
