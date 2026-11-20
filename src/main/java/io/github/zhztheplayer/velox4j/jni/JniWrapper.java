@@ -72,11 +72,11 @@ final class JniWrapper {
   native void notifyWatermarkStatus(long id, boolean idle);
 
   native void initializeState(
-      long id, long context, String keyedStateBackendConfigString, String[] checkpointRecords);
+      long id, long context, String keyedStateBackendConfigString, byte[] checkpointRecords);
 
-  native String[] snapshotState(long id, long context);
+  native byte[] snapshotState(long id, long context);
 
-  native String[] snapshotSourceState(long id);
+  native byte[] snapshotSourceState(long id);
 
   native String[] notifyCheckpointComplete(long id, long checkpointId);
 
@@ -89,7 +89,7 @@ final class JniWrapper {
 
   native long arrowToBaseVector(long cSchema, long cArray);
 
-  native long[] baseVectorDeserialize(String serialized);
+  native long[] baseVectorDeserialize(byte[] serialized);
 
   native long baseVectorWrapInConstant(long id, int length, int index);
 
