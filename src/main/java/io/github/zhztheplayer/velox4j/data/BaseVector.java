@@ -80,7 +80,7 @@ public class BaseVector implements CppObject {
     return jniApi.loadedVector(this);
   }
 
-  public String serialize() {
+  public byte[] serialize() {
     return BaseVectors.serializeOne(this);
   }
 

@@ -35,22 +35,22 @@ public class BaseVectors {
     return jniApi.createEmptyBaseVector(type);
   }
 
-  public static String serializeOne(BaseVector vector) {
+  public static byte[] serializeOne(BaseVector vector) {
     return StaticJniApi.get().baseVectorSerialize(List.of(vector));
   }
 
-  public BaseVector deserializeOne(String serialized) {
+  public BaseVector deserializeOne(byte[] serialized) {
     final List<BaseVector> vectors = jniApi.baseVectorDeserialize(serialized);
     Preconditions.checkState(
         vectors.size() == 1, "Expected one vector, but got %s", vectors.size());
     return vectors.get(0);
   }
 
-  public static String serializeAll(List<? extends BaseVector> vectors) {
+  public static byte[] serializeAll(List<? extends BaseVector> vectors) {
     return StaticJniApi.get().baseVectorSerialize(vectors);
   }
 
-  public List<BaseVector> deserializeAll(String serialized) {
+  public List<BaseVector> deserializeAll(byte[] serialized) {
     return jniApi.baseVectorDeserialize(serialized);
   }
 }
