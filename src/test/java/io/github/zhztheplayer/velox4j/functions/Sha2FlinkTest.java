@@ -24,6 +24,7 @@ import org.apache.arrow.memory.BufferAllocator;
 import org.apache.arrow.memory.RootAllocator;
 import org.apache.arrow.vector.FieldVector;
 import org.apache.arrow.vector.IntVector;
+import org.apache.arrow.vector.VarBinaryVector;
 import org.apache.arrow.vector.VarCharVector;
 import org.apache.arrow.vector.VectorSchemaRoot;
 import org.apache.arrow.vector.table.Table;
@@ -55,6 +56,7 @@ import io.github.zhztheplayer.velox4j.test.Velox4jTests;
 import io.github.zhztheplayer.velox4j.type.BigIntType;
 import io.github.zhztheplayer.velox4j.type.IntegerType;
 import io.github.zhztheplayer.velox4j.type.VarCharType;
+import io.github.zhztheplayer.velox4j.type.VarbinaryType;
 import io.github.zhztheplayer.velox4j.variant.BigIntValue;
 import io.github.zhztheplayer.velox4j.variant.IntegerValue;
 
@@ -110,6 +112,21 @@ public class Sha2FlinkTest {
   private static final String UTF8 = "你好世界";
   private static final String LONG = "0123456789abcdefghijklmnopqrstuvwxyz";
 
+  // A NUL + non-UTF-8 byte: the digest cannot come from a string re-encoding.
+  // The empty binary's digests equal the empty string's, so the SHA*EMPTY
+  // constants above are reused.
+  private static final byte[] RAW = {0x00, (byte) 0xFF, 0x10};
+  private static final String SHA224_RAW =
+      "fb00d9d04bdeeb4c51a031ab62ad806c6b8d293efafb8456deae0320";
+  private static final String SHA256_RAW =
+      "2da45f2cd1f9c8e69a67abf7a6b26c282533d0a7686787a9533265418680d4d2";
+  private static final String SHA384_RAW =
+      "ad8b7bc3149d63462b2b95ce7fc8aa7cec833cd5d3840eab42f92ea63479aefe"
+          + "71e79a2e3abfb3d60566aea38f5737a4";
+  private static final String SHA512_RAW =
+      "b29a9bd5abb2e2e27b92298e242f28970486bd49d6999ed928800d749fed69ff"
+          + "a8bf4c58cde2cb80018d97e8893ea4067040cfac81bfa891bec7249d4b0fbb33";
+
   private static MemoryManager memoryManager;
   private Session session;
 
@@ -144,6 +161,14 @@ public class Sha2FlinkTest {
     return makeRowVectorImpl(new Object[] {varcharColumn, intColumn});
   }
 
+  private RowVector makeRowVector(byte[]... binaryColumn) {
+    return makeRowVectorImpl(new Object[] {binaryColumn});
+  }
+
+  private RowVector makeRowVector(byte[][] binaryColumn, Integer[] intColumn) {
+    return makeRowVectorImpl(new Object[] {binaryColumn, intColumn});
+  }
+
   private RowVector makeRowVectorImpl(Object... columns) {
     // The allocator is intentionally left open: ownership of the Arrow buffers
     // is transferred to the native side through the Arrow C data interface, so
@@ -165,6 +190,19 @@ public class Sha2FlinkTest {
         }
         varchar.setValueCount(column.length);
         vec = varchar;
+      } else if (columns[i] instanceof byte[][]) {
+        final byte[][] column = (byte[][]) columns[i];
+        final VarBinaryVector varbinary = new VarBinaryVector("c" + i, alloc);
+        varbinary.allocateNew();
+        for (int j = 0; j < column.length; j++) {
+          if (column[j] != null) {
+            varbinary.set(j, column[j]);
+          } else {
+            varbinary.setNull(j);
+          }
+        }
+        varbinary.setValueCount(column.length);
+        vec = varbinary;
       } else {
         final Integer[] column = (Integer[]) columns[i];
         final IntVector ints = new IntVector("c" + i, alloc);
@@ -194,6 +232,10 @@ public class Sha2FlinkTest {
 
   private static TypedExpr varcharColumn(int index) {
     return FieldAccessTypedExpr.create(new VarCharType(), "c" + index);
+  }
+
+  private static TypedExpr varbinaryColumn(int index) {
+    return FieldAccessTypedExpr.create(new VarbinaryType(), "c" + index);
   }
 
   private static TypedExpr intColumn(int index) {
@@ -258,6 +300,31 @@ public class Sha2FlinkTest {
                 new String[] {EMPTY, TEST, UTF8, LONG}, new Integer[] {224, 256, 384, 512});
         BaseVector result = evalExpr(input, sha2(varcharColumn(0), intColumn(1)))) {
       assertVarcharValues(result, SHA224_EMPTY, SHA256_TEST, SHA384_UTF8, SHA512_LONG);
+    }
+  }
+
+  // Flink's SHA-2 family also accepts BINARY and digests the raw bytes.
+  @Test
+  public void testFixedLengthSpellingsVarbinary() {
+    try (RowVector input = makeRowVector(RAW, new byte[0], null);
+        BaseVector r224 = evalExpr(input, shaNamed("sha224", varbinaryColumn(0)));
+        BaseVector r256 = evalExpr(input, shaNamed("sha256", varbinaryColumn(0)));
+        BaseVector r384 = evalExpr(input, shaNamed("sha384", varbinaryColumn(0)));
+        BaseVector r512 = evalExpr(input, shaNamed("sha512", varbinaryColumn(0)))) {
+      assertVarcharValues(r224, SHA224_RAW, SHA224_EMPTY, null);
+      assertVarcharValues(r256, SHA256_RAW, SHA256_EMPTY, null);
+      assertVarcharValues(r384, SHA384_RAW, SHA384_EMPTY, null);
+      assertVarcharValues(r512, SHA512_RAW, SHA512_EMPTY, null);
+    }
+  }
+
+  // sha2(<binary>, n) agrees with the fixed-length spellings.
+  @Test
+  public void testSha2ColumnLengthVarbinary() {
+    try (RowVector input =
+            makeRowVector(new byte[][] {RAW, RAW, RAW, RAW}, new Integer[] {224, 256, 384, 512});
+        BaseVector result = evalExpr(input, sha2(varbinaryColumn(0), intColumn(1)))) {
+      assertVarcharValues(result, SHA224_RAW, SHA256_RAW, SHA384_RAW, SHA512_RAW);
     }
   }
 
