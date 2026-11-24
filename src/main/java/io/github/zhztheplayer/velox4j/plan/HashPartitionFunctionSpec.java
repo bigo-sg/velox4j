@@ -28,14 +28,21 @@ import io.github.zhztheplayer.velox4j.type.RowType;
 public class HashPartitionFunctionSpec extends PartitionFunctionSpec {
   private final RowType inputType;
   private final List<Integer> keyChannels;
+  private final List<TypedExpr> constants;
 
   @JsonCreator
   public HashPartitionFunctionSpec(
       @JsonProperty("inputType") RowType inputType,
-      @JsonProperty("keyChannels") List<Integer> keyChannels) {
+      @JsonProperty("keyChannels") List<Integer> keyChannels,
+      @JsonProperty("constants") List<TypedExpr> constants) {
     super();
     this.inputType = inputType;
     this.keyChannels = keyChannels;
+    this.constants = constants == null ? List.of() : constants;
+  }
+
+  public HashPartitionFunctionSpec(RowType inputType, List<Integer> keyChannels) {
+    this(inputType, keyChannels, List.of());
   }
 
   @JsonGetter("inputType")
@@ -50,6 +57,6 @@ public class HashPartitionFunctionSpec extends PartitionFunctionSpec {
 
   @JsonGetter("constants")
   public List<TypedExpr> getConstants() {
-    return List.of();
+    return constants;
   }
 }
