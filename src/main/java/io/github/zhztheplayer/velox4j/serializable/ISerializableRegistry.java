@@ -46,6 +46,7 @@ import io.github.zhztheplayer.velox4j.plan.LocalPartitionNode;
 import io.github.zhztheplayer.velox4j.plan.NestedLoopJoinNode;
 import io.github.zhztheplayer.velox4j.plan.OrderByNode;
 import io.github.zhztheplayer.velox4j.plan.ProjectNode;
+import io.github.zhztheplayer.velox4j.plan.RankNode;
 import io.github.zhztheplayer.velox4j.plan.RowNumberNode;
 import io.github.zhztheplayer.velox4j.plan.StatefulPlanNode;
 import io.github.zhztheplayer.velox4j.plan.StreamJoinNode;
@@ -70,6 +71,7 @@ import io.github.zhztheplayer.velox4j.serde.Serde;
 import io.github.zhztheplayer.velox4j.serde.SerdeRegistry;
 import io.github.zhztheplayer.velox4j.serde.SerdeRegistryFactory;
 import io.github.zhztheplayer.velox4j.stateful.KeyedStateBackendParameters;
+import io.github.zhztheplayer.velox4j.stateful.KeyedStateSpec;
 import io.github.zhztheplayer.velox4j.stateful.RocksDBKeyedStateBackendParameters;
 import io.github.zhztheplayer.velox4j.type.ArrayType;
 import io.github.zhztheplayer.velox4j.type.BigIntType;
@@ -225,10 +227,12 @@ public final class ISerializableRegistry {
     NAME_REGISTRY.registerClass("DeduplicateNode", DeduplicateNode.class);
     NAME_REGISTRY.registerClass("StreamTopNNode", StreamTopNNode.class);
     NAME_REGISTRY.registerClass("StreamRankNode", StreamRankNode.class);
+    NAME_REGISTRY.registerClass("RankNode", RankNode.class);
     NAME_REGISTRY.registerClass("TopNNode", TopNNode.class);
     NAME_REGISTRY.registerClass("GroupAggregationNode", GroupAggregationNode.class);
     NAME_REGISTRY.registerClass("GroupAggsHandlerNode", GroupAggsHandlerNode.class);
     NAME_REGISTRY.registerClass("KeyedStateBackendParameters", KeyedStateBackendParameters.class);
+    NAME_REGISTRY.registerClass("KeyedStateSpec", KeyedStateSpec.class);
     NAME_REGISTRY.registerClass(
         "RocksDBKeyedStateBackendParameters", RocksDBKeyedStateBackendParameters.class);
   }

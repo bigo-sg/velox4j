@@ -16,6 +16,8 @@
 */
 package io.github.zhztheplayer.velox4j.jni;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -126,16 +128,82 @@ public final class JniApi {
       UpIterator itr,
       long context,
       String keyedStateBackendConfigString,
-      String[] checkpointRecords) {
-    jni.initializeState(itr.id(), context, keyedStateBackendConfigString, checkpointRecords);
+      byte[][] checkpointRecords) {
+    jni.initializeState(
+        itr.id(),
+        context,
+        keyedStateBackendConfigString,
+        encodeCheckpointRecords(checkpointRecords));
   }
 
-  public String[] snapshotState(UpIterator itr, long context) {
-    return jni.snapshotState(itr.id(), context);
+  public byte[][] snapshotState(UpIterator itr, long context) {
+    return decodeCheckpointRecords(jni.snapshotState(itr.id(), context));
   }
 
-  public String[] snapshotSourceState(UpIterator itr) {
-    return jni.snapshotSourceState(itr.id());
+  public byte[][] snapshotSourceState(UpIterator itr) {
+    return decodeCheckpointRecords(jni.snapshotSourceState(itr.id()));
+  }
+
+  // Native checkpoint records are raw bytes and travel over JNI as one flat
+  // byte array: int32 record count, then per record int32 length + payload,
+  // little-endian like the checkpoint stream itself. A String channel is
+  // not binary-safe: JNI strings are modified UTF-8, which truncates at
+  // 0x00 and drops invalid sequences.
+  private static byte[] encodeCheckpointRecords(byte[][] checkpointRecords) {
+    if (checkpointRecords == null) {
+      checkpointRecords = new byte[0][];
+    }
+    int size = Integer.BYTES;
+    for (byte[] record : checkpointRecords) {
+      size += Integer.BYTES + record.length;
+    }
+    final ByteBuffer buffer = ByteBuffer.allocate(size).order(ByteOrder.LITTLE_ENDIAN);
+    buffer.putInt(checkpointRecords.length);
+    for (byte[] record : checkpointRecords) {
+      buffer.putInt(record.length);
+      buffer.put(record);
+    }
+    return buffer.array();
+  }
+
+  private static byte[][] decodeCheckpointRecords(byte[] framed) {
+    if (framed == null) {
+      return new byte[0][];
+    }
+    final ByteBuffer buffer = ByteBuffer.wrap(framed).order(ByteOrder.LITTLE_ENDIAN);
+    if (buffer.remaining() < Integer.BYTES) {
+      throw new IllegalArgumentException(
+          "Corrupt checkpoint-record framing: missing the record count");
+    }
+    final int count = buffer.getInt();
+    if (count < 0) {
+      throw new IllegalArgumentException(
+          "Corrupt checkpoint-record framing: negative record count " + count);
+    }
+    final byte[][] records = new byte[count][];
+    for (int i = 0; i < count; i++) {
+      if (buffer.remaining() < Integer.BYTES) {
+        throw new IllegalArgumentException(
+            "Corrupt checkpoint-record framing: truncated length field");
+      }
+      final int length = buffer.getInt();
+      if (length < 0 || length > buffer.remaining()) {
+        throw new IllegalArgumentException(
+            "Corrupt checkpoint-record framing: record of "
+                + length
+                + " bytes exceeds the remaining "
+                + buffer.remaining()
+                + " bytes");
+      }
+      final byte[] record = new byte[length];
+      buffer.get(record);
+      records[i] = record;
+    }
+    if (buffer.hasRemaining()) {
+      throw new IllegalArgumentException(
+          "Corrupt checkpoint-record framing: trailing bytes after the last record");
+    }
+    return records;
   }
 
   public String[] notifyCheckpointComplete(UpIterator itr, long checkpointId) {
@@ -163,7 +231,7 @@ public final class JniApi {
     return baseVectorWrap(jni.arrowToBaseVector(schema.memoryAddress(), array.memoryAddress()));
   }
 
-  public List<BaseVector> baseVectorDeserialize(String serialized) {
+  public List<BaseVector> baseVectorDeserialize(byte[] serialized) {
     return Arrays.stream(jni.baseVectorDeserialize(serialized))
         .mapToObj(this::baseVectorWrap)
         .collect(Collectors.toList());
