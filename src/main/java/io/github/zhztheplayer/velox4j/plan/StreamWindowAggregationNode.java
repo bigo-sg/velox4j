@@ -54,7 +54,7 @@ public class StreamWindowAggregationNode extends PlanNode {
       @JsonProperty("offset") Long offset,
       @JsonProperty("windowType") Integer windowType,
       @JsonProperty("outputType") RowType outputType,
-      @JsonProperty("isRowTime") boolean isEventTime,
+      @JsonProperty("isEventTime") boolean isEventTime,
       @JsonProperty("rowtimeIndex") Integer rowtimeIndex,
       @JsonProperty("windowStartIndex") Integer windowStart,
       @JsonProperty("windowEndIndex") Integer windowEnd) {

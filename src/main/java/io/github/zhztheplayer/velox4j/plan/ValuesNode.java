@@ -16,6 +16,7 @@
 */
 package io.github.zhztheplayer.velox4j.plan;
 
+import java.util.Base64;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -45,7 +46,13 @@ public class ValuesNode extends PlanNode {
 
   public static ValuesNode create(
       String id, List<RowVector> vectors, boolean parallelizable, int repeatTimes) {
-    return new ValuesNode(id, BaseVectors.serializeAll(vectors), parallelizable, repeatTimes);
+    // The "data" field is embedded in plan JSON, so the binary frames are
+    // base64-encoded into text here; the JNI serde contract itself is byte[].
+    return new ValuesNode(
+        id,
+        Base64.getEncoder().encodeToString(BaseVectors.serializeAll(vectors)),
+        parallelizable,
+        repeatTimes);
   }
 
   @JsonGetter("data")

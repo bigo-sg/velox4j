@@ -70,7 +70,7 @@ public class WindowPlanNodeSerdeTest {
         aggregation,
         new HashPartitionFunctionSpec(INPUT_TYPE, List.of(0)),
         new StreamWindowPartitionFunctionSpec(INPUT_TYPE, 1, 3600000L, 60000L, 0L, windowType),
-        new KeyedStateSpec(List.of(0), List.of(new BigIntType())),
+        new KeyedStateSpec(List.of(0, 1), List.of(new BigIntType(), new BigIntType())),
         "UTC",
         3600000L,
         60000L,
@@ -104,12 +104,6 @@ public class WindowPlanNodeSerdeTest {
   @Test
   public void testStreamWindowAggregationNodeCumulative() {
     SerdeTests.testISerializableRoundTrip(newNode(3));
-  }
-
-  @Test
-  public void testKeyedStateSpec() {
-    SerdeTests.testISerializableRoundTrip(
-        new KeyedStateSpec(List.of(0, 1), List.of(new BigIntType(), new BigIntType())));
   }
 
   @Test
