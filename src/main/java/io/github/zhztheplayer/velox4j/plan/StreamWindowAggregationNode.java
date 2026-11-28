@@ -22,16 +22,15 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import io.github.zhztheplayer.velox4j.stateful.KeyedStateSpec;
 import io.github.zhztheplayer.velox4j.type.RowType;
 
 public class StreamWindowAggregationNode extends PlanNode {
   private final PlanNode aggregation;
-  private final PlanNode localAgg;
   private final PartitionFunctionSpec keySelectorSpec;
   private final PartitionFunctionSpec sliceAssignerSpec;
-  private final Long windowInterval;
-  private final boolean useDayLightSaving;
-  private final boolean isLocalAgg;
+  private final KeyedStateSpec keyedStateSpec;
+  private final String shiftTimeZone;
   private final Long size;
   private final Long step;
   private final Long offset;
@@ -46,29 +45,25 @@ public class StreamWindowAggregationNode extends PlanNode {
   public StreamWindowAggregationNode(
       @JsonProperty("id") String id,
       @JsonProperty("aggregation") PlanNode aggregation,
-      @JsonProperty("localAgg") PlanNode localAgg,
       @JsonProperty("keySelectorSpec") PartitionFunctionSpec keySelectorSpec,
       @JsonProperty("sliceAssignerSpec") PartitionFunctionSpec sliceAssignerSpec,
-      @JsonProperty("windowInterval") Long windowInterval,
-      @JsonProperty("useDayLightSaving") boolean useDayLightSaving,
-      @JsonProperty("isLocalAgg") boolean isLocalAgg,
+      @JsonProperty("keyedStateSpec") KeyedStateSpec keyedStateSpec,
+      @JsonProperty("shiftTimeZone") String shiftTimeZone,
       @JsonProperty("size") Long size,
       @JsonProperty("step") Long step,
       @JsonProperty("offset") Long offset,
       @JsonProperty("windowType") Integer windowType,
       @JsonProperty("outputType") RowType outputType,
-      @JsonProperty("isRowTime") boolean isEventTime,
+      @JsonProperty("isEventTime") boolean isEventTime,
       @JsonProperty("rowtimeIndex") Integer rowtimeIndex,
       @JsonProperty("windowStartIndex") Integer windowStart,
       @JsonProperty("windowEndIndex") Integer windowEnd) {
     super(id);
     this.aggregation = aggregation;
-    this.localAgg = localAgg;
     this.keySelectorSpec = keySelectorSpec;
     this.sliceAssignerSpec = sliceAssignerSpec;
-    this.windowInterval = windowInterval;
-    this.useDayLightSaving = useDayLightSaving;
-    this.isLocalAgg = isLocalAgg;
+    this.keyedStateSpec = keyedStateSpec;
+    this.shiftTimeZone = shiftTimeZone;
     this.size = size;
     this.step = step;
     this.offset = offset;
@@ -90,29 +85,19 @@ public class StreamWindowAggregationNode extends PlanNode {
     return sliceAssignerSpec;
   }
 
+  @JsonGetter("keyedStateSpec")
+  public KeyedStateSpec getKeyedStateSpec() {
+    return keyedStateSpec;
+  }
+
+  @JsonGetter("shiftTimeZone")
+  public String getShiftTimeZone() {
+    return shiftTimeZone;
+  }
+
   @JsonGetter("aggregation")
   public PlanNode getAggregation() {
     return aggregation;
-  }
-
-  @JsonGetter("localAgg")
-  public PlanNode getLocalAgg() {
-    return localAgg;
-  }
-
-  @JsonGetter("windowInterval")
-  public Long getWindowInterval() {
-    return windowInterval;
-  }
-
-  @JsonGetter("useDayLightSaving")
-  public boolean useDayLightSaving() {
-    return useDayLightSaving;
-  }
-
-  @JsonGetter("isLocalAgg")
-  public boolean isLocalAgg() {
-    return isLocalAgg;
   }
 
   @JsonGetter("size")

@@ -89,7 +89,7 @@ final class JniWrapper {
 
   native long arrowToBaseVector(long cSchema, long cArray);
 
-  native long[] baseVectorDeserialize(String serialized);
+  native long[] baseVectorDeserialize(byte[] serialized);
 
   native long baseVectorWrapInConstant(long id, int length, int index);
 

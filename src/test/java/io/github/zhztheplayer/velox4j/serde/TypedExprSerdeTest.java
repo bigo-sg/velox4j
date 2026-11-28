@@ -100,7 +100,10 @@ public class TypedExprSerdeTest {
     SerdeTests.testISerializableRoundTrip(expr1);
     final ConstantTypedExpr expr2 =
         new ConstantTypedExpr(
-            new IntegerType(), null, BaseVectors.serializeOne(intVector.wrapInConstant(1, 0)));
+            new IntegerType(),
+            null,
+            java.util.Base64.getEncoder()
+                .encodeToString(BaseVectors.serializeOne(intVector.wrapInConstant(1, 0))));
     SerdeTests.testISerializableRoundTrip(expr2);
   }
 
