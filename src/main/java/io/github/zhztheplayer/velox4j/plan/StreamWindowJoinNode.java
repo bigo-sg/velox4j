@@ -34,6 +34,10 @@ public class StreamWindowJoinNode extends PlanNode {
   private final int numPartitions;
   private final int leftWindowEndIndex;
   private final int rightWindowEndIndex;
+  private final List<Integer> leftKeyChannels;
+  private final List<Integer> rightKeyChannels;
+  private final int shiftTimeZone;
+  private final int joinType;
 
   public StreamWindowJoinNode(
       String id,
@@ -46,6 +50,37 @@ public class StreamWindowJoinNode extends PlanNode {
       int numPartitions,
       int leftWindowEndIndex,
       int rightWindowEndIndex) {
+    this(
+        id,
+        leftInput,
+        rightInput,
+        leftPartFuncSpec,
+        rightPartFuncSpec,
+        probe,
+        outputType,
+        numPartitions,
+        leftWindowEndIndex,
+        rightWindowEndIndex,
+        List.of(),
+        List.of(),
+        0, 0);
+  }
+
+  public StreamWindowJoinNode(
+      String id,
+      PlanNode leftInput,
+      PlanNode rightInput,
+      PartitionFunctionSpec leftPartFuncSpec,
+      PartitionFunctionSpec rightPartFuncSpec,
+      NestedLoopJoinNode probe,
+      RowType outputType,
+      int numPartitions,
+      int leftWindowEndIndex,
+      int rightWindowEndIndex,
+      List<Integer> leftKeyChannels,
+      List<Integer> rightKeyChannels,
+      int shiftTimeZone,
+      int joinType) {
     super(id);
     this.sources = List.of(leftInput, rightInput);
     this.leftPartFuncSpec = leftPartFuncSpec;
@@ -55,6 +90,10 @@ public class StreamWindowJoinNode extends PlanNode {
     this.numPartitions = numPartitions;
     this.leftWindowEndIndex = leftWindowEndIndex;
     this.rightWindowEndIndex = rightWindowEndIndex;
+    this.leftKeyChannels = leftKeyChannels;
+    this.rightKeyChannels = rightKeyChannels;
+    this.shiftTimeZone = shiftTimeZone;
+    this.joinType = joinType;
   }
 
   @JsonCreator
@@ -67,10 +106,16 @@ public class StreamWindowJoinNode extends PlanNode {
       @JsonProperty("outputType") RowType outputType,
       @JsonProperty("numPartitions") int numPartitions,
       @JsonProperty("leftWindowEndIndex") int leftWindowEndIndex,
-      @JsonProperty("rightWindowEndIndex") int rightWindowEndIndex) {
+      @JsonProperty("rightWindowEndIndex") int rightWindowEndIndex,
+      @JsonProperty(value = "leftKeyChannels", defaultValue = "[]")
+          List<Integer> leftKeyChannels,
+      @JsonProperty(value = "rightKeyChannels", defaultValue = "[]")
+          List<Integer> rightKeyChannels,
+      @JsonProperty(value = "shiftTimeZone", defaultValue = "0") int shiftTimeZone,
+      @JsonProperty(value = "joinType", defaultValue = "0") int joinType) {
     Preconditions.checkArgument(
         sources.size() == 2,
-        "NestedLoopJoinNode should have 2 sources, but has %s",
+        "StreamWindowJoinNode should have 2 sources, but has %s",
         sources.size());
     return new StreamWindowJoinNode(
         id,
@@ -82,7 +127,11 @@ public class StreamWindowJoinNode extends PlanNode {
         outputType,
         numPartitions,
         leftWindowEndIndex,
-        rightWindowEndIndex);
+        rightWindowEndIndex,
+        leftKeyChannels,
+        rightKeyChannels,
+        shiftTimeZone,
+        joinType);
   }
 
   @Override
@@ -123,5 +172,25 @@ public class StreamWindowJoinNode extends PlanNode {
   @JsonGetter("rightWindowEndIndex")
   public int getRightWindowEndIndex() {
     return rightWindowEndIndex;
+  }
+
+  @JsonGetter("leftKeyChannels")
+  public List<Integer> getLeftKeyChannels() {
+    return leftKeyChannels;
+  }
+
+  @JsonGetter("rightKeyChannels")
+  public List<Integer> getRightKeyChannels() {
+    return rightKeyChannels;
+  }
+
+  @JsonGetter("shiftTimeZone")
+  public int getShiftTimeZone() {
+    return shiftTimeZone;
+  }
+
+  @JsonGetter("joinType")
+  public int getJoinType() {
+    return joinType;
   }
 }
