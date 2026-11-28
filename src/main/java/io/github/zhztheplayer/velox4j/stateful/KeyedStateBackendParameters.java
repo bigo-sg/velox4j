@@ -27,15 +27,24 @@ public class KeyedStateBackendParameters extends ISerializable {
   private String jobId;
   private String operatorId;
   private int stateBackendType;
+  private Integer maxParallelism;
+  private Integer startKeyGroup;
+  private Integer numKeyGroups;
 
   @JsonCreator
   public KeyedStateBackendParameters(
       @JsonProperty("jobId") String jobId,
       @JsonProperty("operatorId") String operatorId,
-      @JsonProperty("stateBackendType") int stateBackendType) {
+      @JsonProperty("stateBackendType") int stateBackendType,
+      @JsonProperty("maxParallelism") Integer maxParallelism,
+      @JsonProperty("startKeyGroup") Integer startKeyGroup,
+      @JsonProperty("numKeyGroups") Integer numKeyGroups) {
     this.jobId = jobId;
     this.operatorId = operatorId;
     this.stateBackendType = stateBackendType;
+    this.maxParallelism = maxParallelism;
+    this.startKeyGroup = startKeyGroup;
+    this.numKeyGroups = numKeyGroups;
   }
 
   @JsonGetter("jobId")
@@ -51,5 +60,20 @@ public class KeyedStateBackendParameters extends ISerializable {
   @JsonGetter("stateBackendType")
   public int getBackendType() {
     return stateBackendType;
+  }
+
+  @JsonGetter("maxParallelism")
+  public Integer getMaxParallelism() {
+    return maxParallelism;
+  }
+
+  @JsonGetter("startKeyGroup")
+  public Integer getStartKeyGroup() {
+    return startKeyGroup;
+  }
+
+  @JsonGetter("numKeyGroups")
+  public Integer getNumKeyGroups() {
+    return numKeyGroups;
   }
 }

@@ -26,6 +26,7 @@ import io.github.zhztheplayer.velox4j.aggregate.AggregateStep;
 import io.github.zhztheplayer.velox4j.connector.CommitStrategy;
 import io.github.zhztheplayer.velox4j.data.BaseVectorTests;
 import io.github.zhztheplayer.velox4j.exception.VeloxException;
+import io.github.zhztheplayer.velox4j.expression.CallTypedExpr;
 import io.github.zhztheplayer.velox4j.expression.ConstantTypedExpr;
 import io.github.zhztheplayer.velox4j.expression.FieldAccessTypedExpr;
 import io.github.zhztheplayer.velox4j.join.JoinType;
@@ -33,6 +34,8 @@ import io.github.zhztheplayer.velox4j.memory.AllocationListener;
 import io.github.zhztheplayer.velox4j.memory.MemoryManager;
 import io.github.zhztheplayer.velox4j.plan.AggregationNode;
 import io.github.zhztheplayer.velox4j.plan.FilterNode;
+import io.github.zhztheplayer.velox4j.plan.GroupWindowAggregationNode;
+import io.github.zhztheplayer.velox4j.plan.GroupWindowAggsHandlerNode;
 import io.github.zhztheplayer.velox4j.plan.HashJoinNode;
 import io.github.zhztheplayer.velox4j.plan.KeyGroupPartitionFunctionSpec;
 import io.github.zhztheplayer.velox4j.plan.LimitNode;
@@ -46,7 +49,9 @@ import io.github.zhztheplayer.velox4j.plan.ValuesNode;
 import io.github.zhztheplayer.velox4j.plan.WatermarkPushDownSpec;
 import io.github.zhztheplayer.velox4j.session.Session;
 import io.github.zhztheplayer.velox4j.sort.SortOrder;
+import io.github.zhztheplayer.velox4j.stateful.KeyedStateSpec;
 import io.github.zhztheplayer.velox4j.test.Velox4jTests;
+import io.github.zhztheplayer.velox4j.type.BigIntType;
 import io.github.zhztheplayer.velox4j.type.IntegerType;
 import io.github.zhztheplayer.velox4j.type.RowType;
 import io.github.zhztheplayer.velox4j.variant.BooleanValue;
@@ -118,6 +123,88 @@ public class PlanNodeSerdeTest {
   public void testAggregationNode() {
     final AggregationNode aggregationNode = SerdeTests.newSampleAggregationNode("id-2", "id-1");
     SerdeTests.testISerializableRoundTrip(aggregationNode);
+  }
+
+  @Test
+  public void testGroupWindowAggsHandlerNode() {
+    // COUNT(*) with no argument plus SUM(v): the insert-only window supply.
+    // The row types carry BIGINT window columns instead of TIMESTAMP: the
+    // C++ side of the ISerializable round trip does not preserve the
+    // TIMESTAMP precision field (a pre-existing velox4j serde trait, the
+    // window property columns of the production shape carry no precision).
+    final Aggregate countStar =
+        new Aggregate(
+            new CallTypedExpr(new BigIntType(), List.of(), "count"),
+            List.of(),
+            null,
+            List.of(),
+            List.of(),
+            false);
+    final Aggregate sum =
+        new Aggregate(
+            new CallTypedExpr(
+                new IntegerType(),
+                List.of(FieldAccessTypedExpr.create(new IntegerType(), "v")),
+                "sum"),
+            List.of(new IntegerType()),
+            null,
+            List.of(),
+            List.of(),
+            false);
+    final RowType outputType =
+        new RowType(
+            List.of("k", "cnt", "s", "wstart", "wend"),
+            List.of(
+                new IntegerType(),
+                new BigIntType(),
+                new IntegerType(),
+                new BigIntType(),
+                new BigIntType()));
+    final GroupWindowAggsHandlerNode handler =
+        new GroupWindowAggsHandlerNode("id-2", outputType, List.of(countStar, sum), 0);
+    SerdeTests.testISerializableRoundTrip(handler);
+  }
+
+  @Test
+  public void testGroupWindowAggregationNode() {
+    // The KeyedStateSpec rides the node's serde (the node stamps the
+    // registry name around the bare spec serialization - the C++
+    // KeyedStateSpec::serialize writes no name of its own), so this also
+    // covers the spec's field wiring.
+    final Aggregate countStar =
+        new Aggregate(
+            new CallTypedExpr(new BigIntType(), List.of(), "count"),
+            List.of(),
+            null,
+            List.of(),
+            List.of(),
+            false);
+    final RowType inputType =
+        new RowType(List.of("k", "ts"), List.of(new IntegerType(), new BigIntType()));
+    final RowType outputType =
+        new RowType(
+            List.of("k", "cnt", "wstart", "wend"),
+            List.of(new IntegerType(), new BigIntType(), new BigIntType(), new BigIntType()));
+    final GroupWindowAggsHandlerNode handler =
+        new GroupWindowAggsHandlerNode("id-2", outputType, List.of(countStar), 0);
+    final GroupWindowAggregationNode windowAgg =
+        new GroupWindowAggregationNode(
+            "id-3",
+            handler,
+            new KeyedStateSpec(List.of(0), List.of(new IntegerType())),
+            inputType,
+            0L,
+            false,
+            1,
+            true,
+            2,
+            10L,
+            0L,
+            0L,
+            2,
+            3,
+            outputType);
+    SerdeTests.testISerializableRoundTrip(windowAgg);
   }
 
   @Test

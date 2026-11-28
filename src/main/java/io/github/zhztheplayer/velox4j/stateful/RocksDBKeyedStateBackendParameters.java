@@ -50,7 +50,7 @@ public class RocksDBKeyedStateBackendParameters extends KeyedStateBackendParamet
       @JsonProperty("stateKeys") Map<String, Type> stateKeys,
       @JsonProperty("stateValues") Map<String, Type> stateValues,
       @JsonProperty("stateNamespaces") Map<String, Type> stateNamespaces) {
-    super(jobId, operatorId, stateBackendType);
+    super(jobId, operatorId, stateBackendType, null, null, null);
     this.dbHandle = dbHandle;
     this.readOptionHandle = readOptionHandle;
     this.writeOptionHandle = writeOptionHandle;

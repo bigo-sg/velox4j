@@ -58,7 +58,8 @@ public final class BaseVectorTests {
 
   public static RowVector newSampleRowVector(Session session) {
     final String serialized = ResourceTests.readResourceAsString("vector/rowvector-1.b64");
-    final BaseVector deserialized = session.baseVectorOps().deserializeOne(serialized);
+    final byte[] bytes = java.util.Base64.getDecoder().decode(serialized);
+    final BaseVector deserialized = session.baseVectorOps().deserializeOne(bytes);
     return deserialized.asRowVector();
   }
 }
