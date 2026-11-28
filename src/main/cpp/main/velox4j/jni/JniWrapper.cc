@@ -16,12 +16,11 @@
  */
 
 #include "JniWrapper.h"
-#include <velox/common/encode/Base64.h>
+#include <folly/json/json.h>
 #include <velox/common/memory/Memory.h>
 #include <velox/core/PlanNode.h>
 #include <velox/exec/TableWriter.h>
 #include <velox/experimental/stateful/StreamElement.h>
-#include <velox/vector/VectorSaver.h>
 
 #include "JniCommon.h"
 #include "JniError.h"
@@ -33,6 +32,7 @@
 #include "velox4j/lifecycle/Session.h"
 #include "velox4j/query/QueryExecutor.h"
 #include "velox4j/query/StatefulQueryExecutor.h"
+#include "velox4j/serde/PrestoFrame.h"
 
 namespace velox4j {
 using namespace facebook::velox;
@@ -442,23 +442,25 @@ jlong arrowToBaseVector(
 }
 
 jlongArray
-baseVectorDeserialize(JNIEnv* env, jobject javaThis, jstring serialized) {
+baseVectorDeserialize(JNIEnv* env, jobject javaThis, jbyteArray serialized) {
   JNI_METHOD_START
   auto session = sessionOf(env, javaThis);
-  spotify::jni::JavaString jSerialized{env, serialized};
-  auto decoded = encoding::Base64::decode(jSerialized.get());
-  std::istringstream dataStream(decoded);
+  const jsize len = env->GetArrayLength(serialized);
+  std::string binary(static_cast<size_t>(len), '\0');
+  env->GetByteArrayRegion(
+      serialized, 0, len, reinterpret_cast<jbyte*>(binary.data()));
   auto pool = session->memoryManager()->getVeloxPool(
       "Decoding Memory Pool", memory::MemoryPool::Kind::kLeaf);
   std::vector<ObjectHandle> vids{};
-  while (dataStream.tellg() < decoded.size()) {
-    const VectorPtr& vector = restoreVector(dataStream, pool);
+  // Presto columnar replacement for the former VectorSaver-based decoding;
+  // reads the frames written by serde::writePrestoFrame.
+  for (const auto& vector : serde::decodePrestoFrames(binary, pool)) {
     const ObjectHandle vid = session->objectStore()->save(vector);
     vids.push_back(vid);
   }
-  const jsize& len = static_cast<jsize>(vids.size());
-  const jlongArray& out = env->NewLongArray(len);
-  env->SetLongArrayRegion(out, 0, len, vids.data());
+  const jsize nVectors = static_cast<jsize>(vids.size());
+  const jlongArray& out = env->NewLongArray(nVectors);
+  env->SetLongArrayRegion(out, 0, nVectors, vids.data());
   return out;
   JNI_METHOD_END(nullptr)
 }
@@ -750,7 +752,7 @@ void JniWrapper::initialize(JNIEnv* env) {
       "baseVectorDeserialize",
       (void*)baseVectorDeserialize,
       kTypeArray(kTypeLong),
-      kTypeString,
+      kTypeArray(kTypeByte),
       nullptr);
   addNativeMethod(
       "baseVectorWrapInConstant",
